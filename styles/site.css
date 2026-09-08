@@ -165,7 +165,7 @@
 .hero__foot {
   display: flex;
   flex-direction: column;
-  gap: clamp(.75rem, 2.2vh, 2.25rem);
+  gap: var(--sp-md);
   /* Identidade e manchete ficam juntas no topo, com vão curto; toda a
      sobra da dobra desce para cá. É o respiro dos botões — e evita que
      ela se reparta em buracos no meio do conteúdo. */
@@ -183,8 +183,7 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--sp-md);
-  /* Respiro próprio: ar acima da régua e abaixo dos botões. */
-  margin-top: clamp(var(--sp-md), 2.5vh, var(--sp-xl));
+  /* Ar abaixo da régua, para os botões; acima dela fica o carrossel. */
   padding-top: clamp(var(--sp-lg), 3.5vh, var(--sp-2xl));
   padding-bottom: var(--sp-2xs);
   border-top: var(--hair) solid var(--line);
@@ -749,6 +748,8 @@
    ter as imagens.
    ============================================================ */
 
+/* Encosta na régua que abre a barra de ações: o respiro abaixo dele é
+   curto de propósito, para os dois lerem como um bloco só. */
 .clientes { overflow: hidden; }
 .clientes__trilha {
   display: flex;
@@ -803,3 +804,30 @@
   font-size: var(--t-eyebrow);
   color: var(--muted);
 }
+
+
+/* ============================================================ BORDAS DAS ESTEIRAS
+   As três esteiras desaparecem nas laterais em vez de serem cortadas
+   pela borda. É máscara, não gradiente de cor: o que some é o conteúdo,
+   não há tinta nova entrando na paleta.
+   ============================================================ */
+
+.clientes,
+.esteira,
+.tira {
+  --fade: clamp(1.5rem, 7vw, 9rem);
+  -webkit-mask-image: linear-gradient(90deg,
+    transparent 0,
+    #000 var(--fade),
+    #000 calc(100% - var(--fade)),
+    transparent 100%);
+  mask-image: linear-gradient(90deg,
+    transparent 0,
+    #000 var(--fade),
+    #000 calc(100% - var(--fade)),
+    transparent 100%);
+}
+
+/* O carrossel de clientes é estreito: a máscara ali precisa ser curta,
+   senão come metade dos nomes. */
+.clientes { --fade: clamp(1rem, 3vw, 3.5rem); }
