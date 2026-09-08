@@ -24,11 +24,11 @@
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 
 <!-- Ordem obrigatória: tokens → base → site -->
-<link rel="stylesheet" href="/styles/tokens.css?v=20260908w">
-<link rel="stylesheet" href="/styles/base.css?v=20260908w">
-<link rel="stylesheet" href="/styles/site.css?v=20260908w">
+<link rel="stylesheet" href="/styles/tokens.css?v=20260908x">
+<link rel="stylesheet" href="/styles/base.css?v=20260908x">
+<link rel="stylesheet" href="/styles/site.css?v=20260908x">
 <!-- Última: só o que for exclusivo desta versão. -->
-<link rel="stylesheet" href="/styles/global.css?v=20260908w">
+<link rel="stylesheet" href="/styles/global.css?v=20260908x">
 </head>
 
 <body>
@@ -148,15 +148,8 @@
     <!-- Simples: título e retrato em cima, e os parágrafos separados por
          traços opacos. É o traço que dá o ritmo, não a grade. -->
     <div class="sobre">
-      <div class="sobre__topo">
+      <div class="sobre__col">
         <h2 class="sobre__t reveal">Brand Designer<br>e Estrategista.</h2>
-        <figure class="sobre__foto reveal">
-          <img src="/img/samuel-retrato.jpg" alt="Retrato de Samuel Freire" width="928" height="1152" loading="lazy">
-          <figcaption class="small">Samuel Freire — Digital Designer &amp; Strategist</figcaption>
-        </figure>
-      </div>
-
-      <div class="sobre__linhas">
         <p class="sobre__p reveal">
           Sou Samuel Freire, com experiência na criação de websites, identidades visuais, impressos
           e <span class="strong">ferramentas digitais para negócios</span>.
@@ -173,6 +166,11 @@
           presença digital ao desenvolvimento de ferramentas, automações e soluções com AI.
         </p>
       </div>
+
+      <figure class="sobre__foto reveal">
+          <img src="/img/samuel-retrato.jpg" alt="Retrato de Samuel Freire" width="928" height="1152" loading="lazy">
+          <figcaption class="small">Samuel Freire — Digital Designer &amp; Strategist</figcaption>
+        </figure>
     </div>
 
   </div>
@@ -545,6 +543,6 @@
 
 <!-- Lenis: opcional. Se o CDN cair, a rolagem nativa continua. -->
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js" defer></script>
-<script src="/js/main.js?v=20260908w" defer></script>
+<script src="/js/main.js?v=20260908x" defer></script>
 </body>
 </html>

@@ -318,34 +318,38 @@
 
 /* ============================================================ 01 SOBRE
 
-   Título e retrato em cima; abaixo, os parágrafos separados por traços
-   opacos. Quem dá o ritmo é o traço — nada de grade, nada de caixa.
+   Duas colunas que começam na mesma linha: texto à esquerda, retrato à
+   direita. Os traços vivem dentro da coluna de texto — atravessando a
+   seção inteira, sobrava metade da largura vazia à direita deles.
 
    ============================================================ */
 
-.sobre { margin-top: clamp(2.5rem, 6vh, 5rem); }
-
-/* ---------- Topo: título à esquerda, retrato à direita ---------- */
-
-.sobre__topo {
+.sobre {
   display: grid;
   gap: var(--sp-xl);
-  align-items: end;
+  /* Curto: colado na eyebrow, não a 130px dela. */
+  margin-top: var(--sp-xl);
 }
 @media (min-width: 900px) {
-  .sobre__topo {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 15rem);
+  .sobre {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
     gap: clamp(var(--sp-2xl), 6vw, 6rem);
+    align-items: start;
   }
 }
 
+.sobre__col { min-width: 0; }
+
 .sobre__t {
-  font-size: clamp(2.25rem, 5.4vw, 4.5rem);
+  /* Menor que antes: em 52px ele esmagava o corpo do texto ao lado. */
+  font-size: clamp(2rem, 3.6vw, 3rem);
   font-weight: var(--w-black);
-  letter-spacing: -.045em;
-  line-height: .96;
+  letter-spacing: -.04em;
+  line-height: 1.02;
   text-wrap: balance;
 }
+
+/* ---------- Retrato ---------- */
 
 .sobre__foto { margin: 0; }
 .sobre__foto img {
@@ -361,33 +365,24 @@
 }
 .on-dark .sobre__foto figcaption { color: var(--muted-invert); }
 
-
-/* ---------- Linhas: um traço opaco abrindo cada parágrafo ---------- */
-
-.sobre__linhas { margin-top: clamp(3rem, 8vh, 6rem); }
+/* ---------- Parágrafos, abertos por traço opaco ---------- */
 
 .sobre__p {
-  /* O traço atravessa a largura toda; o texto fica na medida de leitura.
-     É esse descompasso que dá o ar editorial. */
   border-top: var(--hair) solid var(--line);
-  padding-top: clamp(var(--sp-lg), 4vh, var(--sp-2xl));
-  margin-top: clamp(var(--sp-lg), 4vh, var(--sp-2xl));
-  max-width: none;
-  font-size: var(--t-body);
+  padding-top: var(--sp-lg);
+  margin-top: var(--sp-lg);
+  /* Sobe de 16 para 17–19px: no corpo anterior o texto sumia ao lado do
+     título. */
+  font-size: clamp(1.0625rem, 1.25vw, 1.1875rem);
+  line-height: 1.6;
   color: var(--muted);
-  line-height: 1.65;
   text-wrap: pretty;
 }
-.sobre__p:first-child { margin-top: 0; }
-/* A medida de leitura vive dentro do parágrafo, não no traço. */
-.sobre__p { padding-right: max(0px, calc(100% - 62ch)); }
-
+.sobre__p:first-of-type { margin-top: clamp(var(--sp-xl), 5vh, var(--sp-2xl)); }
 .on-dark .sobre__p { border-top-color: var(--line-invert); color: var(--muted-invert); }
 
 
-/* ---------- Aparecer ao rolar ---------------------------------------
-   Mais lenta e mais longa que a do resto do site: sobe, sai do desfoque
-   e assenta. Aqui a revelação é parte do desenho.                     */
+/* ---------- Aparecer ao rolar ---------- */
 
 .anim-pronta .sobre .reveal {
   opacity: 0;

@@ -20,11 +20,11 @@
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 
 <!-- Ordem obrigatória: tokens → base → site -->
-<link rel="stylesheet" href="/styles/tokens.css?v=20260908w">
-<link rel="stylesheet" href="/styles/base.css?v=20260908w">
-<link rel="stylesheet" href="/styles/site.css?v=20260908w">
+<link rel="stylesheet" href="/styles/tokens.css?v=20260908x">
+<link rel="stylesheet" href="/styles/base.css?v=20260908x">
+<link rel="stylesheet" href="/styles/site.css?v=20260908x">
 <!-- Última: só o que for exclusivo desta versão. -->
-<link rel="stylesheet" href="/styles/br.css?v=20260908w">
+<link rel="stylesheet" href="/styles/br.css?v=20260908x">
 </head>
 
 <body>
@@ -174,15 +174,8 @@
     <!-- Simples: título e retrato em cima, e os parágrafos separados por
          traços opacos. É o traço que dá o ritmo, não a grade. -->
     <div class="sobre">
-      <div class="sobre__topo">
+      <div class="sobre__col">
         <h2 class="sobre__t reveal">Prazer,<br>sou o Samuel.</h2>
-        <figure class="sobre__foto reveal">
-          <img src="/img/samuel-retrato.jpg" alt="Retrato de Samuel Freire" width="928" height="1152" loading="lazy">
-          <figcaption class="small">Samuel Freire — Web Designer</figcaption>
-        </figure>
-      </div>
-
-      <div class="sobre__linhas">
         <p class="sobre__p reveal">
           Se você ainda não me conhece, muito prazer, sou Samuel. Trabalho como designer há 5 anos
           e, nos últimos 3 anos, venho dividindo minha operação entre
@@ -200,6 +193,11 @@
           Tive o privilégio de contribuir com muitos projetos e é uma honra ter você aqui.
         </p>
       </div>
+
+      <figure class="sobre__foto reveal">
+          <img src="/img/samuel-retrato.jpg" alt="Retrato de Samuel Freire" width="928" height="1152" loading="lazy">
+          <figcaption class="small">Samuel Freire — Web Designer</figcaption>
+        </figure>
     </div>
 
   </div>
@@ -284,6 +282,6 @@
 
 <!-- Lenis: opcional. Se o CDN cair, a rolagem nativa continua. -->
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js" defer></script>
-<script src="/js/main.js?v=20260908w" defer></script>
+<script src="/js/main.js?v=20260908x" defer></script>
 </body>
 </html>
