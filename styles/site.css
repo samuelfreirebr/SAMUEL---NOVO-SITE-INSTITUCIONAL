@@ -315,104 +315,92 @@
 
 /* ============================================================ 01 SOBRE
 
-   Três colunas — título, texto, retrato — para a seção inteira caber
-   numa tela. A faixa de fotos larga que havia aqui sozinha tinha 900px
-   de altura; o retrato agora é apoio, não protagonista.
+   Uma coluna estreita e muito ar. Nada de grade, nada de caixa: o que
+   organiza a seção é o ritmo vertical e a ordem em que cada bloco
+   entra em cena.
 
    ============================================================ */
 
+#sobre { padding-block: var(--section-y-s) var(--section-y); }
+
 .sobre {
-  display: grid;
-  gap: var(--sp-xl);
-  margin-top: var(--sp-lg);
-  padding-top: var(--sp-lg);
-  border-top: var(--hair-2) solid var(--ink);
+  max-width: 46ch;
+  margin-top: clamp(3rem, 8vh, 6rem);
+  /* Recuo editorial: a coluna não encosta na sarjeta, e a assimetria é
+     o que dá a ela um lugar em vez de uma margem. */
+  margin-left: clamp(0px, 9vw, 160px);
 }
 
-/* Respiro menor que o padrão: é o que fecha a seção dentro de uma tela. */
-#sobre { padding-block: var(--section-y-s); }
-
-/* A esteira de bastidores é faixa própria, não parte do Sobre —
-   dentro dele somava 400px e estourava a dobra. */
-.bastidores { padding-bottom: var(--section-y-s); }
-@media (min-width: 1000px) {
-  .sobre {
-    /* minmax(0,…) e não .8fr puro: um título longo tem min-content largo
-       e, sem isso, estoura a proporção da grade (605px numa coluna de
-       386px prevista). */
-    grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr) minmax(0, .85fr);
-    gap: clamp(var(--sp-xl), 3.5vw, var(--sp-2xl));
-    align-items: start;
-  }
-}
-/* A global carrega título + números na coluna da esquerda, então ela
-   precisa de mais largura que a da BR. */
-@media (min-width: 1000px) {
-  .sobre--lado { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, .72fr); }
-}
-
-/* Na faixa de tablet o retrato desce sozinho, em vez de espremer o texto. */
-@media (min-width: 700px) and (max-width: 999px) {
-  .sobre { grid-template-columns: .85fr 1.15fr; }
-  .sobre__retrato { grid-column: 1 / -1; max-width: 300px; }
-}
-
-/* Título de seção, não de capa: em 104px ele quebrava em cinco linhas
-   dentro da coluna estreita. Aqui o corpo acompanha a coluna. */
 .sobre__t {
+  font-size: clamp(2.25rem, 5vw, 4rem);
+  font-weight: var(--w-black);
+  letter-spacing: -.045em;
+  line-height: .98;
   text-wrap: balance;
-  font-size: clamp(1.875rem, 3.6vw, 3.25rem);
-  line-height: 1.02;
-  letter-spacing: -.04em;
 }
-.sobre__corpo { max-width: 54ch; }
-.on-dark .sobre { border-top-color: #FFFFFF; }
 
-.sobre__lado { display: flex; flex-direction: column; gap: var(--sp-xl); }
+/* O ar entre os blocos é o desenho da seção. */
+.sobre__p {
+  margin-top: clamp(3.5rem, 9vh, 7.5rem);
+  font-size: var(--t-body);
+  color: var(--muted);
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+.sobre__p--lead {
+  font-size: var(--t-lead);
+  font-weight: var(--w-light);
+  line-height: 1.42;
+  letter-spacing: -.018em;
+}
+/* O fecho fala mais baixo que o resto. */
+.sobre__p--fecho { font-size: var(--t-small); }
 
-.sobre__retrato { margin: 0; }
-.sobre__retrato img {
+.sobre__foto {
+  margin: clamp(4rem, 11vh, 9rem) 0 0;
+  /* Sai um pouco da medida do texto, para a foto não virar um parágrafo. */
+  width: min(100% + 12vw, 34rem);
+}
+.sobre__foto img {
   width: 100%;
   aspect-ratio: 4 / 5;
   object-fit: cover;
   border-radius: var(--radius-img);
   background: var(--bg-2);
 }
-.sobre__retrato figcaption {
-  margin-top: var(--sp-md);
-  padding-top: var(--sp-md);
-  border-top: var(--hair) solid var(--line);
-  color: var(--muted);
-}
-.on-dark .sobre__retrato figcaption { border-top-color: var(--line-invert); }
 
 
-/* ---------- Métricas: régua de 2px, numeral, legenda ----------------
-   Empilhadas na coluna estreita — nunca em caixa.                    */
+/* ---------- Aparecer ao rolar ---------------------------------------
+   Nesta seção a revelação é o próprio desenho, então ela é mais lenta e
+   mais longa que a do resto do site: sobe, sai do desfoque e assenta.  */
 
-.numeros { display: grid; gap: var(--sp-lg); }
-.numeros li { display: flex; flex-direction: column; }
-.numeros__regua {
-  height: var(--hair-2);
-  background: var(--ink);
-  margin-bottom: var(--sp-sm);
+.anim-pronta .sobre .reveal {
+  opacity: 0;
+  transform: translate3d(0, 42px, 0);
+  filter: blur(10px);
+  transition: opacity 1.15s var(--ease-out),
+              transform 1.15s var(--ease-out),
+              filter 1.15s var(--ease-out);
 }
-.numeros__regua--brand { background: var(--brand); }
-.on-dark .numeros__regua { background: #FFFFFF; }
-.on-dark .numeros__regua--brand { background: var(--brand); }
-.numeros b {
-  font-size: clamp(1.75rem, 2.6vw, 2.5rem);
-  font-weight: var(--w-black);
-  letter-spacing: -.05em;
-  line-height: .95;
+.anim-pronta .sobre .reveal.vis {
+  opacity: 1;
+  transform: none;
+  filter: none;
 }
-.numeros li > span:last-child {
-  margin-top: var(--sp-2xs);
-  font-size: var(--t-small);
-  color: var(--muted);
-  line-height: 1.35;
+
+/* A foto ainda assenta de uma escala levemente maior. */
+.anim-pronta .sobre__foto img {
+  transform: scale(1.05);
+  transition: transform 1.5s var(--ease-out);
 }
-.on-dark .numeros li > span:last-child { color: var(--muted-invert); }
+.anim-pronta .sobre__foto.vis img { transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-pronta .sobre .reveal {
+    opacity: 1; transform: none; filter: none; transition: none;
+  }
+  .anim-pronta .sobre__foto img { transform: none; transition: none; }
+}
 
 
 /* ============================================================ FAIXA DE RESPIRO */
@@ -582,6 +570,10 @@
 }
 
 
+/* A esteira de bastidores é faixa própria: dentro do Sobre ela sozinha
+   somava 400px e estourava a dobra. */
+.bastidores { padding-bottom: var(--section-y-s); }
+
 /* ---------- Tira de bastidores ---------- */
 
 .tira { overflow: hidden; }
@@ -748,4 +740,66 @@
   flex: none;
   fill: currentColor;
   margin-right: calc(var(--sp-2xs) * -1);
+}
+
+
+/* ============================================================ CLIENTES
+   Perfil + nome, em esteira. A foto é opcional: sem ela, as iniciais de
+   data-inicial ficam no lugar, então a lista já funciona antes de você
+   ter as imagens.
+   ============================================================ */
+
+.clientes { overflow: hidden; }
+.clientes__trilha {
+  display: flex;
+  align-items: center;
+  gap: clamp(var(--sp-lg), 3vw, var(--sp-2xl));
+  width: max-content;
+  will-change: transform;
+}
+
+.cliente {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-xs);
+  white-space: nowrap;
+}
+
+.cliente__foto {
+  position: relative;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--bg-2);
+  box-shadow: inset 0 0 0 var(--hair) var(--line-2);
+  /* As iniciais ficam por baixo; a foto, quando existe, cobre. */
+  display: grid;
+  place-items: center;
+}
+.cliente__foto::before {
+  content: attr(data-inicial);
+  font-size: .6875rem;
+  font-weight: var(--w-bold);
+  color: var(--muted);
+}
+.cliente__foto img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cliente__txt { display: flex; flex-direction: column; line-height: 1.2; }
+.cliente__txt b {
+  font-size: var(--t-small);
+  font-weight: var(--w-bold);
+  letter-spacing: -.025em;
+}
+.cliente__txt em {
+  font-style: normal;
+  font-size: var(--t-eyebrow);
+  color: var(--muted);
 }

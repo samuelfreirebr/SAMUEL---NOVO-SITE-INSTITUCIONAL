@@ -145,17 +145,15 @@
     }
   }
 
+  // Qualquer elemento com [data-esteira] vira uma esteira. A velocidade
+  // vem de data-velocidade (px/s); negativa anda no sentido contrário.
   function ligarEsteiras() {
-    var caixaNum = document.querySelector('[data-esteira]');
-    var caixaTira = document.querySelector('[data-tira]');
-
-    if (caixaNum) {
-      var a = montarEsteira(caixaNum, 46);
-      if (a) esteiras.push(a);
-    }
-    if (caixaTira) {
-      var b = montarEsteira(caixaTira, -30);   // sentido contrário
-      if (b) esteiras.push(b);
+    var caixas = document.querySelectorAll('[data-esteira]');
+    for (var i = 0; i < caixas.length; i++) {
+      var vel = parseFloat(caixas[i].getAttribute('data-velocidade'));
+      if (isNaN(vel)) vel = 46;
+      var e = montarEsteira(caixas[i], vel);
+      if (e) esteiras.push(e);
     }
   }
 
