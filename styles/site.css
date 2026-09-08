@@ -86,12 +86,13 @@
 /* ============================================================ HERO */
 
 .hero {
-  /* Fica grudado enquanto a seção seguinte sobe por cima dele. Sobe só o
-     tanto do top negativo antes de fixar — daí a sensação de ser engolido
-     em vez de rolar embora. */
+  /* Fica grudado enquanto a seção seguinte sobe por cima dele. Preso em
+     top:0 ele pararia de vez; quem o mantém subindo — devagar, numa
+     fração da rolagem — é a deriva aplicada no laço do main.js. */
   position: sticky;
-  top: -10vh;
+  top: 0;
   z-index: 0;
+  will-change: transform;
   /* Desconta a barra do topo e ainda deixa uma folga: sem ela os botões
      encostam na borda da dobra e o próximo bloco não dá sinal de que
      existe. A folga é o que convida a rolar. */
@@ -317,52 +318,36 @@
 
 /* ============================================================ 01 SOBRE
 
-   Uma coluna estreita e muito ar. Nada de grade, nada de caixa: o que
-   organiza a seção é o ritmo vertical e a ordem em que cada bloco
-   entra em cena.
+   Título e retrato em cima; abaixo, os parágrafos separados por traços
+   opacos. Quem dá o ritmo é o traço — nada de grade, nada de caixa.
 
    ============================================================ */
 
-#sobre { padding-block: var(--section-y-s) var(--section-y); }
+.sobre { margin-top: clamp(2.5rem, 6vh, 5rem); }
 
-.sobre {
-  max-width: 46ch;
-  margin-top: clamp(3rem, 8vh, 6rem);
-  /* Recuo editorial: a coluna não encosta na sarjeta, e a assimetria é
-     o que dá a ela um lugar em vez de uma margem. */
-  margin-left: clamp(0px, 9vw, 160px);
+/* ---------- Topo: título à esquerda, retrato à direita ---------- */
+
+.sobre__topo {
+  display: grid;
+  gap: var(--sp-xl);
+  align-items: end;
+}
+@media (min-width: 900px) {
+  .sobre__topo {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 15rem);
+    gap: clamp(var(--sp-2xl), 6vw, 6rem);
+  }
 }
 
 .sobre__t {
-  font-size: clamp(2.25rem, 5vw, 4rem);
+  font-size: clamp(2.25rem, 5.4vw, 4.5rem);
   font-weight: var(--w-black);
   letter-spacing: -.045em;
-  line-height: .98;
+  line-height: .96;
   text-wrap: balance;
 }
 
-/* O ar entre os blocos é o desenho da seção. */
-.sobre__p {
-  margin-top: clamp(3.5rem, 9vh, 7.5rem);
-  font-size: var(--t-body);
-  color: var(--muted);
-  line-height: 1.65;
-  text-wrap: pretty;
-}
-.sobre__p--lead {
-  font-size: var(--t-lead);
-  font-weight: var(--w-light);
-  line-height: 1.42;
-  letter-spacing: -.018em;
-}
-/* O fecho fala mais baixo que o resto. */
-.sobre__p--fecho { font-size: var(--t-small); }
-
-.sobre__foto {
-  margin: clamp(4rem, 11vh, 9rem) 0 0;
-  /* Sai um pouco da medida do texto, para a foto não virar um parágrafo. */
-  width: min(100% + 12vw, 34rem);
-}
+.sobre__foto { margin: 0; }
 .sobre__foto img {
   width: 100%;
   aspect-ratio: 4 / 5;
@@ -370,11 +355,39 @@
   border-radius: var(--radius-img);
   background: var(--bg-2);
 }
+.sobre__foto figcaption {
+  margin-top: var(--sp-sm);
+  color: var(--muted);
+}
+.on-dark .sobre__foto figcaption { color: var(--muted-invert); }
+
+
+/* ---------- Linhas: um traço opaco abrindo cada parágrafo ---------- */
+
+.sobre__linhas { margin-top: clamp(3rem, 8vh, 6rem); }
+
+.sobre__p {
+  /* O traço atravessa a largura toda; o texto fica na medida de leitura.
+     É esse descompasso que dá o ar editorial. */
+  border-top: var(--hair) solid var(--line);
+  padding-top: clamp(var(--sp-lg), 4vh, var(--sp-2xl));
+  margin-top: clamp(var(--sp-lg), 4vh, var(--sp-2xl));
+  max-width: none;
+  font-size: var(--t-body);
+  color: var(--muted);
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+.sobre__p:first-child { margin-top: 0; }
+/* A medida de leitura vive dentro do parágrafo, não no traço. */
+.sobre__p { padding-right: max(0px, calc(100% - 62ch)); }
+
+.on-dark .sobre__p { border-top-color: var(--line-invert); color: var(--muted-invert); }
 
 
 /* ---------- Aparecer ao rolar ---------------------------------------
-   Nesta seção a revelação é o próprio desenho, então ela é mais lenta e
-   mais longa que a do resto do site: sobe, sai do desfoque e assenta.  */
+   Mais lenta e mais longa que a do resto do site: sobe, sai do desfoque
+   e assenta. Aqui a revelação é parte do desenho.                     */
 
 .anim-pronta .sobre .reveal {
   opacity: 0;
@@ -384,13 +397,8 @@
               transform 1.15s var(--ease-out),
               filter 1.15s var(--ease-out);
 }
-.anim-pronta .sobre .reveal.vis {
-  opacity: 1;
-  transform: none;
-  filter: none;
-}
+.anim-pronta .sobre .reveal.vis { opacity: 1; transform: none; filter: none; }
 
-/* A foto ainda assenta de uma escala levemente maior. */
 .anim-pronta .sobre__foto img {
   transform: scale(1.05);
   transition: transform 1.5s var(--ease-out);
@@ -398,9 +406,7 @@
 .anim-pronta .sobre__foto.vis img { transform: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  .anim-pronta .sobre .reveal {
-    opacity: 1; transform: none; filter: none; transition: none;
-  }
+  .anim-pronta .sobre .reveal { opacity: 1; transform: none; filter: none; transition: none; }
   .anim-pronta .sobre__foto img { transform: none; transition: none; }
 }
 
@@ -690,19 +696,19 @@
   align-items: center;
   gap: var(--sp-md);
   padding: var(--sp-md);
-  border: var(--hair) solid var(--line-invert);
+  border: var(--hair) solid var(--line-2);
   transition: background var(--d-base) var(--ease-out),
               border-color var(--d-base) var(--ease-out),
               color var(--d-base) var(--ease-out);
 }
-.link:hover { background: #FFFFFF; border-color: #FFFFFF; color: var(--ink); }
+.link:hover { background: var(--ink); border-color: var(--ink); color: #FFFFFF; }
 
 .link__ico {
   display: grid; place-items: center;
   width: 44px; height: 44px;
   border-radius: 50%;
-  background: var(--line-invert);
-  color: #FFFFFF;
+  background: var(--bg-2);
+  color: var(--ink);
   flex: none;
   transition: background var(--d-base) var(--ease-out), color var(--d-base) var(--ease-out);
 }
@@ -718,10 +724,10 @@
 .link__txt em {
   font-style: normal;
   font-size: var(--t-small);
-  color: var(--muted-invert);
+  color: var(--muted);
   transition: color var(--d-base) var(--ease-out);
 }
-.link:hover .link__txt em { color: var(--muted); }
+.link:hover .link__txt em { color: var(--muted-invert); }
 
 .link__seta { flex: none; transition: transform var(--d-base) var(--ease-out); }
 .link:hover .link__seta { transform: translate(3px, -3px); }
@@ -730,7 +736,18 @@
 .link--destaque { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
 .link--destaque .link__ico { background: color-mix(in srgb, #000 16%, transparent); color: var(--brand-ink); }
 .link--destaque .link__txt em { color: color-mix(in srgb, #FFF 80%, transparent); }
-.link--destaque:hover { background: #FFFFFF; border-color: #FFFFFF; color: var(--ink); }
+.link--destaque:hover { background: var(--ink); border-color: var(--ink); color: #FFFFFF; }
+.link--destaque:hover .link__ico { background: var(--brand); color: var(--brand-ink); }
+
+/* Variante escura: se a seção de links voltar a ser faixa invertida,
+   é só recolocar .on-dark que tudo se ajusta. */
+.on-dark .link { border-color: var(--line-invert); }
+.on-dark .link:hover { background: #FFFFFF; border-color: #FFFFFF; color: var(--ink); }
+.on-dark .link__ico { background: var(--line-invert); color: #FFFFFF; }
+.on-dark .link:hover .link__ico { background: var(--brand); color: var(--brand-ink); }
+.on-dark .link__txt em { color: var(--muted-invert); }
+.on-dark .link:hover .link__txt em { color: var(--muted); }
+.on-dark .link--destaque { border-color: var(--brand); }
 .link--destaque:hover .link__ico { background: var(--brand); color: var(--brand-ink); }
 
 

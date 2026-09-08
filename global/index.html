@@ -24,11 +24,11 @@
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 
 <!-- Ordem obrigatória: tokens → base → site -->
-<link rel="stylesheet" href="/styles/tokens.css?v=20260908t">
-<link rel="stylesheet" href="/styles/base.css?v=20260908t">
-<link rel="stylesheet" href="/styles/site.css?v=20260908t">
+<link rel="stylesheet" href="/styles/tokens.css?v=20260908w">
+<link rel="stylesheet" href="/styles/base.css?v=20260908w">
+<link rel="stylesheet" href="/styles/site.css?v=20260908w">
 <!-- Última: só o que for exclusivo desta versão. -->
-<link rel="stylesheet" href="/styles/global.css?v=20260908t">
+<link rel="stylesheet" href="/styles/global.css?v=20260908w">
 </head>
 
 <body>
@@ -140,35 +140,39 @@
 
 
 <!-- ============================================================ 01 SOBRE -->
-<section class="section" id="sobre">
+<section class="section band-invert on-dark" id="sobre">
   <div class="wrap">
 
     <p class="eyebrow reveal"><span class="idx">01</span> — Sobre</p>
 
+    <!-- Simples: título e retrato em cima, e os parágrafos separados por
+         traços opacos. É o traço que dá o ritmo, não a grade. -->
     <div class="sobre">
-      <h2 class="sobre__t reveal">Brand Designer<br>e Estrategista.</h2>
+      <div class="sobre__topo">
+        <h2 class="sobre__t reveal">Brand Designer<br>e Estrategista.</h2>
+        <figure class="sobre__foto reveal">
+          <img src="/img/samuel-retrato.jpg" alt="Retrato de Samuel Freire" width="928" height="1152" loading="lazy">
+          <figcaption class="small">Samuel Freire — Digital Designer &amp; Strategist</figcaption>
+        </figure>
+      </div>
 
-      <p class="sobre__p sobre__p--lead reveal">
-        Sou Samuel Freire, com experiência na criação de websites, identidades visuais,
-        impressos e <span class="strong">ferramentas digitais para negócios</span>.
-      </p>
+      <div class="sobre__linhas">
+        <p class="sobre__p reveal">
+          Sou Samuel Freire, com experiência na criação de websites, identidades visuais, impressos
+          e <span class="strong">ferramentas digitais para negócios</span>.
+        </p>
 
-      <figure class="sobre__foto reveal">
-        <img src="/img/samuel-retrato.jpg" alt="Retrato de Samuel Freire" width="928" height="1152" loading="lazy">
-      </figure>
+        <p class="sobre__p reveal">
+          Ao longo da trajetória recebi a confiança de empresas e times de design, desenvolvendo
+          projetos para negócios no mundo todo, com foco na América do Norte — em maior parte
+          empresas de <span class="strong">construction, remodeling e home improvement</span>.
+        </p>
 
-      <p class="sobre__p reveal">
-        Ao longo da trajetória recebi a confiança de empresas e times de design,
-        desenvolvendo projetos para negócios no mundo todo, com foco na América do Norte
-        — em maior parte empresas de
-        <span class="strong">construction, remodeling e home improvement</span>.
-      </p>
-
-      <p class="sobre__p sobre__p--fecho reveal">
-        Minha atuação combina design, tecnologia e business: da construção de uma marca
-        e sua presença digital ao desenvolvimento de ferramentas, automações e soluções
-        com AI.
-      </p>
+        <p class="sobre__p reveal">
+          Minha atuação combina design, tecnologia e business: da construção de uma marca e sua
+          presença digital ao desenvolvimento de ferramentas, automações e soluções com AI.
+        </p>
+      </div>
     </div>
 
   </div>
@@ -479,7 +483,7 @@
 
 
 <!-- ============================================================ 06 LINKS -->
-<section class="section band-invert on-dark" id="contato">
+<section class="section" id="contato">
   <div class="wrap">
 
     <div class="sec-head">
@@ -541,6 +545,6 @@
 
 <!-- Lenis: opcional. Se o CDN cair, a rolagem nativa continua. -->
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js" defer></script>
-<script src="/js/main.js?v=20260908t" defer></script>
+<script src="/js/main.js?v=20260908w" defer></script>
 </body>
 </html>

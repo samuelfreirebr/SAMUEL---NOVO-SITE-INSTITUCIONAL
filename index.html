@@ -20,11 +20,11 @@
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 
 <!-- Ordem obrigatória: tokens → base → site -->
-<link rel="stylesheet" href="/styles/tokens.css?v=20260908t">
-<link rel="stylesheet" href="/styles/base.css?v=20260908t">
-<link rel="stylesheet" href="/styles/site.css?v=20260908t">
+<link rel="stylesheet" href="/styles/tokens.css?v=20260908w">
+<link rel="stylesheet" href="/styles/base.css?v=20260908w">
+<link rel="stylesheet" href="/styles/site.css?v=20260908w">
 <!-- Última: só o que for exclusivo desta versão. -->
-<link rel="stylesheet" href="/styles/br.css?v=20260908t">
+<link rel="stylesheet" href="/styles/br.css?v=20260908w">
 </head>
 
 <body>
@@ -166,41 +166,40 @@
 </section>
 
 <!-- ============================================================ SOBRE -->
-<section class="section" id="sobre">
+<section class="section band-invert on-dark" id="sobre">
   <div class="wrap">
 
     <p class="eyebrow reveal"><span class="idx">01</span> — Sobre</p>
 
-    <!-- Uma coluna só, estreita, com muito ar entre os blocos. Cada um
-         aparece quando entra em cena — a rolagem é que conduz a leitura. -->
+    <!-- Simples: título e retrato em cima, e os parágrafos separados por
+         traços opacos. É o traço que dá o ritmo, não a grade. -->
     <div class="sobre">
-      <h2 class="sobre__t reveal">Prazer,<br>sou o Samuel.</h2>
+      <div class="sobre__topo">
+        <h2 class="sobre__t reveal">Prazer,<br>sou o Samuel.</h2>
+        <figure class="sobre__foto reveal">
+          <img src="/img/samuel-retrato.jpg" alt="Retrato de Samuel Freire" width="928" height="1152" loading="lazy">
+          <figcaption class="small">Samuel Freire — Web Designer</figcaption>
+        </figure>
+      </div>
 
-      <p class="sobre__p sobre__p--lead reveal">
-        Se você ainda não me conhece, muito prazer, sou Samuel. Trabalho como designer
-        há 5 anos e, nos últimos 3 anos, venho dividindo minha operação entre
-        <span class="strong">lançamentos presenciais e Webdesign</span>.
-      </p>
+      <div class="sobre__linhas">
+        <p class="sobre__p reveal">
+          Se você ainda não me conhece, muito prazer, sou Samuel. Trabalho como designer há 5 anos
+          e, nos últimos 3 anos, venho dividindo minha operação entre
+          <span class="strong">lançamentos presenciais (eventos) e Webdesign</span>.
+        </p>
 
-      <figure class="sobre__foto reveal">
-        <img src="/img/samuel-retrato.jpg" alt="Retrato de Samuel Freire" width="928" height="1152" loading="lazy">
-      </figure>
+        <p class="sobre__p reveal">
+          Em 2023, realizei meu primeiro evento presencial, cuidando de tudo, do design ao pitch.
+          Agora, em 2025, já estamos em nossa 5ª edição.
+        </p>
 
-      <p class="sobre__p reveal">
-        Em 2023, realizei meu primeiro evento presencial, cuidando de tudo, do design
-        ao pitch. Agora, em 2025, já estamos em nossa 5ª edição.
-      </p>
-
-      <p class="sobre__p reveal">
-        Hoje, minha atuação no Webdesign carrega toda minha experiência com infoprodutos
-        e eventos, unindo <span class="strong">branding e performance</span> para grandes
-        nomes do digital.
-      </p>
-
-      <p class="sobre__p sobre__p--fecho reveal">
-        Tive o privilégio de contribuir com muitos projetos e é uma honra ter você aqui.
-        Espero poder te ajudar de alguma forma.
-      </p>
+        <p class="sobre__p reveal">
+          Hoje, minha atuação no Webdesign carrega toda minha experiência com infoprodutos e eventos,
+          unindo <span class="strong">branding e performance</span> para grandes nomes do digital.
+          Tive o privilégio de contribuir com muitos projetos e é uma honra ter você aqui.
+        </p>
+      </div>
     </div>
 
   </div>
@@ -223,7 +222,7 @@
   </div>
 </section>
 <!-- ============================================================ CONTATO -->
-<section class="section band-invert on-dark" id="contato">
+<section class="section" id="contato">
   <div class="wrap">
 
     <div class="sec-head">
@@ -285,6 +284,6 @@
 
 <!-- Lenis: opcional. Se o CDN cair, a rolagem nativa continua. -->
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js" defer></script>
-<script src="/js/main.js?v=20260908t" defer></script>
+<script src="/js/main.js?v=20260908w" defer></script>
 </body>
 </html>

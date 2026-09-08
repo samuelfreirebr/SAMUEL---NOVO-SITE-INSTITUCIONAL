@@ -158,7 +158,32 @@
   }
 
 
-  /* ---------- 3. Lenis (opcional) ------------------------------------
+  /* ---------- 3. Deriva do hero --------------------------------------
+     O hero é sticky: sozinho ele travaria de vez assim que encostasse no
+     topo, e a seção seguinte pareceria subir sobre um bloco parado. Aqui
+     ele continua subindo, mas só numa fração da rolagem — é isso que dá
+     a sensação de estar sendo engolido em vez de ter parado.
+     A altura fica em cache; o laço só faz aritmética.                  */
+
+  var hero = document.querySelector('.hero');
+  var heroAltura = 0;
+  var DERIVA = 0.28;   // sobe 28% da própria altura ao longo do trajeto
+
+  function medirHero() {
+    heroAltura = hero ? hero.offsetHeight : 0;
+  }
+
+  function derivarHero(y) {
+    if (!hero || !heroAltura) return;
+    var p = y / heroAltura;
+    if (p < 0) p = 0;
+    if (p > 1) p = 1;
+    hero.style.transform =
+      'translate3d(0,' + (-(p * heroAltura * DERIVA)).toFixed(2) + 'px,0)';
+  }
+
+
+  /* ---------- 4. Lenis (opcional) ------------------------------------
      ~3 KB, só inércia de rolagem. Se o CDN cair ou o usuário pedir
      menos movimento, a rolagem nativa assume e nada quebra.          */
 
@@ -200,7 +225,7 @@
   }
 
 
-  /* ---------- 4. O laço único ---------------------------------------
+  /* ---------- 5. O laço único ---------------------------------------
      Uma chamada de rAF alimenta esteiras + nav. Nada mais escuta
      scroll.                                                          */
 
@@ -218,6 +243,7 @@
     yLerp = lerp(yLerp, y, FATOR);
 
     varrerPendentes(y);
+    derivarHero(y);
 
     for (var i = 0; i < esteiras.length; i++) {
       var e = esteiras[i];
@@ -237,7 +263,7 @@
   }
 
 
-  /* ---------- 5. Resize: remedir, nunca dentro do laço -------------- */
+  /* ---------- 6. Resize: remedir, nunca dentro do laço -------------- */
 
   var timerResize;
   function aoRedimensionar() {
@@ -248,11 +274,12 @@
         medirEsteira(esteiras[i]);
       }
       medirPendentes();
+      medirHero();
     }, 180);
   }
 
 
-  /* ---------- 6. Miudezas -------------------------------------------- */
+  /* ---------- 7. Miudezas -------------------------------------------- */
 
   function ano() {
     var el = document.querySelector('[data-ano]');
@@ -275,6 +302,7 @@
 
     ligarLenis();
     ligarEsteiras();
+    medirHero();
 
     window.addEventListener('resize', aoRedimensionar, { passive: true });
 
