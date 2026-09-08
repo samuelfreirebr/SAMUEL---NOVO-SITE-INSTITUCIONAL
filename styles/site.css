@@ -187,9 +187,17 @@
 /* O hero tem muita coisa: identidade, status, display, frase e a barra de
    ações. Numa tela de celular só cabe tudo na primeira dobra se o conjunto
    encolher junto. */
+/* Abaixo do desktop o conteúdo do hero é bem mais curto que a tela. Com
+   min-height cheia + space-between, toda essa diferença virava vão entre
+   os blocos. Aqui a altura é a do conteúdo e os vãos são fixos: sobra
+   espaço no fim da dobra, que é o que convida a rolar — sem os buracos
+   no meio. Vale até 900px, que é onde a faixa de tablet ainda esticava. */
+@media (max-width: 900px) {
+  .hero { min-height: auto; padding-block: var(--sp-lg) var(--sp-2xl); }
+  .hero__in { justify-content: flex-start; gap: var(--sp-lg); }
+}
+
 @media (max-width: 640px) {
-  .hero { padding-block: var(--sp-lg) var(--sp-sm); }
-  .hero__in { gap: var(--sp-sm); }
   .hero__avatar { width: 52px; height: 52px; }
   .hero__foot { gap: var(--sp-md); }
   .hero .lead { font-size: 1.0625rem; }
@@ -287,35 +295,92 @@
 
 /* ============================================================ 01 SOBRE */
 
-.sobre { display: grid; gap: var(--sp-2xl); }
-@media (min-width: 1000px) {
+/* Grade assimétrica com traço no vão: é a linha que estrutura, não a caixa. */
+.sobre {
+  display: grid;
+  gap: var(--sp-2xl);
+  margin-top: var(--sp-lg);
+}
+@media (min-width: 900px) {
   .sobre {
-    grid-template-columns: 1.1fr .9fr;
-    gap: clamp(var(--sp-2xl), 7vw, 8rem);
+    grid-template-columns: 1.05fr .95fr;
+    gap: clamp(var(--sp-2xl), 5vw, 5rem);
     align-items: start;
   }
+  /* O traço vertical vive no vão entre as colunas. */
+  .sobre__fotos {
+    padding-left: clamp(var(--sp-2xl), 5vw, 5rem);
+    margin-left: calc(clamp(var(--sp-2xl), 5vw, 5rem) * -1);
+    border-left: var(--hair) solid var(--line);
+  }
+  .sobre--global { grid-template-columns: 1.15fr .85fr; }
 }
-.sobre__corpo { max-width: 52ch; }
-.sobre__corpo .lead { max-width: none; }
 
-.sobre__foto { position: relative; }
-@media (min-width: 1000px) { .sobre__foto { position: sticky; top: 8rem; } }
-.sobre__foto img {
+.sobre__txt > .lead, .sobre__txt > .body { max-width: 52ch; }
+
+
+/* ---------- Bloco traçado ------------------------------------------
+   Hairline fechando o dado. Sem preenchimento, sem sombra, canto quase
+   reto — a linha é o que delimita.                                   */
+
+.tracado {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  border: var(--hair) solid var(--line-2);
+  border-radius: var(--radius-img);
+}
+.tracado li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3xs);
+  padding: var(--sp-md);
+  border-left: var(--hair) solid var(--line-2);
+}
+.tracado li:first-child { border-left: 0; }
+.tracado b {
+  font-size: clamp(1.5rem, 2.6vw, 2rem);
+  font-weight: var(--w-black);
+  letter-spacing: -.05em;
+  line-height: 1;
+}
+.tracado span {
+  font-size: var(--t-eyebrow);
+  font-weight: var(--w-semi);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1.3;
+}
+.on-dark .tracado, .on-dark .tracado li { border-color: var(--line-invert); }
+
+
+/* ---------- Fotos ---------------------------------------------------- */
+
+.sobre__fotos { display: flex; flex-direction: column; gap: var(--sp-md); }
+
+.foto { margin: 0; }
+.foto img {
   width: 100%;
   aspect-ratio: 4 / 5;
   object-fit: cover;
-  object-position: 50% 50%;
   border-radius: var(--radius-img);
   background: var(--bg-2);
 }
-/* Respiro generoso entre foto e legenda */
-.sobre__foto figcaption {
-  margin-top: var(--sp-md);
+.foto--alta img { aspect-ratio: 4 / 5; }
+
+/* O par embaixo, dividido pelo mesmo vão da grade. */
+.sobre__par {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-md);
+}
+.sobre__par .foto img { aspect-ratio: 1 / 1; }
+
+.sobre__leg {
   padding-top: var(--sp-md);
   border-top: var(--hair) solid var(--line);
   color: var(--muted);
 }
-
 
 /* ---------- Métricas: régua + numeral + legenda ---------- */
 
@@ -681,103 +746,12 @@
 .rodape__ano { color: var(--muted-invert); }
 
 
-/* ============================================================ MARCAS GRÁFICAS
-   Família de três formas construídas — não ilustração. Todas herdam
-   currentColor, então a mesma marca serve em faixa clara ou escura, e
-   todas nascem da mesma regra: geometria cheia, sem gradiente, sem
-   sombra, sem contorno decorativo.
+/* ---------- Logo de plataforma dentro do botão ----------------------
+   Vem antes do rótulo, como assinatura de onde o link leva. Herda a cor
+   do botão, então funciona no fantasma e no invertido.               */
 
-   Cada uma carrega um significado, não é enfeite:
-   · chevron  — a subida, a otimização
-   · pilha    — quatro discos para as quatro frentes
-   · escala   — colchetes que se abrem: mais com menos
-   ============================================================ */
-
-.fig {
-  display: block;
-  fill: currentColor;
+.btn__logo {
   flex: none;
-}
-
-/* --- chevron, na faixa laranja --- */
-.respiro__in {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-xl);
-  flex-wrap: wrap;
-}
-.fig--chevron {
-  width: clamp(72px, 9vw, 132px);
-  color: var(--ink);
-}
-/* Sobe ao entrar em cena — o próprio gesto da forma. */
-.anim-pronta .fig--chevron {
-  opacity: 0;
-  transform: translate3d(0, 30px, 0);
-  transition: opacity var(--d-rise) var(--ease-out),
-              transform var(--d-rise) var(--ease-out);
-  transition-delay: var(--delay, 0s);
-}
-.anim-pronta .fig--chevron.vis { opacity: 1; transform: none; }
-
-/* --- pilha, no cabeçalho do ecossistema --- */
-.eco-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--sp-xl);
-}
-.fig--pilha {
-  width: clamp(96px, 12vw, 190px);
-  color: #FFFFFF;
-}
-/* Os quatro se leem; a opacidade cresce para dar profundidade à pilha. */
-.fig--pilha ellipse:nth-child(1) { opacity: .45; }
-.fig--pilha ellipse:nth-child(2) { opacity: .62; }
-.fig--pilha ellipse:nth-child(3) { opacity: .8; }
-.fig--pilha ellipse:nth-child(4) { opacity: 1; }
-/* Os discos entram um a um, de cima para baixo. */
-.anim-pronta .fig--pilha ellipse {
-  transform: translateY(16px);
-  opacity: 0;
-  transition: transform var(--d-rise) var(--ease-out),
-              opacity var(--d-rise) var(--ease-out);
-}
-.anim-pronta .fig--pilha.vis ellipse:nth-child(1) { transform: none; opacity: .45; }
-.anim-pronta .fig--pilha.vis ellipse:nth-child(2) { transform: none; opacity: .62; }
-.anim-pronta .fig--pilha.vis ellipse:nth-child(3) { transform: none; opacity: .8; }
-.anim-pronta .fig--pilha.vis ellipse:nth-child(4) { transform: none; opacity: 1; }
-.anim-pronta .fig--pilha ellipse:nth-child(1) { transition-delay: .04s; }
-.anim-pronta .fig--pilha ellipse:nth-child(2) { transition-delay: .12s; }
-.anim-pronta .fig--pilha ellipse:nth-child(3) { transition-delay: .20s; }
-.anim-pronta .fig--pilha ellipse:nth-child(4) { transition-delay: .28s; }
-
-@media (max-width: 900px) { .fig--pilha { display: none; } }
-
-/* --- colchetes, no bloco de sistemas --- */
-.fig--escala {
-  width: clamp(56px, 5vw, 78px);
-  color: var(--brand);
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 10;
-  margin-bottom: var(--sp-md);
-}
-@media (min-width: 800px) {
-  /* Ocupa a primeira coluna do balanço, acima do texto. */
-  .balanco { grid-template-columns: 1fr 1fr; }
-  .fig--escala { grid-column: 1; margin-bottom: 0; }
-  .balanco__intro { grid-column: 1; }
-  .balanco__lista { grid-column: 2; grid-row: 1 / span 2; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .anim-pronta .fig--chevron,
-  .anim-pronta .fig--pilha ellipse {
-    opacity: 1; transform: none; transition: none;
-  }
-  .anim-pronta .fig--pilha ellipse:nth-child(1) { opacity: .45; }
-  .anim-pronta .fig--pilha ellipse:nth-child(2) { opacity: .62; }
-  .anim-pronta .fig--pilha ellipse:nth-child(3) { opacity: .8; }
+  fill: currentColor;
+  margin-right: calc(var(--sp-2xs) * -1);
 }

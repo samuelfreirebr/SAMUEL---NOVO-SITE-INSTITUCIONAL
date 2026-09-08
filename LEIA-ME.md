@@ -101,6 +101,18 @@ resultado com número. É o número que vende.
 
 **Métricas** — seção `01`, bloco `.metricas`.
 
+## Versão dos assets
+
+Os `<link>` de CSS e o `<script>` levam `?v=…` no fim:
+
+```html
+<link rel="stylesheet" href="/styles/site.css?v=20260907b">
+```
+
+Isso existe porque HTML novo com CSS velho em cache quebra o layout de formas
+confusas — foi o que fez o e-mail aparecer solto na barra do celular.
+**Ao mexer em qualquer CSS ou no JS, suba esse número nos dois `index.html`.**
+
 ## Duas versões, um app
 
 O mesmo aplicativo serve dois sites. O Cloudflare decide qual, pelo IP.
@@ -196,56 +208,3 @@ seção, ele aponta para o Behance — que é onde os projetos estão de fato.
 
 E-mail publicado: `samuelfreirebr@gmail.com`, nos dois arquivos.
 
-## Marcas gráficas
-
-Três formas construídas, no fim de `styles/site.css`. Não são enfeite: cada
-uma carrega um significado, e é isso que as impede de virar clip-art.
-
-| Marca | Onde | O que diz |
-|---|---|---|
-| **Chevron** | faixa laranja | a subida — *business optimization* |
-| **Pilha** | cabeçalho do Ecossistema | quatro discos para as quatro frentes |
-| **Colchetes** | bloco de Systems | que se abrem: fazer mais com menos |
-
-Regras da família, para quando você acrescentar a quarta:
-
-- Geometria cheia. Sem gradiente, sem sombra, sem contorno decorativo
-- `fill: currentColor` — a mesma marca serve em faixa clara ou escura
-- SVG inline (não `<symbol>` + `<use>`), porque as partes internas animam
-- O movimento é o gesto da própria forma: o chevron sobe, os discos entram
-  um a um de cima para baixo
-- Tamanho por `clamp()`, nunca fixo
-
-A pilha some abaixo de 900px — em tela estreita ela competiria com o texto
-em vez de acompanhá-lo.
-
-> A identidade original dizia "nada de forma decorativa grande". Estas ficam
-> no limite disso de propósito: são pontuação em três momentos de uma página
-> longa, não um padrão que se repete. Se virarem repetição, perdem a força.
-
-**Marca** — o lockup é `Samuel` em peso 800 + `Freire` em itálico, na classe
-`.marca` (`styles/site.css`). O contraste é de **peso**, não de cor. A Manrope
-não tem itálico desenhado, então o navegador inclina a upright — mesmo caminho
-do material original.
-
-**Fotos** — `img/`:
-
-| Arquivo | Onde aparece |
-|---|---|
-| `favicon.png` (244×244) | favicon, apple-touch-icon, retrato da nav e avatar do hero |
-| `samuel-retrato.jpg` (928×1152) | retrato editorial da seção *Sobre* |
-| `bastidores-01…09.webp` | esteira de bastidores |
-
-O `favicon.png` já vem com o anel laranja desenhado e os cantos transparentes —
-por isso o CSS **não** aplica `border-radius` nem fundo por baixo dele: recortar
-comeria a borda do anel.
-
-O PNG original do retrato (1,3 MB, vindo do upscale) está em `_originais/` —
-fora da pasta que vai para a hospedagem. O `.jpg` servido tem 169 KB. Se
-trocar o retrato, gere o novo assim e mantenha o original fora de `img/`:
-
-```bash
-sips -s format jpeg -s formatOptions 82 _originais/SEU-ARQUIVO.png --out img/samuel-retrato.jpg
-```
-
-**Paleta** — `styles/tokens.css`, bloco `1. COR`.

@@ -107,7 +107,7 @@
 
   --hair:      1px;   /* divisória padrão */
   --hair-2:    2px;   /* régua de métrica */
-  --radius-img: 24px; /* único raio do sistema — só em foto/mídia */
+  --radius-img: 5px;  /* único raio do sistema — só em foto/mídia, e discreto */
   --radius-pill: 100px;
   --tick:      9px;   /* quadrado de detalhe */
   --bullet:    5px;   /* ponto de detalhe */
