@@ -88,11 +88,14 @@
 .hero {
   /* A barra do topo ocupa lugar no fluxo: descontar a altura dela é o que
      mantém os botões dentro da primeira tela. */
-  min-height: calc(100svh - var(--nav-h));
-  /* Em vh, não em rem: numa tela baixa os custos fixos (respiro, vãos)
-     é que empurravam os botões para fora da dobra — o título já
-     encolhia sozinho, o resto não. */
-  padding-block: clamp(1.25rem, 3.2vh, 3.5rem);
+  /* Desconta a barra do topo e ainda deixa uma folga: sem ela os botões
+     encostam na borda da dobra e o próximo bloco não dá sinal de que
+     existe. A folga é o que convida a rolar. */
+  min-height: calc(100svh - var(--nav-h) - clamp(2rem, 7vh, 5.5rem));
+  /* Assimétrico: mais ar no topo, para a identidade não nascer colada na
+     régua da barra. Em vh, não em rem — numa tela baixa são os custos
+     fixos que empurram os botões para fora da dobra. */
+  padding-block: clamp(2.5rem, 6.5vh, 5.5rem) clamp(1.25rem, 3.2vh, 3.5rem);
   display: flex;
   flex-direction: column;
   position: relative;
@@ -104,8 +107,12 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: clamp(1rem, 3vh, 3.5rem);
+  /* Nada de space-between: ele reparte toda a sobra da tela entre os três
+     blocos, o que abre buracos de 160px+ nas telas altas e, quando o
+     conteúdo cresce, empurra os botões para fora da dobra. Com o vão
+     declarado o ritmo é o mesmo em qualquer altura de janela. */
+  justify-content: flex-start;
+  gap: clamp(var(--sp-lg), 5.5vh, var(--sp-2xl));
 }
 
 .hero__id {
@@ -159,6 +166,10 @@
   display: flex;
   flex-direction: column;
   gap: clamp(.75rem, 2.2vh, 2.25rem);
+  /* Identidade e manchete ficam juntas no topo, com vão curto; toda a
+     sobra da dobra desce para cá. É o respiro dos botões — e evita que
+     ela se reparta em buracos no meio do conteúdo. */
+  margin-top: auto;
 }
 .hero__foot .lead {
   max-width: 46ch;
@@ -172,7 +183,10 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--sp-md);
-  padding-top: clamp(.75rem, 2vh, 2.25rem);
+  /* Respiro próprio: ar acima da régua e abaixo dos botões. */
+  margin-top: clamp(var(--sp-md), 2.5vh, var(--sp-xl));
+  padding-top: clamp(var(--sp-lg), 3.5vh, var(--sp-2xl));
+  padding-bottom: var(--sp-2xs);
   border-top: var(--hair) solid var(--line);
 }
 .hero__btns {
@@ -200,7 +214,7 @@
    no meio. Vale até 900px, que é onde a faixa de tablet ainda esticava. */
 @media (max-width: 900px) {
   .hero { min-height: auto; padding-block: var(--sp-lg) var(--sp-2xl); }
-  .hero__in { justify-content: flex-start; gap: var(--sp-lg); }
+  .hero__in { gap: var(--sp-lg); }
 }
 
 @media (max-width: 640px) {
@@ -299,94 +313,107 @@
 }
 
 
-/* ============================================================ 01 SOBRE */
+/* ============================================================ 01 SOBRE
 
-/* Grade assimétrica com traço no vão: é a linha que estrutura, não a caixa. */
+   Três colunas — título, texto, retrato — para a seção inteira caber
+   numa tela. A faixa de fotos larga que havia aqui sozinha tinha 900px
+   de altura; o retrato agora é apoio, não protagonista.
+
+   ============================================================ */
+
 .sobre {
   display: grid;
-  gap: var(--sp-2xl);
+  gap: var(--sp-xl);
   margin-top: var(--sp-lg);
+  padding-top: var(--sp-lg);
+  border-top: var(--hair-2) solid var(--ink);
 }
-@media (min-width: 900px) {
+
+/* Respiro menor que o padrão: é o que fecha a seção dentro de uma tela. */
+#sobre { padding-block: var(--section-y-s); }
+
+/* A esteira de bastidores é faixa própria, não parte do Sobre —
+   dentro dele somava 400px e estourava a dobra. */
+.bastidores { padding-bottom: var(--section-y-s); }
+@media (min-width: 1000px) {
   .sobre {
-    grid-template-columns: 1.05fr .95fr;
-    gap: clamp(var(--sp-2xl), 5vw, 5rem);
+    /* minmax(0,…) e não .8fr puro: um título longo tem min-content largo
+       e, sem isso, estoura a proporção da grade (605px numa coluna de
+       386px prevista). */
+    grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr) minmax(0, .85fr);
+    gap: clamp(var(--sp-xl), 3.5vw, var(--sp-2xl));
     align-items: start;
   }
-  /* O traço vertical vive no vão entre as colunas. */
-  .sobre__fotos {
-    padding-left: clamp(var(--sp-2xl), 5vw, 5rem);
-    margin-left: calc(clamp(var(--sp-2xl), 5vw, 5rem) * -1);
-    border-left: var(--hair) solid var(--line);
-  }
-  .sobre--global { grid-template-columns: 1.15fr .85fr; }
+}
+/* A global carrega título + números na coluna da esquerda, então ela
+   precisa de mais largura que a da BR. */
+@media (min-width: 1000px) {
+  .sobre--lado { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, .72fr); }
 }
 
-.sobre__txt > .lead, .sobre__txt > .body { max-width: 52ch; }
-
-
-/* ---------- Bloco traçado ------------------------------------------
-   Hairline fechando o dado. Sem preenchimento, sem sombra, canto quase
-   reto — a linha é o que delimita.                                   */
-
-.tracado {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  border: var(--hair) solid var(--line-2);
-  border-radius: var(--radius-img);
+/* Na faixa de tablet o retrato desce sozinho, em vez de espremer o texto. */
+@media (min-width: 700px) and (max-width: 999px) {
+  .sobre { grid-template-columns: .85fr 1.15fr; }
+  .sobre__retrato { grid-column: 1 / -1; max-width: 300px; }
 }
-.tracado li {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3xs);
-  padding: var(--sp-md);
-  border-left: var(--hair) solid var(--line-2);
+
+/* Título de seção, não de capa: em 104px ele quebrava em cinco linhas
+   dentro da coluna estreita. Aqui o corpo acompanha a coluna. */
+.sobre__t {
+  text-wrap: balance;
+  font-size: clamp(1.875rem, 3.6vw, 3.25rem);
+  line-height: 1.02;
+  letter-spacing: -.04em;
 }
-.tracado li:first-child { border-left: 0; }
-.tracado b {
-  font-size: clamp(1.5rem, 2.6vw, 2rem);
-  font-weight: var(--w-black);
-  letter-spacing: -.05em;
-  line-height: 1;
-}
-.tracado span {
-  font-size: var(--t-eyebrow);
-  font-weight: var(--w-semi);
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--muted);
-  line-height: 1.3;
-}
-.on-dark .tracado, .on-dark .tracado li { border-color: var(--line-invert); }
+.sobre__corpo { max-width: 54ch; }
+.on-dark .sobre { border-top-color: #FFFFFF; }
 
+.sobre__lado { display: flex; flex-direction: column; gap: var(--sp-xl); }
 
-/* ---------- Fotos ---------------------------------------------------- */
-
-.sobre__fotos { display: flex; flex-direction: column; gap: var(--sp-md); }
-
-.foto { margin: 0; }
-.foto img {
+.sobre__retrato { margin: 0; }
+.sobre__retrato img {
   width: 100%;
   aspect-ratio: 4 / 5;
   object-fit: cover;
   border-radius: var(--radius-img);
   background: var(--bg-2);
 }
-.foto--alta img { aspect-ratio: 4 / 5; }
-
-/* O par embaixo, dividido pelo mesmo vão da grade. */
-.sobre__par {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-md);
-}
-.sobre__par .foto img { aspect-ratio: 1 / 1; }
-
-.sobre__leg {
+.sobre__retrato figcaption {
+  margin-top: var(--sp-md);
   padding-top: var(--sp-md);
   border-top: var(--hair) solid var(--line);
   color: var(--muted);
 }
+.on-dark .sobre__retrato figcaption { border-top-color: var(--line-invert); }
+
+
+/* ---------- Métricas: régua de 2px, numeral, legenda ----------------
+   Empilhadas na coluna estreita — nunca em caixa.                    */
+
+.numeros { display: grid; gap: var(--sp-lg); }
+.numeros li { display: flex; flex-direction: column; }
+.numeros__regua {
+  height: var(--hair-2);
+  background: var(--ink);
+  margin-bottom: var(--sp-sm);
+}
+.numeros__regua--brand { background: var(--brand); }
+.on-dark .numeros__regua { background: #FFFFFF; }
+.on-dark .numeros__regua--brand { background: var(--brand); }
+.numeros b {
+  font-size: clamp(1.75rem, 2.6vw, 2.5rem);
+  font-weight: var(--w-black);
+  letter-spacing: -.05em;
+  line-height: .95;
+}
+.numeros li > span:last-child {
+  margin-top: var(--sp-2xs);
+  font-size: var(--t-small);
+  color: var(--muted);
+  line-height: 1.35;
+}
+.on-dark .numeros li > span:last-child { color: var(--muted-invert); }
+
 
 /* ============================================================ FAIXA DE RESPIRO */
 

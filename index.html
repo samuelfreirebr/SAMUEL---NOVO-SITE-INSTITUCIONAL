@@ -20,11 +20,11 @@
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 
 <!-- Ordem obrigatória: tokens → base → site -->
-<link rel="stylesheet" href="/styles/tokens.css?v=20260908a">
-<link rel="stylesheet" href="/styles/base.css?v=20260908a">
-<link rel="stylesheet" href="/styles/site.css?v=20260908a">
+<link rel="stylesheet" href="/styles/tokens.css?v=20260908l">
+<link rel="stylesheet" href="/styles/base.css?v=20260908l">
+<link rel="stylesheet" href="/styles/site.css?v=20260908l">
 <!-- Última: só o que for exclusivo desta versão. -->
-<link rel="stylesheet" href="/styles/br.css?v=20260908a">
+<link rel="stylesheet" href="/styles/br.css?v=20260908l">
 </head>
 
 <body>
@@ -139,13 +139,14 @@
 
     <p class="eyebrow reveal"><span class="idx">01</span> — Sobre</p>
 
+    <!-- Três colunas: título, texto e retrato lado a lado. É o que faz a
+         seção inteira caber numa tela. Os bastidores ficam na esteira
+         logo abaixo, então aqui basta o retrato. -->
     <div class="sobre">
+      <h2 class="h1 sobre__t reveal">Prazer,<br>sou o Samuel.</h2>
 
-      <!-- Coluna de texto: a bio inteira, corrida. -->
-      <div class="sobre__txt">
-        <h2 class="h1 reveal">Prazer,<br>sou o Samuel.</h2>
-
-        <p class="lead mt-lg reveal" style="--delay:.06s">
+      <div class="sobre__corpo">
+        <p class="lead reveal" style="--delay:.06s">
           Se você ainda não me conhece, muito prazer, sou Samuel. Trabalho como designer há 5 anos
           e, nos últimos 3 anos, venho dividindo minha operação entre
           <span class="strong">lançamentos presenciais (eventos) e Webdesign</span>.
@@ -160,35 +161,22 @@
           Tive o privilégio de contribuir com muitos projetos e é uma honra ter você aqui.
           Espero poder te ajudar de alguma forma.
         </p>
-
       </div>
 
-      <!-- Coluna de imagens: uma grande e um par embaixo, separadas por traço. -->
-      <div class="sobre__fotos">
-        <figure class="foto foto--alta reveal" style="--delay:.1s">
-          <img src="/img/samuel-retrato.jpg" alt="Retrato de Samuel Freire" width="928" height="1152" loading="lazy">
-        </figure>
-        <div class="sobre__par">
-          <figure class="foto reveal" style="--delay:.16s">
-            <img src="/img/bastidores-04.webp" alt="Samuel em um dos eventos presenciais" width="630" height="803" loading="lazy">
-          </figure>
-          <figure class="foto reveal" style="--delay:.22s">
-            <img src="/img/bastidores-05.webp" alt="Samuel gravando conteúdo" width="630" height="803" loading="lazy">
-          </figure>
-        </div>
-        <figcaption class="small sobre__leg reveal" style="--delay:.26s">Samuel Freire — Web Designer</figcaption>
-      </div>
-
+      <figure class="sobre__retrato reveal" style="--delay:.12s">
+        <img src="/img/samuel-retrato.jpg" alt="Retrato de Samuel Freire" width="928" height="1152" loading="lazy">
+        <figcaption class="small">Samuel Freire — Web Designer</figcaption>
+      </figure>
     </div>
-
-    <ul class="tracado mt-2xl reveal" style="--delay:.18s">
-      <li><b>5</b><span>anos como designer</span></li>
-      <li><b>5ª</b><span>edição do evento</span></li>
-      <li><b>+300</b><span>ofertas criadas</span></li>
-    </ul>
 
   </div>
 
+</section>
+
+
+
+<!-- ============================================================ BASTIDORES -->
+<section class="bastidores" aria-label="Bastidores">
   <div class="tira" data-tira>
     <ul class="tira__trilha" data-trilha>
       <li><img src="/img/bastidores-01.webp" alt="" width="630" height="803" loading="lazy"></li>
@@ -203,7 +191,6 @@
     </ul>
   </div>
 </section>
-
 
 <!-- ============================================================ CONTATO -->
 <section class="section band-invert on-dark" id="contato">
@@ -265,6 +252,6 @@
 
 <!-- Lenis: opcional. Se o CDN cair, a rolagem nativa continua. -->
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js" defer></script>
-<script src="/js/main.js?v=20260908a" defer></script>
+<script src="/js/main.js?v=20260908l" defer></script>
 </body>
 </html>

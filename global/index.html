@@ -24,11 +24,11 @@
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 
 <!-- Ordem obrigatória: tokens → base → site -->
-<link rel="stylesheet" href="/styles/tokens.css?v=20260908a">
-<link rel="stylesheet" href="/styles/base.css?v=20260908a">
-<link rel="stylesheet" href="/styles/site.css?v=20260908a">
+<link rel="stylesheet" href="/styles/tokens.css?v=20260908l">
+<link rel="stylesheet" href="/styles/base.css?v=20260908l">
+<link rel="stylesheet" href="/styles/site.css?v=20260908l">
 <!-- Última: só o que for exclusivo desta versão. -->
-<link rel="stylesheet" href="/styles/global.css?v=20260908a">
+<link rel="stylesheet" href="/styles/global.css?v=20260908l">
 </head>
 
 <body>
@@ -145,13 +145,21 @@
 
     <p class="eyebrow reveal"><span class="idx">01</span> — Sobre</p>
 
-    <!-- Mesma estrutura da BR, sem o par de bastidores: aqui só o retrato. -->
-    <div class="sobre sobre--global">
+    <!-- Mesma grade de três colunas da BR. Aqui os números ficam empilhados
+         sob o título, preenchendo a coluna estreita. -->
+    <div class="sobre sobre--lado">
+      <div class="sobre__lado">
+        <h2 class="h1 sobre__t reveal">Brand Designer<br>e Estrategista.</h2>
 
-      <div class="sobre__txt">
-        <h2 class="h1 reveal">Brand Designer<br>e Estrategista.</h2>
+        <ul class="numeros reveal" style="--delay:.16s">
+          <li><span class="numeros__regua numeros__regua--brand" aria-hidden="true"></span><b>6+</b><span>anos de mercado</span></li>
+          <li><span class="numeros__regua" aria-hidden="true"></span><b>04</b><span>frentes de atuação</span></li>
+          <li><span class="numeros__regua" aria-hidden="true"></span><b>6</b><span>países atendidos</span></li>
+        </ul>
+      </div>
 
-        <p class="lead mt-lg reveal" style="--delay:.06s">
+      <div class="sobre__corpo">
+        <p class="lead reveal" style="--delay:.06s">
           Sou Samuel Freire, com experiência na criação de websites, identidades visuais,
           impressos e <span class="strong">ferramentas digitais para negócios</span>.
         </p>
@@ -164,24 +172,13 @@
           Minha atuação combina design, tecnologia e business: da construção de uma marca e sua
           presença digital ao desenvolvimento de ferramentas, automações e soluções com AI.
         </p>
-
       </div>
 
-      <div class="sobre__fotos">
-        <figure class="foto foto--alta reveal" style="--delay:.1s">
-          <img src="/img/samuel-retrato.jpg" alt="Retrato de Samuel Freire" width="928" height="1152" loading="lazy">
-        </figure>
-        <figcaption class="small sobre__leg reveal" style="--delay:.16s">Samuel Freire — Digital Designer &amp; Strategist</figcaption>
-      </div>
-
+      <figure class="sobre__retrato reveal" style="--delay:.12s">
+        <img src="/img/samuel-retrato.jpg" alt="Retrato de Samuel Freire" width="928" height="1152" loading="lazy">
+        <figcaption class="small">Samuel Freire — Digital Designer &amp; Strategist</figcaption>
+      </figure>
     </div>
-
-    <ul class="tracado mt-2xl reveal" style="--delay:.18s">
-      <li><b>6+</b><span>anos de mercado</span></li>
-      <li><b>04</b><span>frentes de atuação</span></li>
-      <li><b>6</b><span>países atendidos</span></li>
-    </ul>
-
 
   </div>
 </section>
@@ -553,6 +550,6 @@
 
 <!-- Lenis: opcional. Se o CDN cair, a rolagem nativa continua. -->
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js" defer></script>
-<script src="/js/main.js?v=20260908a" defer></script>
+<script src="/js/main.js?v=20260908l" defer></script>
 </body>
 </html>
