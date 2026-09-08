@@ -196,7 +196,9 @@ h1, h2, h3, h4 {
 
 /* ---------- Estrutura ------------------------------------------------- */
 
-.section { padding-block: var(--section-y); }
+/* Fundo próprio: o hero fica grudado atrás, e uma seção transparente o
+   deixaria aparecer através. As faixas coloridas sobrescrevem logo abaixo. */
+.section { padding-block: var(--section-y); background: var(--bg); }
 .section--tight { padding-block: var(--section-y-s); }
 
 .wrap {

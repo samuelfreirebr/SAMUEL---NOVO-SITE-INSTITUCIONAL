@@ -86,8 +86,12 @@
 /* ============================================================ HERO */
 
 .hero {
-  /* A barra do topo ocupa lugar no fluxo: descontar a altura dela é o que
-     mantém os botões dentro da primeira tela. */
+  /* Fica grudado enquanto a seção seguinte sobe por cima dele. Sobe só o
+     tanto do top negativo antes de fixar — daí a sensação de ser engolido
+     em vez de rolar embora. */
+  position: sticky;
+  top: -10vh;
+  z-index: 0;
   /* Desconta a barra do topo e ainda deixa uma folga: sem ela os botões
      encostam na borda da dobra e o próximo bloco não dá sinal de que
      existe. A folga é o que convida a rolar. */
@@ -98,7 +102,6 @@
   padding-block: clamp(2.5rem, 6.5vh, 5.5rem) clamp(1.25rem, 3.2vh, 3.5rem);
   display: flex;
   flex-direction: column;
-  position: relative;
   border-bottom: var(--hair) solid var(--line);
 }
 /* Três tempos: identidade no topo, título ao centro, ações no rodapé —
@@ -667,6 +670,20 @@
 
 .links { display: grid; gap: var(--sp-sm); max-width: 720px; }
 
+/* No desktop a seção vira duas colunas: cabeçalho à esquerda, links à
+   direita. Empilhados, os links ficavam num bloco estreito à esquerda e
+   metade da largura sobrava vazia. */
+@media (min-width: 900px) {
+  #contato .wrap {
+    display: grid;
+    grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+    gap: clamp(var(--sp-2xl), 6vw, 6rem);
+    align-items: start;
+  }
+  #contato .sec-head { max-width: none; position: sticky; top: var(--sp-2xl); }
+  #contato .links { margin-top: 0; max-width: none; }
+}
+
 .link {
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -831,3 +848,12 @@
 /* O carrossel de clientes é estreito: a máscara ali precisa ser curta,
    senão come metade dos nomes. */
 .clientes { --fade: clamp(1rem, 3vw, 3.5rem); }
+
+
+/* ============================================================ COBERTURA
+   Tudo que vem depois do hero passa por cima dele. Precisa de fundo
+   próprio (resolvido em .section e aqui) e de ficar acima na pilha.
+   ============================================================ */
+
+main > .hero ~ * { position: relative; z-index: 1; }
+.bastidores { background: var(--bg); }
