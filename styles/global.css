@@ -1,0 +1,10 @@
+/* ============================================================
+   VERSÃO GLOBAL  —  links.samuelfreire.com.br/global
+   Carrega depois de site.css. Só o que for exclusivo de fora do Brasil.
+   Hoje está vazio de propósito: as duas versões são idênticas.
+
+   Para divergir, há dois caminhos:
+   · conteúdo/estrutura → editar global/index.html
+   · só aparência       → escrever aqui, ou usar o seletor de versão:
+                          :root[data-versao="global"] .hero__title { ... }
+   ============================================================ */

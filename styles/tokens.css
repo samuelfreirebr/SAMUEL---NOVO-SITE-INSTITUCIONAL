@@ -1,0 +1,139 @@
+/* ============================================================
+   TOKENS — Samuel Freire
+   Fonte única da verdade. Nenhum componente escreve cor ou
+   medida crua; todos leem daqui. Trocar a paleta inteira
+   é editar este arquivo.
+   ============================================================ */
+
+:root {
+
+  /* ---------- 1. COR ------------------------------------------------ */
+
+  /* Acento único. Pontos, réguas, índices, blocos de respiro. */
+  --brand:            #FF4F18;
+  --brand-ink:        #FFFFFF;   /* texto sobre o laranja */
+  --brand-wash:       #FFF4F0;   /* laranja a 4% — respiro, nunca texto */
+
+  /* Tinta. Todo texto principal. */
+  --ink:              #141517;
+  --ink-2:            #3A3F45;
+
+  /* Fundos. Máximo dois no site inteiro (branco alterna com cinza). */
+  --bg:               #FFFFFF;
+  --bg-2:             #F2F4F7;
+  --bg-invert:        #141517;   /* faixas escuras de respiro */
+
+  /* Cinzas de apoio */
+  --muted:            #5B6470;   /* texto secundário */
+  /* Da paleta da marca, mas fora de uso como texto: sobre branco dá
+     2.55:1 e sobre o cinza 2.32:1 — reprova no WCAG AA nos tamanhos
+     pequenos em que apareceria. Texto secundário usa --muted (6:1).
+     Reservado para uso decorativo ou sobre a tinta. */
+  --meta:             #9AA3AF;
+  --line:             #E1E5EA;   /* hairline padrão */
+  --line-2:           #DCE0E6;   /* hairline forte */
+  --line-invert:      rgba(255,255,255,.14);
+  --muted-invert:     rgba(255,255,255,.62);
+
+  /* Sem gradientes. Sem sombras. Estas variáveis não existem de propósito. */
+
+
+  /* ---------- 2. TIPOGRAFIA ------------------------------------------ */
+
+  --font: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+          Helvetica, Arial, sans-serif;
+
+  --w-light:   300;
+  --w-book:    400;
+  --w-medium:  500;
+  --w-semi:    600;
+  --w-bold:    700;
+  --w-black:   800;
+
+  /* Escala fluida. clamp() faz o trabalho de quase toda media query.
+     Referência do deck (canvas 1920): capa 170 · seção 72–104 · métrica 132. */
+  --t-display:  clamp(3.25rem, 10.5vw, 10.625rem);  /* 52 → 170 */
+  --t-h1:       clamp(2.75rem, 7.6vw, 6.5rem);      /* 44 → 104 */
+  --t-h2:       clamp(2.25rem, 5.4vw, 4.5rem);      /* 36 → 72  */
+  --t-h3:       clamp(1.5rem,  2.6vw, 2.25rem);     /* 24 → 36  */
+  --t-metric:   clamp(3.25rem, 7.2vw, 8.25rem);     /* 52 → 132 */
+  --t-lead:     clamp(1.1875rem, 1.9vw, 1.875rem);  /* 19 → 30  */
+  --t-body:     clamp(1rem, 1.15vw, 1.125rem);      /* 16 → 18  */
+  --t-small:    clamp(.8125rem, .95vw, .9375rem);   /* 13 → 15  */
+  --t-eyebrow:  clamp(.6875rem, .85vw, .8125rem);   /* 11 → 13  */
+
+  /* Aperto ótico: quanto maior o tipo, mais negativo. */
+  --ls-display: -.055em;
+  --ls-h1:      -.045em;
+  --ls-h2:      -.038em;
+  --ls-h3:      -.028em;
+  --ls-body:    -.011em;
+  --ls-eyebrow: .18em;
+
+  --lh-display: .88;
+  --lh-h:       .96;
+  --lh-h3:      1.12;
+  --lh-lead:    1.36;
+  --lh-body:    1.6;
+
+  /* Ponto laranja que precede toda eyebrow */
+  --dot:        9px;
+
+
+  /* ---------- 3. ESPAÇO ---------------------------------------------- */
+
+  --sp-3xs: .25rem;
+  --sp-2xs: .5rem;
+  --sp-xs:  .75rem;
+  --sp-sm:  1rem;
+  --sp-md:  1.5rem;
+  --sp-lg:  2.25rem;
+  --sp-xl:  3.5rem;
+  --sp-2xl: 5rem;
+  --sp-3xl: 7.5rem;
+
+  /* Respiro vertical entre seções e recuo lateral do canvas.
+     O deck usa 80–100px de padding; na web isso escala. */
+  --gutter:      clamp(1.25rem, 5vw, 6.25rem);
+  --section-y:   clamp(5rem, 11vw, 11.25rem);
+  --section-y-s: clamp(3.5rem, 7vw, 7rem);
+
+  --maxw:      1600px;   /* canvas útil */
+  --maxw-text: 62ch;     /* medida de leitura confortável */
+  --rail:      clamp(0px, 18vw, 340px);  /* faixa lateral fixa do deck */
+
+
+  /* ---------- 4. TRAÇO ------------------------------------------------ */
+
+  --hair:      1px;   /* divisória padrão */
+  --hair-2:    2px;   /* régua de métrica */
+  --radius-img: 24px; /* único raio do sistema — só em foto/mídia */
+  --radius-pill: 100px;
+  --tick:      9px;   /* quadrado de detalhe */
+  --bullet:    5px;   /* ponto de detalhe */
+
+
+  /* ---------- 5. TEMPO ------------------------------------------------ */
+
+  --ease-out:  cubic-bezier(.16, .84, .24, 1);
+  --ease-in-out: cubic-bezier(.62, .04, .3, 1);
+
+  --d-fast:  .18s;
+  --d-base:  .42s;
+  --d-slow:  .9s;
+  --d-rise:  1.05s;   /* revelação de bloco ao entrar em cena */
+
+  --lerp:      .085;  /* fator de suavização do loop de scroll */
+  --marquee-s: 46s;   /* volta completa da esteira */
+
+  /* Altura da barra do topo. Ela rola junto com a página, então o hero
+     precisa descontá-la para caber numa tela. */
+  --nav-h: clamp(68px, 7vw, 96px);
+
+  --z-nav: 100;
+}
+
+/* A esteira e os laços de scroll só existem se o usuário aceitar movimento. */
+@media (prefers-reduced-motion: reduce) {
+  :root { --d-fast: 0s; --d-base: 0s; --d-slow: 0s; --d-rise: 0s; }
+}

@@ -1,0 +1,76 @@
+/* ============================================================
+   VERSÃO BR  —  links.samuelfreire.com.br/
+   Carrega depois de site.css. Só o que é exclusivo do Brasil.
+
+   Para divergir, há dois caminhos:
+   · conteúdo/estrutura → editar index.html
+   · só aparência       → escrever aqui, ou usar o seletor de versão:
+                          :root[data-versao="br"] .hero__title { ... }
+   ============================================================ */
+
+
+/* ---------- Título do hero ----------------------------------------
+   A manchete do BR é uma frase inteira, não duas palavras. No corpo
+   de display (até 170px) ela viraria nove linhas, então aqui a escala
+   é outra — o peso e o aperto continuam os mesmos.                 */
+
+.hero__title {
+  font-size: min(clamp(2rem, 4.6vw, 4.5rem), 13vh);
+  letter-spacing: var(--ls-h1);
+  line-height: .98;
+  max-width: 20ch;
+}
+
+
+/* ---------- Selos --------------------------------------------------
+   Os dois do site atual: alcance e volume. Mesma pílula de hairline
+   do status, sem caixa e sem sombra.                               */
+
+.selos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2xs);
+}
+.selo {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-2xs);
+  padding: .55em 1.1em;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 var(--hair) var(--line-2);
+  font-size: var(--t-eyebrow);
+  line-height: 1.4;
+}
+.selo b {
+  font-weight: var(--w-black);
+  letter-spacing: -.02em;
+  color: var(--ink);
+  text-transform: uppercase;
+}
+.selo span {
+  font-weight: var(--w-semi);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+
+/* ---------- Tira de bastidores -------------------------------------
+   Aqui ela fecha a seção Sobre, então precisa do respiro que antes
+   vinha da classe utilitária.                                      */
+
+.tira { margin-top: var(--sp-2xl); }
+
+
+/* ---------- Ajuste de dobra no celular -----------------------------
+   A manchete do BR é longa: no celular ela ocupa seis linhas e
+   empurrava a barra de ações para fora da primeira tela.            */
+
+@media (max-width: 640px) {
+  .hero__title {
+    font-size: 1.75rem;
+    margin-top: var(--sp-md);
+    max-width: none;
+  }
+  .selo { padding: .5em .9em; }
+}

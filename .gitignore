@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Editores
+.vscode/
+.idea/
+*.swp
+
+# Arquivos-fonte pesados que não vão para a hospedagem.
+# O que é servido está em img/ — aqui ficam só os originais.
+_originais/

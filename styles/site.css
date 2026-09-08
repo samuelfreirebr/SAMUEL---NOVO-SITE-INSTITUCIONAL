@@ -1,0 +1,783 @@
+/* ============================================================
+   SITE — uma seção por bloco.
+   Só lê variáveis de tokens.css. Nenhuma cor ou medida crua.
+   ============================================================ */
+
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+
+/* ============================================================ NAV */
+
+.nav {
+  /* Não é fixa: rola junto com a página, como no material de referência.
+     Some naturalmente e devolve a tela inteira ao conteúdo. */
+  position: relative;
+  z-index: var(--z-nav);
+  min-height: var(--nav-h);
+  display: flex;
+  align-items: center;
+  padding-inline: var(--gutter);
+  border-bottom: var(--hair) solid var(--line);
+  background: var(--bg);
+}
+
+/* Três zonas: logo à esquerda, âncoras no centro exato, contato à direita.
+   As colunas 1fr dos lados são o que mantém o centro centrado de verdade,
+   independente da largura do logo ou do e-mail. */
+.nav__in {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--sp-md);
+}
+
+.nav__logo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2xs);
+  font-size: clamp(1.0625rem, 1.5vw, 1.375rem);
+  justify-self: start;
+}
+.nav__mark {
+  width: var(--tick);
+  height: var(--tick);
+  background: var(--brand);
+  flex: none;
+}
+
+.nav__links {
+  display: none;
+  justify-self: center;
+  gap: clamp(var(--sp-md), 2.4vw, var(--sp-xl));
+  font-size: var(--t-small);
+  font-weight: var(--w-semi);
+  letter-spacing: -.015em;
+}
+.nav__links a { transition: color var(--d-fast) var(--ease-out); }
+.nav__links a:hover { color: var(--brand); }
+
+.nav__fim {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-md);
+  justify-self: end;
+}
+.nav__email {
+  display: none;
+  font-size: var(--t-small);
+  white-space: nowrap;
+}
+.nav__email span { color: var(--muted); }
+.nav__email a {
+  font-weight: var(--w-semi);
+  transition: color var(--d-fast) var(--ease-out);
+}
+.nav__email a:hover { color: var(--brand); }
+
+.nav__cta { flex: none; }
+
+@media (min-width: 860px)  { .nav__links { display: flex; } }
+@media (min-width: 1100px) { .nav__email { display: block; } }
+
+
+/* ============================================================ HERO */
+
+.hero {
+  /* A barra do topo ocupa lugar no fluxo: descontar a altura dela é o que
+     mantém os botões dentro da primeira tela. */
+  min-height: calc(100svh - var(--nav-h));
+  padding-block: var(--sp-xl) var(--sp-xl);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  border-bottom: var(--hair) solid var(--line);
+}
+/* Três tempos: identidade no topo, título ao centro, ações no rodapé —
+   com space-between os três se distribuem dentro de uma tela só. */
+.hero__in {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--sp-xl);
+}
+
+.hero__id {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-md);
+  flex-wrap: wrap;
+}
+.hero__avatar {
+  width: 68px; height: 68px;
+  flex: none;
+}
+.hero__id-txt { margin-right: auto; }
+.hero__name { font-size: 1.0625rem; line-height: 1.2; }
+.hero__role { font-size: var(--t-small); color: var(--muted); line-height: 1.3; }
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2xs);
+  font-size: var(--t-eyebrow);
+  font-weight: var(--w-semi);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  padding: .6em 1em .6em .85em;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 var(--hair) var(--line-2);
+}
+.status__dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--brand);
+  flex: none;
+}
+.anim-pronta .status__dot { animation: pulso 2.4s var(--ease-in-out) infinite; }
+@keyframes pulso {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%      { opacity: .45; transform: scale(.82); }
+}
+
+/* O clamp de --t-display olha só a largura. Aqui a altura também manda:
+   sem isso, numa tela baixa o título empurra os botões para fora da
+   primeira dobra. */
+.hero__title {
+  text-wrap: balance;
+  font-size: min(var(--t-display), 15vh);
+}
+.hero__title-2 { color: var(--muted); }
+
+.hero__foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-lg);
+}
+.hero__foot .lead { max-width: 46ch; }
+
+/* Barra de ações: os botões à esquerda, as redes à direita. */
+.hero__acoes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-md);
+  padding-top: var(--sp-lg);
+  border-top: var(--hair) solid var(--line);
+}
+.hero__btns {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2xs);
+}
+@media (max-width: 560px) {
+  /* Numa tela estreita o orçamento ocupa a linha inteira — é a ação
+     principal — e os outros dois dividem a linha de baixo. Duas fileiras
+     em vez de três: é o que faz a barra caber na primeira dobra. */
+  .hero__btns { width: 100%; }
+  .hero__btns .btn--brand { flex: 1 0 100%; justify-content: center; }
+  .hero__btns .btn--ghost { flex: 1 1 0; justify-content: center; }
+}
+
+/* O hero tem muita coisa: identidade, status, display, frase e a barra de
+   ações. Numa tela de celular só cabe tudo na primeira dobra se o conjunto
+   encolher junto. */
+@media (max-width: 640px) {
+  .hero { padding-block: var(--sp-lg) var(--sp-sm); }
+  .hero__in { gap: var(--sp-sm); }
+  .hero__avatar { width: 52px; height: 52px; }
+  .hero__foot { gap: var(--sp-md); }
+  .hero .lead { font-size: 1.0625rem; }
+  .hero__acoes { padding-top: var(--sp-md); gap: var(--sp-sm); }
+  .hero__btns .btn { padding: .95em 1.1em; }
+
+  /* No celular os três botões são a ação; a fileira de redes é o que
+     empurrava a barra para fora da dobra. Elas seguem inteiras na
+     seção de Contato, que é onde alguém vai procurá-las. */
+  .hero .social { display: none; }
+}
+
+.social { display: flex; gap: var(--sp-2xs); }
+.social a {
+  display: grid;
+  place-items: center;
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  color: var(--muted);
+  box-shadow: inset 0 0 0 var(--hair) var(--line);
+  transition: color var(--d-fast) var(--ease-out),
+              background var(--d-fast) var(--ease-out),
+              box-shadow var(--d-fast) var(--ease-out);
+}
+.social a:hover {
+  color: var(--brand-ink);
+  background: var(--brand);
+  box-shadow: none;
+}
+.social svg { fill: currentColor; }
+
+
+/* ============================================================ ESTEIRA
+   Uma trilha, duplicada pelo JS. O rAF empurra o translateX.
+   Sem JS: fica estática e legível.                                  */
+
+.esteira-band { padding-block: var(--sp-lg); overflow: hidden; }
+
+.esteira { overflow: hidden; }
+.esteira__trilha {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2xl);
+  width: max-content;
+  will-change: transform;
+}
+.esteira__trilha > li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-sm);
+  white-space: nowrap;
+}
+/* Separador: quadrado de 9px, não bullet nem ícone */
+.esteira__trilha > li::after {
+  content: "";
+  width: var(--tick); height: var(--tick);
+  background: var(--brand);
+  margin-left: var(--sp-2xl);
+  align-self: center;
+}
+.esteira__trilha b {
+  font-size: clamp(1.75rem, 3.2vw, 3rem);
+  font-weight: var(--w-black);
+  letter-spacing: -.05em;
+  color: #FFFFFF;
+}
+.esteira__trilha span {
+  font-size: var(--t-small);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted-invert);
+}
+
+
+/* ============================================================ CABEÇALHO DE SEÇÃO */
+
+.sec-head { max-width: 24ch; }
+.sec-head .lead { max-width: 40ch; }
+
+.sec-head--row {
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-lg);
+}
+@media (min-width: 900px) {
+  .sec-head--row {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+  .sec-head--row .body { max-width: 34ch; text-align: right; }
+}
+
+
+/* ============================================================ 01 SOBRE */
+
+.sobre { display: grid; gap: var(--sp-2xl); }
+@media (min-width: 1000px) {
+  .sobre {
+    grid-template-columns: 1.1fr .9fr;
+    gap: clamp(var(--sp-2xl), 7vw, 8rem);
+    align-items: start;
+  }
+}
+.sobre__corpo { max-width: 52ch; }
+.sobre__corpo .lead { max-width: none; }
+
+.sobre__foto { position: relative; }
+@media (min-width: 1000px) { .sobre__foto { position: sticky; top: 8rem; } }
+.sobre__foto img {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  object-position: 50% 50%;
+  border-radius: var(--radius-img);
+  background: var(--bg-2);
+}
+/* Respiro generoso entre foto e legenda */
+.sobre__foto figcaption {
+  margin-top: var(--sp-md);
+  padding-top: var(--sp-md);
+  border-top: var(--hair) solid var(--line);
+  color: var(--muted);
+}
+
+
+/* ---------- Métricas: régua + numeral + legenda ---------- */
+
+.metricas {
+  display: grid;
+  gap: var(--sp-xl) var(--sp-lg);
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+.metrica { display: flex; flex-direction: column; }
+.metrica__regua {
+  height: var(--hair-2);
+  background: var(--ink);
+  margin-bottom: var(--sp-md);
+}
+.metrica__regua--brand { background: var(--brand); }
+.metrica__n {
+  font-size: var(--t-metric);
+  font-weight: var(--w-black);
+  letter-spacing: -.055em;
+  line-height: .86;
+  display: block;
+}
+.metrica__lbl {
+  margin-top: var(--sp-sm);
+  font-size: var(--t-small);
+  color: var(--muted);
+  line-height: 1.4;
+  max-width: 26ch;
+}
+.metrica__paises {
+  display: block;
+  margin-top: var(--sp-3xs);
+  font-style: normal;
+  font-weight: var(--w-semi);
+  letter-spacing: .1em;
+  color: var(--muted);
+  font-size: .8em;
+}
+
+
+/* ============================================================ FAIXA DE RESPIRO */
+
+.respiro { padding-block: clamp(var(--sp-2xl), 9vw, 9rem); }
+.respiro__frase { max-width: 18ch; }
+
+
+/* ============================================================ 02 ECOSSISTEMA
+   Pilha: cada frente é sticky e a seguinte cobre a anterior.       */
+
+.pilha { display: flex; flex-direction: column; gap: var(--sp-md); }
+
+.frente {
+  position: sticky;
+  /* Cada cartão para um pouco mais abaixo que o anterior */
+  top: calc(6rem + var(--i) * var(--sp-sm));
+  background: var(--bg-invert);
+  border-top: var(--hair-2) solid var(--brand);
+  border-bottom: var(--hair) solid var(--line-invert);
+  padding-top: var(--sp-lg);
+  padding-bottom: var(--sp-2xl);
+}
+/* Só a primeira ganha a régua laranja; as demais, hairline discreta. */
+.frente:not(:first-child) { border-top-color: var(--line-invert); }
+
+.frente__in {
+  display: grid;
+  gap: var(--sp-md);
+  align-items: start;
+}
+@media (min-width: 800px) {
+  /* Faixa lateral estreita fixa + conteúdo */
+  .frente__in { grid-template-columns: 5rem minmax(0, 1fr) minmax(0, 1.1fr); gap: var(--sp-lg); }
+}
+.frente__idx {
+  font-size: var(--t-small);
+  font-weight: var(--w-bold);
+  letter-spacing: .12em;
+  color: var(--brand);
+  padding-top: .6em;
+}
+.frente__nome { color: #FFFFFF; }
+.frente__itens {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2xs);
+  font-size: var(--t-body);
+  color: var(--muted-invert);
+}
+.frente__itens li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-sm);
+  padding-block: var(--sp-2xs);
+  border-bottom: var(--hair) solid var(--line-invert);
+}
+.frente__itens li::before {
+  content: "";
+  flex: none;
+  width: var(--bullet); height: var(--bullet);
+  border-radius: 50%;
+  background: var(--brand);
+  transform: translateY(-.25em);
+}
+
+
+/* ---------- Balanço − / + ---------- */
+
+.balanco {
+  display: grid;
+  gap: var(--sp-xl);
+  padding-top: var(--sp-xl);
+  border-top: var(--hair) solid var(--line-invert);
+}
+@media (min-width: 800px) { .balanco { grid-template-columns: 1fr 1fr; gap: var(--sp-2xl); } }
+.balanco__intro { max-width: 40ch; }
+.balanco__lista {
+  display: flex;
+  flex-direction: column;
+  font-size: clamp(1.25rem, 2.4vw, 2rem);
+  font-weight: var(--w-black);
+  letter-spacing: -.035em;
+  color: #FFFFFF;
+}
+.balanco__lista li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-md);
+  padding-block: var(--sp-sm);
+  border-bottom: var(--hair) solid var(--line-invert);
+}
+.sinal { color: var(--muted); font-weight: var(--w-light); }
+.sinal--mais { color: var(--brand); }
+
+
+/* ============================================================ 03 PROJETOS */
+
+.projetos { border-top: var(--hair) solid var(--line); }
+
+.projeto { border-bottom: var(--hair) solid var(--line); }
+.projeto__link {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--sp-md);
+  align-items: start;
+  padding-block: var(--sp-xl);
+  transition: padding-inline var(--d-base) var(--ease-out);
+}
+@media (min-width: 800px) {
+  .projeto__link { gap: var(--sp-2xl); }
+  .projeto__link:hover { padding-inline: var(--sp-md); }
+}
+.projeto__num {
+  font-size: var(--t-small);
+  font-weight: var(--w-bold);
+  letter-spacing: .12em;
+  color: var(--muted);
+  padding-top: .35em;
+}
+.projeto__corpo { min-width: 0; }
+
+.projeto__tags {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-md);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-md);
+}
+.tag {
+  font-size: var(--t-eyebrow);
+  font-weight: var(--w-semi);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink);
+  padding: .5em .9em;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 var(--hair) var(--line-2);
+}
+.projeto__data {
+  font-size: var(--t-eyebrow);
+  font-weight: var(--w-semi);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.projeto__titulo { max-width: 22ch; transition: color var(--d-fast) var(--ease-out); }
+.projeto__link:hover .projeto__titulo { color: var(--brand); }
+.projeto__ctx { margin-top: var(--sp-sm); max-width: 46ch; }
+.projeto__disc { margin-top: var(--sp-md); color: var(--muted); letter-spacing: .02em; }
+
+.projeto__seta {
+  display: grid;
+  place-items: center;
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 var(--hair) var(--line-2);
+  transition: background var(--d-base) var(--ease-out),
+              color var(--d-base) var(--ease-out),
+              box-shadow var(--d-base) var(--ease-out);
+}
+.projeto__link:hover .projeto__seta {
+  background: var(--brand);
+  color: var(--brand-ink);
+  box-shadow: none;
+}
+
+
+/* ---------- Tira de bastidores ---------- */
+
+.tira { overflow: hidden; }
+.tira__trilha {
+  display: flex;
+  gap: var(--sp-md);
+  width: max-content;
+  will-change: transform;
+}
+.tira__trilha li { flex: none; }
+.tira__trilha img {
+  width: clamp(180px, 22vw, 300px);
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: var(--radius-img);
+  background: var(--bg-2);
+}
+
+
+/* ============================================================ 04 POR QUÊ */
+
+.porques {
+  display: grid;
+  gap: var(--sp-xl);
+  border-top: var(--hair-2) solid var(--ink);
+  padding-top: var(--sp-xl);
+}
+@media (min-width: 800px) {
+  .porques { grid-template-columns: repeat(3, 1fr); gap: var(--sp-2xl); }
+}
+.porque { display: flex; flex-direction: column; }
+@media (max-width: 799px) {
+  .porque + .porque { border-top: var(--hair) solid var(--line-2); padding-top: var(--sp-xl); }
+}
+.porque__idx {
+  font-size: var(--t-small);
+  font-weight: var(--w-bold);
+  letter-spacing: .12em;
+  color: var(--brand);
+  margin-bottom: var(--sp-md);
+}
+.porque__t { margin-bottom: var(--sp-sm); }
+
+.sempre { border-top: var(--hair) solid var(--line-2); padding-top: var(--sp-xl); }
+.sempre__lista {
+  display: grid;
+  gap: var(--sp-md);
+  font-size: clamp(1.25rem, 2.4vw, 2rem);
+  font-weight: var(--w-black);
+  letter-spacing: -.035em;
+}
+@media (min-width: 800px) { .sempre__lista { grid-template-columns: repeat(3, 1fr); } }
+.sempre__lista li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-md);
+  padding-top: var(--sp-md);
+  border-top: var(--hair-2) solid var(--brand);
+}
+.sempre__n { font-size: var(--t-small); font-weight: var(--w-bold); letter-spacing: .12em; color: var(--muted); }
+
+
+/* ============================================================ 05 PROCESSO */
+
+.processo { border-top: var(--hair-2) solid var(--ink); }
+
+.passo {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--sp-sm) var(--sp-md);
+  padding-block: var(--sp-xl);
+  border-bottom: var(--hair) solid var(--line);
+}
+@media (min-width: 800px) {
+  .passo {
+    grid-template-columns: 5rem minmax(0, .9fr) minmax(0, 1.1fr);
+    gap: var(--sp-lg);
+    align-items: baseline;
+  }
+}
+.passo__n {
+  font-size: var(--t-small);
+  font-weight: var(--w-bold);
+  letter-spacing: .12em;
+  color: var(--brand);
+}
+.passo__d { max-width: 48ch; }
+@media (max-width: 799px) { .passo__d { grid-column: 1 / -1; } }
+
+
+/* ============================================================ 06 LINKS */
+
+.links { display: grid; gap: var(--sp-sm); max-width: 720px; }
+
+.link {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--sp-md);
+  padding: var(--sp-md);
+  border: var(--hair) solid var(--line-invert);
+  transition: background var(--d-base) var(--ease-out),
+              border-color var(--d-base) var(--ease-out),
+              color var(--d-base) var(--ease-out);
+}
+.link:hover { background: #FFFFFF; border-color: #FFFFFF; color: var(--ink); }
+
+.link__ico {
+  display: grid; place-items: center;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--line-invert);
+  color: #FFFFFF;
+  flex: none;
+  transition: background var(--d-base) var(--ease-out), color var(--d-base) var(--ease-out);
+}
+.link:hover .link__ico { background: var(--brand); color: var(--brand-ink); }
+.link__ico svg { fill: currentColor; }
+
+.link__txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.link__txt b {
+  font-weight: var(--w-bold);
+  letter-spacing: -.025em;
+  font-size: var(--t-body);
+}
+.link__txt em {
+  font-style: normal;
+  font-size: var(--t-small);
+  color: var(--muted-invert);
+  transition: color var(--d-base) var(--ease-out);
+}
+.link:hover .link__txt em { color: var(--muted); }
+
+.link__seta { flex: none; transition: transform var(--d-base) var(--ease-out); }
+.link:hover .link__seta { transform: translate(3px, -3px); }
+
+/* O destaque é o orçamento: fundo laranja, sem exceção no resto. */
+.link--destaque { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.link--destaque .link__ico { background: color-mix(in srgb, #000 16%, transparent); color: var(--brand-ink); }
+.link--destaque .link__txt em { color: color-mix(in srgb, #FFF 80%, transparent); }
+.link--destaque:hover { background: #FFFFFF; border-color: #FFFFFF; color: var(--ink); }
+.link--destaque:hover .link__ico { background: var(--brand); color: var(--brand-ink); }
+
+
+/* ============================================================ RODAPÉ */
+
+.rodape { padding-block: var(--sp-xl); border-top: var(--hair) solid var(--line-invert); }
+.rodape__in {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-sm) var(--sp-lg);
+  justify-content: space-between;
+  align-items: center;
+}
+.rodape__marca { color: #FFFFFF; }
+.rodape__ano { color: var(--muted-invert); }
+
+
+/* ============================================================ MARCAS GRÁFICAS
+   Família de três formas construídas — não ilustração. Todas herdam
+   currentColor, então a mesma marca serve em faixa clara ou escura, e
+   todas nascem da mesma regra: geometria cheia, sem gradiente, sem
+   sombra, sem contorno decorativo.
+
+   Cada uma carrega um significado, não é enfeite:
+   · chevron  — a subida, a otimização
+   · pilha    — quatro discos para as quatro frentes
+   · escala   — colchetes que se abrem: mais com menos
+   ============================================================ */
+
+.fig {
+  display: block;
+  fill: currentColor;
+  flex: none;
+}
+
+/* --- chevron, na faixa laranja --- */
+.respiro__in {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-xl);
+  flex-wrap: wrap;
+}
+.fig--chevron {
+  width: clamp(72px, 9vw, 132px);
+  color: var(--ink);
+}
+/* Sobe ao entrar em cena — o próprio gesto da forma. */
+.anim-pronta .fig--chevron {
+  opacity: 0;
+  transform: translate3d(0, 30px, 0);
+  transition: opacity var(--d-rise) var(--ease-out),
+              transform var(--d-rise) var(--ease-out);
+  transition-delay: var(--delay, 0s);
+}
+.anim-pronta .fig--chevron.vis { opacity: 1; transform: none; }
+
+/* --- pilha, no cabeçalho do ecossistema --- */
+.eco-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-xl);
+}
+.fig--pilha {
+  width: clamp(96px, 12vw, 190px);
+  color: #FFFFFF;
+}
+/* Os quatro se leem; a opacidade cresce para dar profundidade à pilha. */
+.fig--pilha ellipse:nth-child(1) { opacity: .45; }
+.fig--pilha ellipse:nth-child(2) { opacity: .62; }
+.fig--pilha ellipse:nth-child(3) { opacity: .8; }
+.fig--pilha ellipse:nth-child(4) { opacity: 1; }
+/* Os discos entram um a um, de cima para baixo. */
+.anim-pronta .fig--pilha ellipse {
+  transform: translateY(16px);
+  opacity: 0;
+  transition: transform var(--d-rise) var(--ease-out),
+              opacity var(--d-rise) var(--ease-out);
+}
+.anim-pronta .fig--pilha.vis ellipse:nth-child(1) { transform: none; opacity: .45; }
+.anim-pronta .fig--pilha.vis ellipse:nth-child(2) { transform: none; opacity: .62; }
+.anim-pronta .fig--pilha.vis ellipse:nth-child(3) { transform: none; opacity: .8; }
+.anim-pronta .fig--pilha.vis ellipse:nth-child(4) { transform: none; opacity: 1; }
+.anim-pronta .fig--pilha ellipse:nth-child(1) { transition-delay: .04s; }
+.anim-pronta .fig--pilha ellipse:nth-child(2) { transition-delay: .12s; }
+.anim-pronta .fig--pilha ellipse:nth-child(3) { transition-delay: .20s; }
+.anim-pronta .fig--pilha ellipse:nth-child(4) { transition-delay: .28s; }
+
+@media (max-width: 900px) { .fig--pilha { display: none; } }
+
+/* --- colchetes, no bloco de sistemas --- */
+.fig--escala {
+  width: clamp(56px, 5vw, 78px);
+  color: var(--brand);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 10;
+  margin-bottom: var(--sp-md);
+}
+@media (min-width: 800px) {
+  /* Ocupa a primeira coluna do balanço, acima do texto. */
+  .balanco { grid-template-columns: 1fr 1fr; }
+  .fig--escala { grid-column: 1; margin-bottom: 0; }
+  .balanco__intro { grid-column: 1; }
+  .balanco__lista { grid-column: 2; grid-row: 1 / span 2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-pronta .fig--chevron,
+  .anim-pronta .fig--pilha ellipse {
+    opacity: 1; transform: none; transition: none;
+  }
+  .anim-pronta .fig--pilha ellipse:nth-child(1) { opacity: .45; }
+  .anim-pronta .fig--pilha ellipse:nth-child(2) { opacity: .62; }
+  .anim-pronta .fig--pilha ellipse:nth-child(3) { opacity: .8; }
+}

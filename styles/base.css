@@ -1,0 +1,287 @@
+/* ============================================================
+   BASE — reset, tipografia, primitivos, utilitários
+   Carrega depois de tokens.css e antes de site.css.
+   ============================================================ */
+
+/* ---------- Fonte auto-hospedada -------------------------------------
+   Manrope variável: um arquivo por subset cobre 300–800.
+   Sem CDN, sem dependência externa.                                    */
+
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+  src: url("../fonts/manrope-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6,
+                 U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F,
+                 U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+  src: url("../fonts/manrope-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7,
+                 U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF,
+                 U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
+                 U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+
+/* ---------- Reset ---------------------------------------------------- */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+* { margin: 0; padding: 0; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+/* Lenis assume a rolagem; sem ele o nativo continua valendo. */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-stopped { overflow: hidden; }
+
+body {
+  font-family: var(--font);
+  font-size: var(--t-body);
+  font-weight: var(--w-book);
+  line-height: var(--lh-body);
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "kern" 1, "liga" 1;
+  overflow-x: hidden;
+}
+
+img, picture, video, svg, canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+button { background: none; border: 0; cursor: pointer; }
+
+a { color: inherit; text-decoration: none; }
+
+ul, ol { list-style: none; }
+
+:focus-visible {
+  outline: var(--hair-2) solid var(--brand);
+  outline-offset: 3px;
+}
+
+::selection { background: var(--brand); color: var(--brand-ink); }
+
+
+/* ---------- Tipografia ----------------------------------------------- */
+
+h1, h2, h3, h4 {
+  font-weight: var(--w-black);
+  text-wrap: balance;
+}
+
+.display {
+  font-size: var(--t-display);
+  line-height: var(--lh-display);
+  letter-spacing: var(--ls-display);
+  font-weight: var(--w-black);
+}
+.h1 {
+  font-size: var(--t-h1);
+  line-height: var(--lh-h);
+  letter-spacing: var(--ls-h1);
+  font-weight: var(--w-black);
+}
+.h2 {
+  font-size: var(--t-h2);
+  line-height: var(--lh-h);
+  letter-spacing: var(--ls-h2);
+  font-weight: var(--w-black);
+}
+.h3 {
+  font-size: var(--t-h3);
+  line-height: var(--lh-h3);
+  letter-spacing: var(--ls-h3);
+  font-weight: var(--w-bold);
+}
+
+.lead {
+  font-size: var(--t-lead);
+  line-height: var(--lh-lead);
+  font-weight: var(--w-light);
+  letter-spacing: -.018em;
+  color: var(--muted);
+  max-width: 34ch;
+  text-wrap: pretty;
+}
+.body { font-size: var(--t-body); color: var(--muted); max-width: var(--maxw-text); text-wrap: pretty; }
+.small { font-size: var(--t-small); color: var(--muted); }
+
+/* Peso 800 no meio de um parágrafo leve: a única ênfase permitida. */
+.strong { font-weight: var(--w-black); color: var(--ink); letter-spacing: -.03em; }
+.on-dark .strong { color: #FFFFFF; }
+
+
+/* ---------- Eyebrow: ponto laranja + rótulo em caixa alta ------------- */
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-xs);
+  font-size: var(--t-eyebrow);
+  font-weight: var(--w-semi);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  /* --meta (#9AA3AF) daria 2.55:1 sobre branco: reprova no AA para
+     texto de 11px. --muted entrega 6:1 e mantém a hierarquia. */
+  color: var(--muted);
+  line-height: 1;
+}
+.eyebrow::before {
+  content: "";
+  flex: none;
+  width: var(--dot);
+  height: var(--dot);
+  border-radius: 50%;
+  background: var(--brand);
+}
+.eyebrow .idx { color: var(--ink); font-weight: var(--w-bold); }
+.on-dark .eyebrow { color: var(--muted-invert); }
+.on-dark .eyebrow .idx { color: #FFFFFF; }
+
+
+/* ---------- Botões ---------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  padding: 1.05em 1.6em;
+  border-radius: var(--radius-pill);
+  font-size: var(--t-small);
+  font-weight: var(--w-bold);
+  letter-spacing: .01em;
+  line-height: 1;
+  background: var(--ink);
+  color: #FFFFFF;
+  transition: background var(--d-fast) var(--ease-out),
+              color var(--d-fast) var(--ease-out);
+}
+.btn:hover { background: var(--brand); color: var(--brand-ink); }
+
+.btn--brand { background: var(--brand); color: var(--brand-ink); }
+.btn--brand:hover { background: var(--ink); color: #FFFFFF; }
+
+.btn--ghost {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 var(--hair) var(--line-2);
+}
+.btn--ghost:hover { background: var(--ink); color: #FFFFFF; box-shadow: none; }
+
+.on-dark .btn--ghost { color: #FFFFFF; box-shadow: inset 0 0 0 var(--hair) var(--line-invert); }
+.on-dark .btn--ghost:hover { background: #FFFFFF; color: var(--ink); }
+
+/* Seta que avança no hover */
+.btn .arrow { transition: transform var(--d-base) var(--ease-out); }
+.btn:hover .arrow { transform: translate(3px, -3px); }
+
+
+/* ---------- Estrutura ------------------------------------------------- */
+
+.section { padding-block: var(--section-y); }
+.section--tight { padding-block: var(--section-y-s); }
+
+.wrap {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* Faixas de fundo. Duas cores no site inteiro, mais a tinta. */
+.band-2      { background: var(--bg-2); }
+.band-invert { background: var(--bg-invert); color: #FFFFFF; }
+.band-brand  { background: var(--brand); color: var(--brand-ink); }
+
+.on-dark .body, .on-dark .lead { color: var(--muted-invert); }
+.on-dark .rule { background: var(--line-invert); }
+
+/* Hairline: a única divisória do sistema. Nunca card com sombra. */
+.rule {
+  height: var(--hair);
+  background: var(--line);
+  border: 0;
+  width: 100%;
+}
+.rule--strong { height: var(--hair-2); background: var(--ink); }
+.rule--brand  { height: var(--hair-2); background: var(--brand); }
+
+
+/* ---------- Utilitários ----------------------------------------------- */
+
+.stack { display: flex; flex-direction: column; }
+.between { display: flex; flex-direction: column; justify-content: space-between; }
+.row { display: flex; align-items: center; }
+.wrapline { flex-wrap: wrap; }
+.gap-xs { gap: var(--sp-xs); }
+.gap-sm { gap: var(--sp-sm); }
+.gap-md { gap: var(--sp-md); }
+.gap-lg { gap: var(--sp-lg); }
+.gap-xl { gap: var(--sp-xl); }
+.mt-md { margin-top: var(--sp-md); }
+.mt-lg { margin-top: var(--sp-lg); }
+.mt-xl { margin-top: var(--sp-xl); }
+.mt-2xl { margin-top: var(--sp-2xl); }
+.brand { color: var(--brand); }
+.nowrap { white-space: nowrap; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+
+.skip {
+  position: absolute; left: var(--sp-sm); top: -100px;
+  z-index: calc(var(--z-nav) + 1);
+  background: var(--ink); color: #FFF;
+  padding: var(--sp-xs) var(--sp-md); border-radius: var(--radius-pill);
+  transition: top var(--d-fast) var(--ease-out);
+}
+.skip:focus { top: var(--sp-sm); }
+
+
+/* ---------- Camada de animação ----------------------------------------
+   Nada aqui roda até o JS pôr .anim-pronta em <html>.
+   Se o script falhar, o conteúdo permanece inteiro e visível.          */
+
+.anim-pronta .reveal {
+  opacity: 0;
+  transform: translate3d(0, 26px, 0);
+  transition: opacity var(--d-rise) var(--ease-out),
+              transform var(--d-rise) var(--ease-out);
+  transition-delay: var(--delay, 0s);
+  will-change: opacity, transform;
+}
+.anim-pronta .reveal.vis {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .anim-pronta .reveal { opacity: 1; transform: none; transition: none; }
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}

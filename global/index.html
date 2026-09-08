@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="pt-BR" data-versao="global">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Samuel Freire — Digital Design &amp; Brand Experience</title>
+<meta name="description" content="Estratégia, Brand, Systems e Marketing. Ajudo empresas a melhorar a forma como se apresentam, vendem e operam.">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Samuel Freire — Digital Design &amp; Brand Experience">
+<meta property="og:description" content="Estratégia, Brand, Systems e Marketing. Ajudo empresas a melhorar a forma como se apresentam, vendem e operam.">
+<meta property="og:locale" content="pt_BR">
+<meta name="theme-color" content="#FFFFFF">
+<!-- Canônica aponta para a raiz: é ela que concentra o SEO.
+     Aqui NÃO entra "noindex": se o Cloudflare fizer rewrite (servir este
+     arquivo na própria URL raiz, que é o modo realmente invisível), o
+     noindex viajaria junto e tiraria o site inteiro do índice. -->
+<link rel="canonical" href="https://links.samuelfreire.com.br/">
+
+<link rel="icon" href="/img/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="/img/favicon.png">
+
+<!-- Fonte auto-hospedada: preload do subset latino, zero dependência de CDN -->
+<link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
+
+<!-- Ordem obrigatória: tokens → base → site -->
+<link rel="stylesheet" href="/styles/tokens.css">
+<link rel="stylesheet" href="/styles/base.css">
+<link rel="stylesheet" href="/styles/site.css">
+<!-- Última: só o que for exclusivo desta versão. -->
+<link rel="stylesheet" href="/styles/global.css">
+</head>
+
+<body>
+<a class="skip" href="#conteudo">Pular para o conteúdo</a>
+
+<!-- ============================================================
+     SPRITE DE ÍCONES — simple-icons (CC0), embutido.
+     Sem requisição extra, sem CDN.
+     ============================================================ -->
+<svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-whatsapp" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.83 9.83 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.8 11.8 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.9 11.9 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.82 11.82 0 0 0-3.48-8.413Z"/></symbol>
+  <symbol id="i-instagram" viewBox="0 0 24 24"><path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0m0 2.163c3.204 0 3.584.012 4.85.07 1.17.053 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07s-3.585-.015-4.859-.074c-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844s.016-3.586.061-4.861c.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06zm0 3.678a6.162 6.162 0 1 0 0 12.323 6.162 6.162 0 0 0 0-12.323M12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8m7.846-10.405a1.441 1.441 0 0 1-2.88 0 1.44 1.44 0 0 1 2.88 0"/></symbol>
+  <symbol id="i-youtube" viewBox="0 0 24 24"><path d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 16 16"><path d="M4 12L12 4M12 4H5.5M12 4v6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<!-- ============================================================ NAV -->
+<header class="nav" id="nav">
+  <div class="nav__in">
+    <a class="nav__logo" href="#topo" aria-label="Samuel Freire — início">
+      <span class="nav__mark" aria-hidden="true"></span>
+      <span class="marca"><b>Samuel</b><i>Freire</i></span>
+    </a>
+
+    <nav class="nav__links" aria-label="Seções">
+      <a href="#projetos">Projetos</a>
+      <a href="#contato">Contato</a>
+    </nav>
+
+    <div class="nav__fim">
+      <p class="nav__email">
+        <span>Email:</span>
+        <a href="mailto:samuelfreirebr@gmail.com">samuelfreirebr@gmail.com</a>
+      </p>
+      <a class="btn nav__cta" href="https://wa.me/5583982078301" target="_blank" rel="noopener">Contato</a>
+    </div>
+  </div>
+</header>
+
+<main id="conteudo">
+
+<!-- ============================================================ HERO -->
+<section class="hero" id="topo">
+  <div class="wrap hero__in">
+
+    <div class="hero__id reveal">
+      <img class="hero__avatar" src="/img/favicon.png" alt="Samuel Freire" width="244" height="244" fetchpriority="high">
+      <div class="hero__id-txt">
+        <p class="hero__name marca"><b>Samuel</b><i>Freire</i></p>
+        <p class="hero__role">Digital Design &amp; Brand Experience</p>
+      </div>
+      <span class="status" role="status">
+        <span class="status__dot" aria-hidden="true"></span>Disponível para projetos
+      </span>
+    </div>
+
+    <h1 class="display hero__title reveal" style="--delay:.08s">
+      More than design.<br>
+      <span class="hero__title-2">Business optimization.</span>
+    </h1>
+
+    <div class="hero__foot">
+      <p class="lead reveal" style="--delay:.16s">
+        Um negócio que combina <span class="strong">Estratégia, Brand, Systems e Marketing</span> —
+        ajudando empresas a melhorar a forma como se apresentam, vendem e operam.
+      </p>
+
+      <div class="hero__acoes reveal" style="--delay:.24s">
+        <div class="hero__btns">
+          <a class="btn btn--brand" href="https://wa.me/5583982078301" target="_blank" rel="noopener">
+            Solicitar orçamento
+            <svg class="arrow" width="13" height="13" aria-hidden="true"><use href="#i-arrow"/></svg>
+          </a>
+          <a class="btn btn--ghost" href="https://www.behance.net/samuelfreirebr" target="_blank" rel="noopener">
+            Ver portfólio
+            <svg class="arrow" width="13" height="13" aria-hidden="true"><use href="#i-arrow"/></svg>
+          </a>
+          <a class="btn btn--ghost" href="#projetos">
+            Ver projetos
+            <svg class="arrow" width="13" height="13" aria-hidden="true"><use href="#i-arrow"/></svg>
+          </a>
+        </div>
+        <ul class="social" aria-label="Redes">
+          <li><a href="https://wa.me/5583982078301" target="_blank" rel="noopener" aria-label="WhatsApp"><svg width="16" height="16" aria-hidden="true"><use href="#i-whatsapp"/></svg></a></li>
+          <li><a href="https://www.instagram.com/samuelfreirebr" target="_blank" rel="noopener" aria-label="Instagram"><svg width="16" height="16" aria-hidden="true"><use href="#i-instagram"/></svg></a></li>
+          <li><a href="https://www.behance.net/samuelfreirebr" target="_blank" rel="noopener" aria-label="Behance"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7.443 5.35c.639 0 1.23.05 1.77.198.54.099 1.001.297 1.387.545.385.297.685.644.884 1.09.197.446.296.99.296 1.634 0 .743-.167 1.362-.506 1.858-.334.495-.836.9-1.487 1.214.9.256 1.572.71 2.011 1.354.442.644.66 1.42.66 2.326 0 .74-.14 1.38-.42 1.92-.28.545-.664.99-1.15 1.335-.48.35-1.04.6-1.67.762-.62.16-1.26.24-1.92.24H0V5.35zm-.354 5.56c.525 0 .96-.125 1.301-.376.34-.25.506-.66.506-1.222 0-.31-.056-.57-.17-.77a1.2 1.2 0 0 0-.45-.463 1.9 1.9 0 0 0-.649-.226 4 4 0 0 0-.764-.06H3.18v3.117zm.173 5.845c.33 0 .64-.03.93-.096.29-.06.55-.17.77-.32.22-.15.4-.35.53-.61.13-.26.19-.59.19-.98 0-.77-.22-1.32-.65-1.65-.43-.33-1-.49-1.71-.49H3.18v4.146zM16.94 16.9c.43.42 1.05.63 1.86.63.58 0 1.08-.15 1.5-.44.42-.29.68-.6.78-.92h2.61c-.42 1.3-1.06 2.22-1.92 2.78-.86.56-1.9.84-3.12.84-.85 0-1.62-.14-2.3-.41a4.8 4.8 0 0 1-1.74-1.16 5.2 5.2 0 0 1-1.1-1.8 6.6 6.6 0 0 1-.39-2.3c0-.82.13-1.58.4-2.28a5.3 5.3 0 0 1 1.13-1.81 5.2 5.2 0 0 1 1.75-1.2 5.6 5.6 0 0 1 2.25-.44c.92 0 1.72.18 2.41.54.69.36 1.25.84 1.69 1.44.44.6.75 1.29.94 2.06.19.77.26 1.58.21 2.42h-7.81c0 .84.28 1.63.71 2.05Zm3.28-5.56c-.34-.38-.93-.58-1.66-.58-.48 0-.88.08-1.19.25-.32.16-.57.36-.76.6-.19.24-.32.5-.4.77-.7.27-.11.51-.13.72h4.75c-.14-.75-.28-1.38-.61-1.76M15.1 6.44h6.06v1.47H15.1z"/></svg></a></li>
+          <li><a href="https://www.youtube.com/@samuelfreirebr" target="_blank" rel="noopener" aria-label="YouTube"><svg width="16" height="16" aria-hidden="true"><use href="#i-youtube"/></svg></a></li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ============================================================ ESTEIRA -->
+<section class="band-invert on-dark esteira-band" aria-label="Números">
+  <div class="esteira" data-esteira>
+    <ul class="esteira__trilha" data-trilha>
+      <li><b>+98%</b><span>avaliações positivas</span></li>
+      <li><b>+200</b><span>clientes satisfeitos</span></li>
+      <li><b>+6</b><span>anos de experiência</span></li>
+    </ul>
+  </div>
+</section>
+
+
+<!-- ============================================================ 01 SOBRE -->
+<section class="section" id="sobre">
+  <div class="wrap">
+
+    <p class="eyebrow reveal"><span class="idx">01</span> — Sobre</p>
+
+    <div class="sobre">
+      <div class="sobre__txt">
+        <h2 class="h1 mt-lg reveal">Prazer,<br>sou o Samuel.</h2>
+
+        <div class="sobre__corpo mt-xl">
+          <p class="lead reveal" style="--delay:.06s">
+            Sou <span class="strong">Brand Designer e Estrategista</span>, com experiência na criação de
+            websites, identidades visuais, impressos e ferramentas digitais personalizadas para negócios.
+          </p>
+          <p class="body mt-md reveal" style="--delay:.1s">
+            Trabalho como designer há mais de 6 anos e, nos últimos 3, venho dividindo minha operação entre
+            lançamentos presenciais e webdesign. Em 2023 realizei meu primeiro evento presencial, cuidando de
+            tudo — do design ao pitch. Hoje já estamos na 5ª edição.
+          </p>
+          <p class="body mt-md reveal" style="--delay:.14s">
+            Ao longo da trajetória recebi a confiança de empresas e times de design, desenvolvendo projetos
+            para negócios no mundo todo, com foco na América do Norte — em maior parte empresas de
+            <span class="strong">construction, remodeling e home improvement</span>.
+          </p>
+          <p class="body mt-md reveal" style="--delay:.18s">
+            Minha atuação combina design, tecnologia e business: da construção de uma marca e sua presença
+            digital ao desenvolvimento de ferramentas, automações e soluções com AI.
+          </p>
+        </div>
+      </div>
+
+      <figure class="sobre__foto reveal" style="--delay:.12s">
+        <img src="/img/samuel-retrato.jpg" alt="Retrato de Samuel Freire" width="928" height="1152" loading="lazy">
+        <figcaption class="small">Samuel Freire — Digital Designer &amp; Strategist</figcaption>
+      </figure>
+    </div>
+
+    <!-- Métricas: régua de 2px + numeral + legenda alinhada pela base -->
+    <ul class="metricas mt-2xl">
+      <li class="metrica reveal">
+        <span class="metrica__regua" aria-hidden="true"></span>
+        <b class="metrica__n">6+</b>
+        <span class="metrica__lbl">anos de experiência no mercado digital</span>
+      </li>
+      <li class="metrica reveal" style="--delay:.07s">
+        <span class="metrica__regua metrica__regua--brand" aria-hidden="true"></span>
+        <b class="metrica__n">+300</b>
+        <span class="metrica__lbl">ofertas criadas para lançamentos</span>
+      </li>
+      <li class="metrica reveal" style="--delay:.14s">
+        <span class="metrica__regua" aria-hidden="true"></span>
+        <b class="metrica__n">5</b>
+        <span class="metrica__lbl">eventos presenciais sobre negócios e network</span>
+      </li>
+      <li class="metrica reveal" style="--delay:.21s">
+        <span class="metrica__regua" aria-hidden="true"></span>
+        <b class="metrica__n">6</b>
+        <span class="metrica__lbl">países atendidos <em class="metrica__paises">BR · US · PT · ES · PH · CA</em></span>
+      </li>
+    </ul>
+
+  </div>
+</section>
+
+
+<!-- ============================================================ FAIXA DE RESPIRO -->
+<section class="respiro band-brand">
+  <div class="wrap respiro__in">
+    <p class="h2 respiro__frase reveal">More than design.<br>Business optimization.</p>
+    <!-- Chevron ascendente: a marca da otimização. -->
+    <svg class="fig fig--chevron reveal" viewBox="0 0 120 104" aria-hidden="true" style="--delay:.12s">
+      <path d="M60 6 116 54v40L60 46 4 94V54Z"/>
+    </svg>
+  </div>
+</section>
+
+
+<!-- ============================================================ 02 ECOSSISTEMA -->
+<section class="section band-invert on-dark" id="ecossistema">
+  <div class="wrap">
+
+    <div class="eco-head">
+      <div class="sec-head">
+        <p class="eyebrow reveal"><span class="idx">02</span> — Our ecosystem</p>
+        <h2 class="h1 mt-lg reveal">Our<br>Ecosystem</h2>
+        <p class="lead mt-lg reveal" style="--delay:.08s">
+          Esse é o ecossistema de capacidades. Definimos exatamente
+          <span class="strong">o que faz sentido para o seu negócio</span>.
+        </p>
+      </div>
+      <!-- Quatro discos para as quatro frentes. A contagem é o conteúdo. -->
+      <svg class="fig fig--pilha reveal" viewBox="0 0 132 126" aria-hidden="true">
+        <ellipse cx="66" cy="16" rx="32" ry="10"/>
+        <ellipse cx="66" cy="47" rx="39" ry="11"/>
+        <ellipse cx="66" cy="78" rx="46" ry="12"/>
+        <ellipse cx="66" cy="109" rx="54" ry="13"/>
+      </svg>
+    </div>
+
+    <!-- Pilha de cartões: cada frente gruda no topo e a seguinte cobre. -->
+    <ol class="pilha mt-2xl" data-pilha>
+      <li class="frente" style="--i:0">
+        <div class="frente__in">
+          <span class="frente__idx">01</span>
+          <h3 class="h2 frente__nome">Brand</h3>
+          <ul class="frente__itens">
+            <li>Visual Identity</li>
+            <li>Design Systems</li>
+          </ul>
+        </div>
+      </li>
+      <li class="frente" style="--i:1">
+        <div class="frente__in">
+          <span class="frente__idx">02</span>
+          <h3 class="h2 frente__nome">Digital</h3>
+          <ul class="frente__itens">
+            <li>Websites</li>
+            <li>Sales Funnels</li>
+            <li>Landing Pages</li>
+            <li>Blogs</li>
+            <li>Google Business Profile</li>
+            <li>PDFs &amp; Presentations</li>
+          </ul>
+        </div>
+      </li>
+      <li class="frente" style="--i:2">
+        <div class="frente__in">
+          <span class="frente__idx">03</span>
+          <h3 class="h2 frente__nome">Marketing</h3>
+          <ul class="frente__itens">
+            <li>Social Media Assets</li>
+            <li>Campaign Creative</li>
+            <li>Print Materials</li>
+            <li>Business Cards</li>
+            <li>Flyers &amp; Stickers</li>
+          </ul>
+        </div>
+      </li>
+      <li class="frente" style="--i:3">
+        <div class="frente__in">
+          <span class="frente__idx">04</span>
+          <h3 class="h2 frente__nome">Systems<br>&amp; Tools</h3>
+          <ul class="frente__itens">
+            <li>AI-Powered Workflows</li>
+            <li>Workflow Automation</li>
+            <li>Business Systems</li>
+            <li>Process Optimization</li>
+            <li>Internal Tools</li>
+          </ul>
+        </div>
+      </li>
+    </ol>
+
+    <!-- Balanço do que os sistemas tiram e devolvem -->
+    <div class="balanco mt-2xl reveal">
+      <!-- Colchetes que se abrem: fazer mais com menos. -->
+      <svg class="fig fig--escala" viewBox="0 0 104 104" aria-hidden="true">
+        <path d="M40 9H9v31M64 9h31v31M95 64v31H64M40 95H9V64"/>
+      </svg>
+      <p class="body balanco__intro">
+        Analisamos os processos por trás do negócio e identificamos oportunidades para criar sistemas,
+        ferramentas e automações que permitam <span class="strong">fazer mais com menos</span>.
+      </p>
+      <ul class="balanco__lista">
+        <li><span class="sinal">−</span> Less manual work.</li>
+        <li><span class="sinal">−</span> Human errors.</li>
+        <li><span class="sinal">−</span> Problems.</li>
+        <li><span class="sinal">−</span> Stress.</li>
+        <li><span class="sinal sinal--mais">+</span> Independence.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ============================================================ 03 PROJETOS -->
+<section class="section" id="projetos">
+  <div class="wrap">
+
+    <div class="sec-head sec-head--row">
+      <div>
+        <p class="eyebrow reveal"><span class="idx">03</span> — Projetos em destaque</p>
+        <h2 class="h1 mt-lg reveal">Selected<br>Work</h2>
+      </div>
+      <a class="btn btn--ghost reveal" href="https://www.behance.net/samuelfreirebr" target="_blank" rel="noopener">
+        Ver tudo no Behance
+        <svg class="arrow" width="13" height="13" aria-hidden="true"><use href="#i-arrow"/></svg>
+      </a>
+    </div>
+
+    <!-- ------------------------------------------------------------------
+         TROCAR PELOS CASES REAIS.
+         Formato por projeto: contexto do cliente em 1 linha → problema →
+         o que foi feito → resultado com número. É o número que vende.
+         A imagem entra em .projeto__media (retrato, 630×803 ou 4:5).
+         ------------------------------------------------------------------ -->
+    <ol class="projetos mt-2xl">
+
+      <li class="projeto reveal">
+        <a class="projeto__link" href="https://www.behance.net/samuelfreirebr" target="_blank" rel="noopener">
+          <span class="projeto__num" aria-hidden="true">01</span>
+          <div class="projeto__corpo">
+            <p class="projeto__tags">
+              <span class="tag">Landing Page</span>
+              <span class="projeto__data">Lançamento 7D</span>
+            </p>
+            <h3 class="h3 projeto__titulo">Página de lançamento construída para escala e previsibilidade</h3>
+            <p class="body projeto__ctx">
+              Infoprodutor do mercado digital brasileiro, lançamento de 7 dias.
+            </p>
+            <p class="small projeto__disc">Estratégia · Copy Design · Landing Page · Criativos</p>
+          </div>
+          <span class="projeto__seta" aria-hidden="true"><svg width="15" height="15"><use href="#i-arrow"/></svg></span>
+        </a>
+      </li>
+
+      <li class="projeto reveal" style="--delay:.06s">
+        <a class="projeto__link" href="https://www.behance.net/samuelfreirebr" target="_blank" rel="noopener">
+          <span class="projeto__num" aria-hidden="true">02</span>
+          <div class="projeto__corpo">
+            <p class="projeto__tags">
+              <span class="tag">Identidade Visual</span>
+              <span class="projeto__data">Brand System</span>
+            </p>
+            <h3 class="h3 projeto__titulo">Identidade e design system para operação de home improvement</h3>
+            <p class="body projeto__ctx">
+              Empresa de remodeling na América do Norte, atuação regional.
+            </p>
+            <p class="small projeto__disc">Visual Identity · Design System · Impressos</p>
+          </div>
+          <span class="projeto__seta" aria-hidden="true"><svg width="15" height="15"><use href="#i-arrow"/></svg></span>
+        </a>
+      </li>
+
+      <li class="projeto reveal" style="--delay:.12s">
+        <a class="projeto__link" href="https://www.behance.net/samuelfreirebr" target="_blank" rel="noopener">
+          <span class="projeto__num" aria-hidden="true">03</span>
+          <div class="projeto__corpo">
+            <p class="projeto__tags">
+              <span class="tag">Systems &amp; Tools</span>
+              <span class="projeto__data">AI Workflow</span>
+            </p>
+            <h3 class="h3 projeto__titulo">Automação de processos internos com AI para reduzir trabalho manual</h3>
+            <p class="body projeto__ctx">
+              Operação de serviços com time enxuto e processo 100% manual.
+            </p>
+            <p class="small projeto__disc">Process Optimization · Workflow Automation · Internal Tools</p>
+          </div>
+          <span class="projeto__seta" aria-hidden="true"><svg width="15" height="15"><use href="#i-arrow"/></svg></span>
+        </a>
+      </li>
+
+    </ol>
+
+  </div>
+
+  <!-- Faixa de bastidores: retrato vertical, cantos de 24px, respiro generoso -->
+  <div class="tira mt-2xl" data-tira>
+    <ul class="tira__trilha" data-trilha>
+      <li><img src="/img/bastidores-01.webp" alt="" width="630" height="803" loading="lazy"></li>
+      <li><img src="/img/bastidores-02.webp" alt="" width="630" height="803" loading="lazy"></li>
+      <li><img src="/img/bastidores-03.webp" alt="" width="630" height="803" loading="lazy"></li>
+      <li><img src="/img/bastidores-04.webp" alt="" width="630" height="803" loading="lazy"></li>
+      <li><img src="/img/bastidores-05.webp" alt="" width="630" height="803" loading="lazy"></li>
+      <li><img src="/img/bastidores-06.webp" alt="" width="630" height="803" loading="lazy"></li>
+      <li><img src="/img/bastidores-07.webp" alt="" width="630" height="803" loading="lazy"></li>
+      <li><img src="/img/bastidores-08.webp" alt="" width="785" height="1000" loading="lazy"></li>
+      <li><img src="/img/bastidores-09.webp" alt="" width="785" height="1000" loading="lazy"></li>
+    </ul>
+  </div>
+</section>
+
+
+<!-- ============================================================ 04 POR QUÊ -->
+<section class="section band-2" id="porque">
+  <div class="wrap">
+
+    <div class="sec-head">
+      <p class="eyebrow reveal"><span class="idx">04</span> — Why clients work with us</p>
+      <h2 class="h1 mt-lg reveal">Não é só<br>ficar bonito.</h2>
+      <p class="lead mt-lg reveal" style="--delay:.08s">
+        Cada decisão de design, sistemas ou automações é conectada a uma
+        <span class="strong">necessidade real do negócio</span>.
+      </p>
+    </div>
+
+    <ul class="porques mt-2xl">
+      <li class="porque reveal">
+        <span class="porque__idx">01</span>
+        <h3 class="h3 porque__t">Trabalho inteligente</h3>
+        <p class="body">
+          Não trabalhamos apenas para deixar o negócio visualmente melhor. Entendemos o negócio,
+          identificamos os problemas e construímos soluções que tornam a operação mais clara,
+          eficiente e profissional.
+        </p>
+      </li>
+      <li class="porque reveal" style="--delay:.07s">
+        <span class="porque__idx">02</span>
+        <h3 class="h3 porque__t">Comunicação clara</h3>
+        <p class="body">
+          Você sempre sabe o que estamos fazendo, por que estamos fazendo, o que vem depois
+          e quando cada etapa será entregue.
+        </p>
+      </li>
+      <li class="porque reveal" style="--delay:.14s">
+        <span class="porque__idx">03</span>
+        <h3 class="h3 porque__t">High-Level Execution</h3>
+        <p class="body">
+          Cada solução é desenvolvida com consistência, intenção e profissionalismo,
+          do primeiro passo até a implementação final.
+        </p>
+      </li>
+    </ul>
+
+    <!-- You will always know -->
+    <div class="sempre mt-2xl reveal">
+      <p class="eyebrow">You will always know</p>
+      <ol class="sempre__lista mt-lg">
+        <li><span class="sempre__n">01</span> What we're doing</li>
+        <li><span class="sempre__n">02</span> Why we're doing it</li>
+        <li><span class="sempre__n">03</span> What happens next</li>
+      </ol>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ============================================================ 05 PROCESSO -->
+<section class="section" id="processo">
+  <div class="wrap">
+
+    <div class="sec-head sec-head--row">
+      <div>
+        <p class="eyebrow reveal"><span class="idx">05</span> — How we work</p>
+        <h2 class="h1 mt-lg reveal">Our<br>Process</h2>
+      </div>
+      <p class="body reveal processo__intro">
+        O escopo exato pode variar de acordo com o projeto,
+        mas o processo permanece consistente.
+      </p>
+    </div>
+
+    <ol class="processo mt-2xl">
+      <li class="passo reveal">
+        <span class="passo__n">01</span>
+        <h3 class="h3 passo__t">Discovery</h3>
+        <p class="body passo__d">Entendemos o negócio, os problemas, o público e onde queremos chegar.</p>
+      </li>
+      <li class="passo reveal" style="--delay:.05s">
+        <span class="passo__n">02</span>
+        <h3 class="h3 passo__t">Strategy</h3>
+        <p class="body passo__d">Definimos a mudança com base nos dados.</p>
+      </li>
+      <li class="passo reveal" style="--delay:.1s">
+        <span class="passo__n">03</span>
+        <h3 class="h3 passo__t">Roadmap</h3>
+        <p class="body passo__d">Estabelecemos todas as etapas do processo.</p>
+      </li>
+      <li class="passo reveal" style="--delay:.15s">
+        <span class="passo__n">04</span>
+        <h3 class="h3 passo__t">Implementation</h3>
+        <p class="body passo__d">Desenvolvemos todas as soluções definidas na estratégia.</p>
+      </li>
+      <li class="passo reveal" style="--delay:.2s">
+        <span class="passo__n">05</span>
+        <h3 class="h3 passo__t">Testing</h3>
+        <p class="body passo__d">Testamos, encontramos erros e ajustamos detalhes até finalizar o projeto.</p>
+      </li>
+      <li class="passo reveal" style="--delay:.25s">
+        <span class="passo__n">06</span>
+        <h3 class="h3 passo__t">Delivery</h3>
+        <p class="body passo__d">
+          Organizamos e entregamos todos os materiais, arquivos, sistemas e acessos necessários.
+          E continuamos próximos, com suporte e acompanhamento.
+        </p>
+      </li>
+    </ol>
+
+  </div>
+</section>
+
+
+<!-- ============================================================ 06 LINKS -->
+<section class="section band-invert on-dark" id="contato">
+  <div class="wrap">
+
+    <div class="sec-head">
+      <p class="eyebrow reveal"><span class="idx">06</span> — Contato</p>
+      <h2 class="h1 mt-lg reveal">Let's<br>Build It.</h2>
+      <p class="lead mt-lg reveal" style="--delay:.08s">
+        Me conte o que o seu negócio precisa resolver. O primeiro passo é uma conversa.
+      </p>
+    </div>
+
+    <ul class="links mt-2xl">
+      <li class="reveal">
+        <a class="link link--destaque" href="https://wa.me/5583982078301" target="_blank" rel="noopener">
+          <span class="link__ico"><svg width="20" height="20" aria-hidden="true"><use href="#i-whatsapp"/></svg></span>
+          <span class="link__txt">
+            <b>Solicite seu orçamento</b>
+            <em>WhatsApp — resposta no mesmo dia útil</em>
+          </span>
+          <svg class="link__seta" width="16" height="16" aria-hidden="true"><use href="#i-arrow"/></svg>
+        </a>
+      </li>
+      <li class="reveal" style="--delay:.05s">
+        <a class="link" href="https://www.behance.net/samuelfreirebr" target="_blank" rel="noopener">
+          <span class="link__ico"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7.443 5.35c.639 0 1.23.05 1.77.198.54.099 1.001.297 1.387.545.385.297.685.644.884 1.09.197.446.296.99.296 1.634 0 .743-.167 1.362-.506 1.858-.334.495-.836.9-1.487 1.214.9.256 1.572.71 2.011 1.354.442.644.66 1.42.66 2.326 0 .74-.14 1.38-.42 1.92-.28.545-.664.99-1.15 1.335-.48.35-1.04.6-1.67.762-.62.16-1.26.24-1.92.24H0V5.35zm-.354 5.56c.525 0 .96-.125 1.301-.376.34-.25.506-.66.506-1.222 0-.31-.056-.57-.17-.77a1.2 1.2 0 0 0-.45-.463 1.9 1.9 0 0 0-.649-.226 4 4 0 0 0-.764-.06H3.18v3.117zm.173 5.845c.33 0 .64-.03.93-.096.29-.06.55-.17.77-.32.22-.15.4-.35.53-.61.13-.26.19-.59.19-.98 0-.77-.22-1.32-.65-1.65-.43-.33-1-.49-1.71-.49H3.18v4.146zM16.94 16.9c.43.42 1.05.63 1.86.63.58 0 1.08-.15 1.5-.44.42-.29.68-.6.78-.92h2.61c-.42 1.3-1.06 2.22-1.92 2.78-.86.56-1.9.84-3.12.84-.85 0-1.62-.14-2.3-.41a4.8 4.8 0 0 1-1.74-1.16 5.2 5.2 0 0 1-1.1-1.8 6.6 6.6 0 0 1-.39-2.3c0-.82.13-1.58.4-2.28a5.3 5.3 0 0 1 1.13-1.81 5.2 5.2 0 0 1 1.75-1.2 5.6 5.6 0 0 1 2.25-.44c.92 0 1.72.18 2.41.54.69.36 1.25.84 1.69 1.44.44.6.75 1.29.94 2.06.19.77.26 1.58.21 2.42h-7.81c0 .84.28 1.63.71 2.05Zm3.28-5.56c-.34-.38-.93-.58-1.66-.58-.48 0-.88.08-1.19.25-.32.16-.57.36-.76.6-.19.24-.32.5-.4.77-.7.27-.11.51-.13.72h4.75c-.14-.75-.28-1.38-.61-1.76M15.1 6.44h6.06v1.47H15.1z"/></svg></span>
+          <span class="link__txt"><b>Portfólio no Behance</b><em>Projetos publicados</em></span>
+          <svg class="link__seta" width="16" height="16" aria-hidden="true"><use href="#i-arrow"/></svg>
+        </a>
+      </li>
+      <li class="reveal" style="--delay:.1s">
+        <a class="link" href="https://www.instagram.com/samuelfreirebr" target="_blank" rel="noopener">
+          <span class="link__ico"><svg width="20" height="20" aria-hidden="true"><use href="#i-instagram"/></svg></span>
+          <span class="link__txt"><b>Instagram</b><em>@samuelfreirebr</em></span>
+          <svg class="link__seta" width="16" height="16" aria-hidden="true"><use href="#i-arrow"/></svg>
+        </a>
+      </li>
+      <li class="reveal" style="--delay:.15s">
+        <a class="link" href="https://www.youtube.com/@samuelfreirebr" target="_blank" rel="noopener">
+          <span class="link__ico"><svg width="20" height="20" aria-hidden="true"><use href="#i-youtube"/></svg></span>
+          <span class="link__txt"><b>YouTube</b><em>Bastidores e processo</em></span>
+          <svg class="link__seta" width="16" height="16" aria-hidden="true"><use href="#i-arrow"/></svg>
+        </a>
+      </li>
+    </ul>
+
+  </div>
+</section>
+
+</main>
+
+
+<!-- ============================================================ FOOTER -->
+<footer class="rodape band-invert on-dark">
+  <div class="wrap rodape__in">
+    <p class="small rodape__marca"><span class="marca"><b>Samuel</b><i>Freire</i></span> — Digital design &amp; brand experience</p>
+    <p class="small rodape__ano">© <span data-ano>2026</span> · Todos os direitos reservados</p>
+  </div>
+</footer>
+
+
+<!-- Lenis: opcional. Se o CDN cair, a rolagem nativa continua. -->
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js" defer></script>
+<script src="/js/main.js" defer></script>
+</body>
+</html>
