@@ -279,6 +279,14 @@
     ligarEsteiras();
 
     window.addEventListener('resize', aoRedimensionar, { passive: true });
+
+    // Uma aba aberta em segundo plano mede tudo com a janela em 0x0: as
+    // posições em cache saem erradas e o observer nem chega a disparar.
+    // Quando ela aparece, remedimos antes que a varredura use lixo.
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') aoRedimensionar();
+    });
+
     requestAnimationFrame(laco);
   }
 

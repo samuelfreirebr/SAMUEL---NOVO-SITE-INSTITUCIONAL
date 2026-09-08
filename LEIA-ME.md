@@ -20,10 +20,24 @@ img/                 retrato + bastidores
 ## Rodando localmente
 
 ```bash
-python3 -m http.server 4173
+python3 -m http.server 3000 --bind 0.0.0.0
 ```
 
-Depois abra `http://localhost:4173`.
+Depois abra `http://localhost:3000` (e `/global/` para a outra versão).
+
+O `--bind 0.0.0.0` faz o servidor escutar em toda a rede, então dá para
+abrir no celular pelo IP da máquina — útil para julgar o layout mobile num
+aparelho de verdade:
+
+```
+http://<ip-da-máquina>:3000
+```
+
+Descubra o IP com `ipconfig getifaddr en0`. Se não abrir, é o firewall do
+macOS bloqueando o Python.
+
+O `.claude/launch.json` usa `autoPort`, então a porta pode variar quando
+outro projeto já estiver ocupando a de sempre.
 
 > Se um dia entrar vídeo em `video/`, troque por um servidor com suporte a
 > HTTP Range — o `http.server` do Python não tem e o vídeo trava no meio.
