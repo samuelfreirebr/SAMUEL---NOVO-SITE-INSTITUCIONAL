@@ -127,8 +127,9 @@
   --marquee-s: 46s;   /* volta completa da esteira */
 
   /* Altura da barra do topo. Ela rola junto com a página, então o hero
-     precisa descontá-la para caber numa tela. */
-  --nav-h: clamp(68px, 7vw, 96px);
+     precisa descontá-la para caber numa tela — e por isso responde também
+     à altura: num notebook baixo, 96px de barra é o que faltava embaixo. */
+  --nav-h: clamp(64px, min(7vw, 9vh), 96px);
 
   --z-nav: 100;
 }

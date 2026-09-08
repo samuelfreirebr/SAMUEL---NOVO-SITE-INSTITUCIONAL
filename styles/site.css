@@ -89,7 +89,10 @@
   /* A barra do topo ocupa lugar no fluxo: descontar a altura dela é o que
      mantém os botões dentro da primeira tela. */
   min-height: calc(100svh - var(--nav-h));
-  padding-block: var(--sp-xl) var(--sp-xl);
+  /* Em vh, não em rem: numa tela baixa os custos fixos (respiro, vãos)
+     é que empurravam os botões para fora da dobra — o título já
+     encolhia sozinho, o resto não. */
+  padding-block: clamp(1.25rem, 3.2vh, 3.5rem);
   display: flex;
   flex-direction: column;
   position: relative;
@@ -102,7 +105,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: var(--sp-xl);
+  gap: clamp(1rem, 3vh, 3.5rem);
 }
 
 .hero__id {
@@ -112,7 +115,7 @@
   flex-wrap: wrap;
 }
 .hero__avatar {
-  width: 68px; height: 68px;
+  width: min(68px, 8vh); height: min(68px, 8vh);
   flex: none;
 }
 .hero__id-txt { margin-right: auto; }
@@ -148,16 +151,19 @@
    primeira dobra. */
 .hero__title {
   text-wrap: balance;
-  font-size: min(var(--t-display), 15vh);
+  font-size: min(var(--t-display), 12vh);
 }
 .hero__title-2 { color: var(--muted); }
 
 .hero__foot {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-lg);
+  gap: clamp(.75rem, 2.2vh, 2.25rem);
 }
-.hero__foot .lead { max-width: 46ch; }
+.hero__foot .lead {
+  max-width: 46ch;
+  font-size: min(var(--t-lead), 2.6vh);
+}
 
 /* Barra de ações: os botões à esquerda, as redes à direita. */
 .hero__acoes {
@@ -166,7 +172,7 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--sp-md);
-  padding-top: var(--sp-lg);
+  padding-top: clamp(.75rem, 2vh, 2.25rem);
   border-top: var(--hair) solid var(--line);
 }
 .hero__btns {
@@ -381,45 +387,6 @@
   border-top: var(--hair) solid var(--line);
   color: var(--muted);
 }
-
-/* ---------- Métricas: régua + numeral + legenda ---------- */
-
-.metricas {
-  display: grid;
-  gap: var(--sp-xl) var(--sp-lg);
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-}
-.metrica { display: flex; flex-direction: column; }
-.metrica__regua {
-  height: var(--hair-2);
-  background: var(--ink);
-  margin-bottom: var(--sp-md);
-}
-.metrica__regua--brand { background: var(--brand); }
-.metrica__n {
-  font-size: var(--t-metric);
-  font-weight: var(--w-black);
-  letter-spacing: -.055em;
-  line-height: .86;
-  display: block;
-}
-.metrica__lbl {
-  margin-top: var(--sp-sm);
-  font-size: var(--t-small);
-  color: var(--muted);
-  line-height: 1.4;
-  max-width: 26ch;
-}
-.metrica__paises {
-  display: block;
-  margin-top: var(--sp-3xs);
-  font-style: normal;
-  font-weight: var(--w-semi);
-  letter-spacing: .1em;
-  color: var(--muted);
-  font-size: .8em;
-}
-
 
 /* ============================================================ FAIXA DE RESPIRO */
 
