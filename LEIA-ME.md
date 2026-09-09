@@ -166,12 +166,28 @@ primeira — configure o Access.
 
 ### Usando
 
-- **Textos** — campo vazio mantém o que já está no site. Quebra de linha
-  vira `<br>` sozinha.
-- **Fotos** — arraste para a área tracejada. Copie o endereço e cole no
-  campo de foto do cliente ou do projeto.
-- **Clientes e projetos** — adicionar, remover e reordenar com as setas.
-  Cliente sem foto mostra as iniciais; sem `@`, o arroba some.
+**Editar site** é a aba principal: o site inteiro aparece num quadro e você
+edita clicando. Texto contornado em laranja é editável — clique, escreva,
+Enter quebra linha, Esc sai. Clique numa foto para trocá-la pela galeria.
+
+O botão *BR / Global* troca a versão que está no quadro. *Recarregar* volta o
+quadro ao que está salvo mantendo o que você editou; *Descartar* joga fora
+tudo desde o último salvamento.
+
+O ponto branco no botão **Salvar** avisa que há alteração pendente. Nada vai
+ao ar antes de salvar, e o navegador avisa se você tentar sair com edição
+solta.
+
+As outras abas são para o que não dá para fazer clicando:
+
+- **Clientes e projetos** — adicionar, remover e reordenar. Cliente sem foto
+  mostra as iniciais; sem `@`, o arroba some.
+- **Fotos** — arraste para a área tracejada. Também dá para enviar direto de
+  dentro do "Escolher imagem", sem sair do que estava fazendo.
+
+O editor só existe no painel: o script é injetado no quadro a partir dele. O
+site publicado não carrega uma linha de editor, e quem visita nunca recebe
+nada disso.
 
 Cada salvamento guarda a versão anterior em `site:anterior` no KV — se algo
 sair errado, dá para recuperar por lá.

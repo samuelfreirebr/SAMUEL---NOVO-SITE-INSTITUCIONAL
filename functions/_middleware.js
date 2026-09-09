@@ -98,6 +98,12 @@ export async function onRequest(context) {
         }
       },
     })
+    .on('[data-edit-img]', {
+      element(el) {
+        const valor = buscar(conteudo, el.getAttribute('data-edit-img'));
+        if (typeof valor === 'string' && valor.trim() !== '') el.setAttribute('src', valor);
+      },
+    })
     .on('[data-lista]', {
       element(el) {
         const nome = el.getAttribute('data-lista');

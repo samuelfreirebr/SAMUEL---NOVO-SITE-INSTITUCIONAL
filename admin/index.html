@@ -12,105 +12,113 @@
 <link rel="stylesheet" href="/styles/base.css?v=20260909h">
 
 <style>
-  body { background: var(--bg-2); }
+  html, body { height: 100%; }
+  body { background: var(--bg-2); display: flex; flex-direction: column; }
 
   .topo {
-    position: sticky; top: 0; z-index: 10;
-    display: flex; align-items: center; gap: var(--sp-md);
-    padding: var(--sp-md) var(--gutter);
-    background: var(--bg);
-    border-bottom: var(--hair) solid var(--line);
+    display: flex; align-items: center; gap: var(--sp-sm);
+    padding: var(--sp-sm) var(--sp-md);
+    background: var(--bg); border-bottom: var(--hair) solid var(--line);
+    flex-wrap: wrap; flex: none;
   }
-  .topo h1 { font-size: 1.0625rem; letter-spacing: -.04em; margin-right: auto; }
+  .topo h1 { font-size: 1rem; letter-spacing: -.04em; margin-right: auto; }
   .topo h1 i { font-style: italic; font-weight: var(--w-book); }
 
-  .aviso {
-    display: none;
-    padding: var(--sp-sm) var(--gutter);
-    font-size: var(--t-small);
-    border-bottom: var(--hair) solid var(--line);
+  .grupo { display: flex; gap: 2px; padding: 3px; background: var(--bg-2); border-radius: var(--radius-pill); }
+  .grupo button {
+    padding: .45em .95em; border-radius: var(--radius-pill);
+    font-size: var(--t-eyebrow); font-weight: var(--w-semi); color: var(--muted);
   }
-  .aviso[data-tipo="erro"] { background: var(--brand-wash); color: var(--ink); }
-  .aviso[data-tipo="ok"]   { background: var(--bg-2); color: var(--muted); }
-  .aviso.mostra { display: block; }
+  .grupo button[aria-selected="true"] { background: var(--bg); color: var(--ink); }
 
-  main { max-width: 980px; margin-inline: auto; padding: var(--sp-xl) var(--gutter) var(--sp-3xl); }
-
-  .abas { display: flex; flex-wrap: wrap; gap: var(--sp-2xs); margin-bottom: var(--sp-xl); }
-  .aba {
-    padding: .6em 1.1em; border-radius: var(--radius-pill);
-    font-size: var(--t-small); font-weight: var(--w-semi);
+  .mini {
+    padding: .5em .9em; border-radius: var(--radius-pill);
+    font-size: var(--t-eyebrow); font-weight: var(--w-semi);
     box-shadow: inset 0 0 0 var(--hair) var(--line-2); background: var(--bg);
   }
-  .aba[aria-selected="true"] { background: var(--ink); color: #fff; box-shadow: none; }
+  .mini:hover { background: var(--ink); color: #fff; box-shadow: none; }
+  .mini--perigo:hover { background: var(--brand); color: #fff; }
+  .mini[disabled] { opacity: .4; pointer-events: none; }
 
+  #salvar[data-sujo="1"]::after {
+    content: ""; width: 6px; height: 6px; border-radius: 50%;
+    background: #fff; margin-left: .5em; display: inline-block;
+  }
+
+  .aviso {
+    display: none; padding: var(--sp-2xs) var(--sp-md);
+    font-size: var(--t-small); flex: none;
+    border-bottom: var(--hair) solid var(--line);
+  }
+  .aviso[data-tipo="erro"] { background: var(--brand); color: #fff; }
+  .aviso[data-tipo="ok"] { background: var(--ink); color: #fff; }
+  .aviso.mostra { display: block; }
+
+  .corpo { flex: 1; min-height: 0; display: flex; }
+  .painel { flex: 1; min-height: 0; overflow: auto; }
   .painel[hidden] { display: none; }
 
-  fieldset {
-    border: 0; padding: 0; margin: 0 0 var(--sp-2xl);
+  #painel-site { display: flex; flex-direction: column; overflow: hidden; }
+  .dica {
+    padding: var(--sp-2xs) var(--sp-md); flex: none;
+    font-size: var(--t-eyebrow); color: var(--muted);
+    background: var(--bg); border-bottom: var(--hair) solid var(--line);
   }
+  .dica b { color: var(--ink); }
+  .quadro-caixa { flex: 1; min-height: 0; background: var(--bg-2); padding: var(--sp-sm); }
+  #quadro {
+    width: 100%; height: 100%; border: 0; display: block;
+    background: var(--bg); border-radius: var(--radius-img);
+    box-shadow: 0 0 0 1px var(--line);
+  }
+
+  .form { max-width: 900px; margin-inline: auto; padding: var(--sp-xl) var(--sp-md) var(--sp-3xl); }
+  fieldset { border: 0; padding: 0; margin: 0 0 var(--sp-2xl); }
   legend {
     font-size: var(--t-eyebrow); font-weight: var(--w-semi);
     letter-spacing: .16em; text-transform: uppercase; color: var(--muted);
     padding-bottom: var(--sp-sm); margin-bottom: var(--sp-md);
     border-bottom: var(--hair-2) solid var(--ink); width: 100%;
   }
-
   label { display: block; margin-bottom: var(--sp-md); }
-  label > span {
-    display: block; font-size: var(--t-small); font-weight: var(--w-semi);
-    margin-bottom: var(--sp-2xs);
-  }
+  label > span { display: block; font-size: var(--t-small); font-weight: var(--w-semi); margin-bottom: var(--sp-2xs); }
   label > small { display: block; color: var(--muted); font-size: var(--t-eyebrow); margin-top: 4px; }
-
   input[type=text], textarea, select {
-    width: 100%; padding: .7em .85em;
-    background: var(--bg); color: var(--ink);
+    width: 100%; padding: .7em .85em; background: var(--bg); color: var(--ink);
     border: var(--hair) solid var(--line-2); border-radius: var(--radius-img);
     font-size: var(--t-body); line-height: 1.5;
   }
-  textarea { min-height: 5.5em; resize: vertical; }
+  textarea { min-height: 4.5em; resize: vertical; }
   input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
-
   .linha { display: grid; gap: var(--sp-md); }
   @media (min-width: 700px) { .linha--2 { grid-template-columns: 1fr 1fr; } }
 
-  /* ---- itens de lista (clientes, projetos) ---- */
-  .item {
-    background: var(--bg); border: var(--hair) solid var(--line);
-    border-radius: var(--radius-img); padding: var(--sp-md); margin-bottom: var(--sp-md);
-  }
-  .item__topo { display: flex; align-items: center; gap: var(--sp-sm); margin-bottom: var(--sp-md); }
+  .item { background: var(--bg); border: var(--hair) solid var(--line); border-radius: var(--radius-img); padding: var(--sp-md); margin-bottom: var(--sp-md); }
+  .item__topo { display: flex; align-items: center; gap: var(--sp-sm); margin-bottom: var(--sp-md); flex-wrap: wrap; }
   .item__n { font-size: var(--t-eyebrow); font-weight: var(--w-bold); letter-spacing: .12em; color: var(--muted); margin-right: auto; }
+  .previa { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; background: var(--bg-2); flex: none; }
+  .previa--larga { width: 84px; height: 105px; border-radius: var(--radius-img); }
 
-  .mini {
-    padding: .45em .8em; border-radius: var(--radius-pill);
-    font-size: var(--t-eyebrow); font-weight: var(--w-semi);
-    box-shadow: inset 0 0 0 var(--hair) var(--line-2); background: var(--bg);
-  }
-  .mini:hover { background: var(--ink); color: #fff; box-shadow: none; }
-  .mini--perigo:hover { background: var(--brand); color: #fff; }
-
-  .previa { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: var(--bg-2); flex: none; }
-  .previa--larga { width: 96px; height: 120px; border-radius: var(--radius-img); }
-
-  /* ---- galeria ---- */
-  .galeria-adm { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: var(--sp-md); }
-  .foto-adm { background: var(--bg); border: var(--hair) solid var(--line); border-radius: var(--radius-img); overflow: hidden; }
+  .galeria-adm { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--sp-md); }
+  .foto-adm { background: var(--bg); border: var(--hair) solid var(--line); border-radius: var(--radius-img); overflow: hidden; text-align: left; }
   .foto-adm img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
-  .foto-adm__pe { display: flex; align-items: center; gap: var(--sp-2xs); padding: var(--sp-2xs); }
+  .foto-adm__pe { display: flex; align-items: center; gap: 4px; padding: 5px; }
   .foto-adm__nome { font-size: 10px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
 
   .solta {
     display: grid; place-items: center; gap: var(--sp-2xs);
-    padding: var(--sp-xl); margin-bottom: var(--sp-lg);
+    padding: var(--sp-lg); margin-bottom: var(--sp-lg);
     border: 2px dashed var(--line-2); border-radius: var(--radius-img);
-    background: var(--bg); color: var(--muted); font-size: var(--t-small);
-    cursor: pointer;
+    background: var(--bg); color: var(--muted); font-size: var(--t-small); cursor: pointer;
   }
   .solta.ativa { border-color: var(--brand); color: var(--ink); }
-
   .vazio { color: var(--muted); font-size: var(--t-small); padding: var(--sp-lg) 0; }
+
+  dialog { width: min(92vw, 720px); max-height: 84vh; padding: 0; border: 0; border-radius: var(--radius-img); background: var(--bg); }
+  dialog::backdrop { background: rgba(20,21,23,.55); }
+  .modal__topo { display: flex; align-items: center; gap: var(--sp-sm); padding: var(--sp-md); border-bottom: var(--hair) solid var(--line); }
+  .modal__topo b { margin-right: auto; font-size: var(--t-small); }
+  .modal__corpo { padding: var(--sp-md); overflow: auto; }
 </style>
 </head>
 
@@ -118,135 +126,128 @@
 
 <header class="topo">
   <h1>Painel <i>Samuel Freire</i></h1>
-  <a class="mini" href="/" target="_blank">Ver site</a>
-  <a class="mini" href="/global/" target="_blank">Ver global</a>
-  <button class="btn btn--brand" id="salvar" type="button">Salvar</button>
+
+  <div class="grupo" id="versoes">
+    <button type="button" aria-selected="true"  data-versao="br">BR</button>
+    <button type="button" aria-selected="false" data-versao="global">Global</button>
+  </div>
+
+  <div class="grupo" id="abas">
+    <button type="button" aria-selected="true"  data-alvo="site">Editar site</button>
+    <button type="button" aria-selected="false" data-alvo="clientes">Clientes</button>
+    <button type="button" aria-selected="false" data-alvo="projetos">Projetos</button>
+    <button type="button" aria-selected="false" data-alvo="fotos">Fotos</button>
+  </div>
+
+  <button class="mini" type="button" id="recarregar">Recarregar</button>
+  <button class="mini mini--perigo" type="button" id="desfazer" disabled>Descartar</button>
+  <button class="btn btn--brand" type="button" id="salvar">Salvar</button>
 </header>
 
 <p class="aviso" id="aviso" role="status"></p>
 
-<main>
-  <div class="abas" role="tablist">
-    <button class="aba" role="tab" aria-selected="true"  data-alvo="textos">Textos</button>
-    <button class="aba" role="tab" aria-selected="false" data-alvo="clientes">Clientes</button>
-    <button class="aba" role="tab" aria-selected="false" data-alvo="projetos">Projetos</button>
-    <button class="aba" role="tab" aria-selected="false" data-alvo="fotos">Fotos</button>
-  </div>
+<div class="corpo">
 
-  <!-- ---------------------------------------------------- TEXTOS -->
-  <section class="painel" id="painel-textos">
-    <p class="vazio" id="dica-textos">
-      Campo em branco mantém o texto que já está no site. Quebra de linha vira
-      <code>&lt;br&gt;</code> automaticamente.
+  <section class="painel" id="painel-site">
+    <p class="dica">
+      <b>Clique em qualquer texto contornado</b> para editar — Enter quebra linha, Esc sai.
+      <b>Clique numa foto</b> para trocar. Nada vai ao ar até você salvar.
     </p>
-    <div id="campos"></div>
+    <div class="quadro-caixa"><iframe id="quadro" title="Site"></iframe></div>
   </section>
 
-  <!-- -------------------------------------------------- CLIENTES -->
   <section class="painel" id="painel-clientes" hidden>
-    <fieldset>
-      <legend>Clientes do carrossel</legend>
-      <div id="lista-clientes"></div>
-      <button class="mini" type="button" data-novo="cliente">+ Adicionar cliente</button>
-    </fieldset>
+    <div class="form">
+      <fieldset>
+        <legend>Clientes do carrossel</legend>
+        <div id="lista-clientes"></div>
+        <button class="mini" type="button" data-novo="cliente">+ Adicionar cliente</button>
+      </fieldset>
+    </div>
   </section>
 
-  <!-- -------------------------------------------------- PROJETOS -->
   <section class="painel" id="painel-projetos" hidden>
-    <fieldset>
-      <legend>Projetos em destaque</legend>
-      <div id="lista-projetos"></div>
-      <button class="mini" type="button" data-novo="projeto">+ Adicionar projeto</button>
-    </fieldset>
+    <div class="form">
+      <fieldset>
+        <legend>Projetos em destaque</legend>
+        <div id="lista-projetos"></div>
+        <button class="mini" type="button" data-novo="projeto">+ Adicionar projeto</button>
+      </fieldset>
+    </div>
   </section>
 
-  <!-- ----------------------------------------------------- FOTOS -->
   <section class="painel" id="painel-fotos" hidden>
-    <fieldset>
-      <legend>Enviar imagem</legend>
-      <label>
-        <span>Pasta</span>
-        <select id="pasta">
-          <option value="clientes">clientes</option>
-          <option value="projetos">projetos</option>
-          <option value="bastidores">bastidores</option>
-          <option value="geral">geral</option>
-        </select>
-      </label>
-      <div class="solta" id="solta">
-        <b>Arraste as imagens aqui</b>
-        <span>ou clique para escolher — JPG, PNG, WebP ou AVIF, até 6 MB</span>
-      </div>
-      <input type="file" id="arquivo" accept="image/*" multiple hidden>
-    </fieldset>
-
-    <fieldset>
-      <legend>Imagens enviadas</legend>
-      <div class="galeria-adm" id="galeria"></div>
-      <p class="vazio" id="galeria-vazia">Nenhuma imagem enviada ainda.</p>
-    </fieldset>
+    <div class="form">
+      <fieldset>
+        <legend>Enviar imagem</legend>
+        <label><span>Pasta</span>
+          <select id="pasta">
+            <option value="clientes">clientes</option>
+            <option value="projetos">projetos</option>
+            <option value="bastidores">bastidores</option>
+            <option value="geral">geral</option>
+          </select>
+        </label>
+        <div class="solta" id="solta">
+          <b>Arraste as imagens aqui</b>
+          <span>ou clique para escolher — JPG, PNG, WebP ou AVIF, at&eacute; 6 MB</span>
+        </div>
+        <input type="file" id="arquivo" accept="image/*" multiple hidden>
+      </fieldset>
+      <fieldset>
+        <legend>Imagens enviadas</legend>
+        <div class="galeria-adm" id="galeria"></div>
+        <p class="vazio" id="galeria-vazia">Nenhuma imagem enviada ainda.</p>
+      </fieldset>
+    </div>
   </section>
-</main>
+</div>
 
-<script>
-/* ============================================================
-   Painel. Sem framework, como o resto do site.
+<dialog id="escolher">
+  <div class="modal__topo">
+    <b>Escolher imagem</b>
+    <button class="mini" type="button" id="escolher-subir">Enviar nova</button>
+    <button class="mini" type="button" id="escolher-fechar">Fechar</button>
+  </div>
+  <div class="modal__corpo">
+    <div class="galeria-adm" id="escolher-galeria"></div>
+    <p class="vazio" id="escolher-vazia">Nenhuma imagem enviada ainda. Use &ldquo;Enviar nova&rdquo;.</p>
+  </div>
+</dialog>
 
-   O que ele NÃO faz de propósito: não escreve nos arquivos do
-   repositório. Tudo que você salva vai para o KV e para o R2, e
-   o site lê de lá. Assim o git continua sendo a fonte do padrão,
-   e um erro aqui nunca apaga o trabalho versionado.
-   ============================================================ */
+<script type="module">
+import { ligarEditor } from './editor.js';
 
 const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
-/* No servidor local as Functions não existem: a API devolve o HTML da
-   página 404. Sem isto, o painel mostrava "Unexpected token '<'", que
-   não diz nada a quem está usando. */
+/* No servidor local as Functions nao existem: a API devolve o HTML do 404.
+   Sem isto, o painel mostrava "Unexpected token '<'". */
 const LOCAL = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 async function api(url, opcoes) {
   const r = await fetch(url, opcoes);
   const texto = await r.text();
   let dado;
-  try {
-    dado = JSON.parse(texto);
-  } catch (e) {
+  try { dado = JSON.parse(texto); }
+  catch (e) {
     throw new Error(LOCAL
-      ? 'as Functions do Cloudflare não rodam no servidor local. Publique no Pages para o painel funcionar.'
-      : 'o servidor respondeu algo que não é JSON — verifique se as Functions foram publicadas.');
+      ? 'as Functions do Cloudflare nao rodam no servidor local. Publique no Pages para o painel funcionar.'
+      : 'o servidor respondeu algo que nao e JSON — verifique se as Functions foram publicadas.');
   }
   if (!r.ok) throw new Error(dado.erro || ('erro ' + r.status));
   return dado;
 }
-const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
 let conteudo = {};
+let salvo = '{}';
+let versao = 'br';
 
-/* ---------- campos de texto, por versão ---------- */
-const CAMPOS = [
-  ['Versão BR — links.samuelfreire.com.br', [
-    ['br.hero.papel',     'Papel (abaixo do nome)',      'linha'],
-    ['br.hero.titulo',    'Manchete do topo',            'bloco'],
-    ['br.sobre.titulo',   'Título do Sobre',             'bloco'],
-    ['br.sobre.p1',       'Sobre — 1º parágrafo',        'bloco'],
-    ['br.sobre.p2',       'Sobre — 2º parágrafo',        'bloco'],
-    ['br.sobre.p3',       'Sobre — 3º parágrafo',        'bloco'],
-    ['br.sobre.legenda',  'Legenda da foto',             'linha'],
-    ['br.contato.titulo', 'Título do Contato',           'bloco'],
-    ['br.rodape.marca',   'Rodapé',                      'linha'],
-  ]],
-  ['Versão global — /global', [
-    ['global.hero.papel',     'Papel (abaixo do nome)',  'linha'],
-    ['global.hero.titulo',    'Manchete do topo',        'bloco'],
-    ['global.sobre.titulo',   'Título do Sobre',         'bloco'],
-    ['global.sobre.p1',       'Sobre — 1º parágrafo',    'bloco'],
-    ['global.sobre.p2',       'Sobre — 2º parágrafo',    'bloco'],
-    ['global.sobre.p3',       'Sobre — 3º parágrafo',    'bloco'],
-    ['global.sobre.legenda',  'Legenda da foto',         'linha'],
-    ['global.contato.titulo', 'Título do Contato',       'bloco'],
-    ['global.rodape.marca',   'Rodapé',                  'linha'],
-  ]],
-];
+const sujo = () => JSON.stringify(conteudo) !== salvo;
+
+function marcarEstado() {
+  $('#salvar').dataset.sujo = sujo() ? '1' : '0';
+  $('#desfazer').disabled = !sujo();
+}
 
 function pegar(caminho) {
   return caminho.split('.').reduce((o, k) => (o && typeof o === 'object' ? o[k] : undefined), conteudo);
@@ -259,7 +260,8 @@ function definir(caminho, valor) {
     if (typeof alvo[p] !== 'object' || alvo[p] === null) alvo[p] = {};
     alvo = alvo[p];
   }
-  if (valor === '') delete alvo[ultima]; else alvo[ultima] = valor;
+  if (valor === '' || valor == null) delete alvo[ultima]; else alvo[ultima] = valor;
+  marcarEstado();
 }
 
 function avisar(texto, tipo = 'ok') {
@@ -267,147 +269,147 @@ function avisar(texto, tipo = 'ok') {
   el.textContent = texto;
   el.dataset.tipo = tipo;
   el.classList.add('mostra');
-  if (tipo === 'ok') setTimeout(() => el.classList.remove('mostra'), 4000);
+  if (tipo === 'ok') setTimeout(() => el.classList.remove('mostra'), 3500);
 }
 
-/* ---------- montagem dos campos ---------- */
-function montarTextos() {
-  const raiz = $('#campos');
-  raiz.innerHTML = '';
-  for (const [titulo, campos] of CAMPOS) {
-    const fs = document.createElement('fieldset');
-    fs.innerHTML = `<legend>${titulo}</legend>`;
-    for (const [chave, rotulo, tipo] of campos) {
-      const valor = pegar(chave);
-      const l = document.createElement('label');
-      const controle = tipo === 'bloco'
-        ? `<textarea data-chave="${chave}"></textarea>`
-        : `<input type="text" data-chave="${chave}">`;
-      l.innerHTML = `<span>${rotulo}</span>${controle}`;
-      const c = l.querySelector('[data-chave]');
-      // <br> vira quebra de linha na edição, e volta a <br> ao salvar
-      c.value = (valor || '').replace(/<br\s*\/?>/gi, '\n');
-      fs.appendChild(l);
+function carregarQuadro() {
+  const q = $('#quadro');
+  q.src = (versao === 'br' ? '/' : '/global/') + '?editor=' + Date.now();
+  q.onload = () => {
+    const doc = q.contentDocument;
+    // O que foi editado e ainda nao salvo precisa reaparecer apos recarregar.
+    for (const el of doc.querySelectorAll('[data-edit]')) {
+      const v = pegar(el.getAttribute('data-edit'));
+      if (typeof v === 'string' && v !== '') el.innerHTML = v;
     }
-    raiz.appendChild(fs);
+    for (const img of doc.querySelectorAll('[data-edit-img]')) {
+      const v = pegar(img.getAttribute('data-edit-img'));
+      if (typeof v === 'string' && v !== '') img.src = v;
+    }
+    const info = ligarEditor(q, definir, escolherImagem);
+    if (info) avisar('Pronto para editar: ' + info.textos + ' textos e ' + info.imagens + ' fotos nesta versao.');
+  };
+}
+
+let resolverEscolha = null;
+
+async function escolherImagem() {
+  await pintarEscolher();
+  $('#escolher').showModal();
+  return new Promise((r) => { resolverEscolha = r; });
+}
+
+async function pintarEscolher() {
+  const g = $('#escolher-galeria');
+  g.innerHTML = '';
+  let imgs = [];
+  try { imgs = (await api('/api/imagens')).imagens || []; }
+  catch (e) { avisar('Nao listei as imagens — ' + e.message, 'erro'); }
+  $('#escolher-vazia').hidden = imgs.length > 0;
+  for (const im of imgs) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'foto-adm';
+    b.innerHTML = '<img src="' + im.url + '" alt="" loading="lazy">'
+      + '<div class="foto-adm__pe"><span class="foto-adm__nome">' + im.chave.split('/').pop() + '</span></div>';
+    b.onclick = () => fecharEscolher(im.url);
+    g.appendChild(b);
   }
 }
 
-function colherTextos() {
-  for (const c of $$('#campos [data-chave]')) {
-    const v = c.value.trim().replace(/\n/g, '<br>');
-    definir(c.dataset.chave, v);
-  }
+function fecharEscolher(url) {
+  $('#escolher').close();
+  if (resolverEscolha) { resolverEscolha(url || null); resolverEscolha = null; }
 }
+$('#escolher-fechar').onclick = () => fecharEscolher(null);
+$('#escolher').addEventListener('cancel', () => fecharEscolher(null));
+$('#escolher-subir').onclick = () => { $('#arquivo').dataset.paraEscolha = '1'; $('#arquivo').click(); };
 
-/* ---------- clientes ---------- */
+function esc(x) { return (x || '').replace(/"/g, '&quot;'); }
+
 function montarClientes() {
   const raiz = $('#lista-clientes');
   raiz.innerHTML = '';
   const itens = conteudo.clientes || [];
-  if (!itens.length) {
-    raiz.innerHTML = '<p class="vazio">Nenhum cliente ainda. A lista do site continua a que está no HTML.</p>';
-  }
+  if (!itens.length) raiz.innerHTML = '<p class="vazio">Nenhum cliente aqui ainda — o carrossel segue com a lista do HTML.</p>';
   itens.forEach((c, i) => raiz.appendChild(itemCliente(c, i)));
 }
 
 function itemCliente(c, i) {
   const d = document.createElement('div');
   d.className = 'item';
-  d.innerHTML = `
-    <div class="item__topo">
-      <img class="previa" src="${c.foto || ''}" alt="" onerror="this.removeAttribute('src')">
-      <span class="item__n">${String(i + 1).padStart(2, '0')}</span>
-      <button class="mini" type="button" data-mover="-1">↑</button>
-      <button class="mini" type="button" data-mover="1">↓</button>
-      <button class="mini mini--perigo" type="button" data-remover>Remover</button>
-    </div>
-    <div class="linha linha--2">
-      <label><span>Nome</span><input type="text" data-campo="nome" value="${(c.nome || '').replace(/"/g, '&quot;')}"></label>
-      <label><span>@ do Instagram</span><input type="text" data-campo="handle" value="${(c.handle || '').replace(/"/g, '&quot;')}">
-        <small>Deixe vazio se a pessoa não tem — o @ some do card.</small></label>
-    </div>
-    <label><span>Foto</span><input type="text" data-campo="foto" value="${(c.foto || '').replace(/"/g, '&quot;')}">
-      <small>Cole o endereço da aba Fotos. Vazio: aparecem as iniciais.</small></label>`;
-
-  d.querySelector('[data-remover]').onclick = () => {
-    conteudo.clientes.splice(i, 1); montarClientes();
-  };
-  for (const b of d.querySelectorAll('[data-mover]')) {
-    b.onclick = () => {
-      const j = i + Number(b.dataset.mover);
-      if (j < 0 || j >= conteudo.clientes.length) return;
-      const l = conteudo.clientes;
-      [l[i], l[j]] = [l[j], l[i]];
-      montarClientes();
-    };
-  }
-  for (const c2 of d.querySelectorAll('[data-campo]')) {
-    c2.oninput = () => {
-      conteudo.clientes[i][c2.dataset.campo] = c2.value;
-      if (c2.dataset.campo === 'foto') d.querySelector('.previa').src = c2.value;
-    };
-  }
+  d.innerHTML = ''
+    + '<div class="item__topo">'
+    + '<img class="previa" src="' + esc(c.foto) + '" alt="" onerror="this.removeAttribute(\'src\')">'
+    + '<span class="item__n">' + String(i + 1).padStart(2, '0') + '</span>'
+    + '<button class="mini" type="button" data-foto>Trocar foto</button>'
+    + '<button class="mini" type="button" data-mover="-1">&uarr;</button>'
+    + '<button class="mini" type="button" data-mover="1">&darr;</button>'
+    + '<button class="mini mini--perigo" type="button" data-remover>Remover</button>'
+    + '</div>'
+    + '<div class="linha linha--2">'
+    + '<label><span>Nome</span><input type="text" data-campo="nome" value="' + esc(c.nome) + '"></label>'
+    + '<label><span>@ do Instagram</span><input type="text" data-campo="handle" value="' + esc(c.handle) + '">'
+    + '<small>Vazio: o arroba some do card.</small></label>'
+    + '</div>';
+  ligarItem(d, conteudo.clientes, i, montarClientes, 'foto');
   return d;
 }
 
-/* ---------- projetos ---------- */
 function montarProjetos() {
   const raiz = $('#lista-projetos');
   raiz.innerHTML = '';
   const itens = conteudo.projetos || [];
-  if (!itens.length) {
-    raiz.innerHTML = '<p class="vazio">Nenhum projeto ainda. A lista do site continua a que está no HTML.</p>';
-  }
+  if (!itens.length) raiz.innerHTML = '<p class="vazio">Nenhum projeto aqui ainda — a secao segue com a lista do HTML.</p>';
   itens.forEach((p, i) => raiz.appendChild(itemProjeto(p, i)));
 }
 
 function itemProjeto(p, i) {
-  const v = (x) => (x || '').replace(/"/g, '&quot;');
   const d = document.createElement('div');
   d.className = 'item';
-  d.innerHTML = `
-    <div class="item__topo">
-      <img class="previa previa--larga" src="${p.imagem || ''}" alt="" onerror="this.removeAttribute('src')">
-      <span class="item__n">${String(i + 1).padStart(2, '0')}</span>
-      <button class="mini" type="button" data-mover="-1">↑</button>
-      <button class="mini" type="button" data-mover="1">↓</button>
-      <button class="mini mini--perigo" type="button" data-remover>Remover</button>
-    </div>
-    <div class="linha linha--2">
-      <label><span>Etiqueta</span><input type="text" data-campo="tag" value="${v(p.tag)}"><small>Ex.: Landing Page</small></label>
-      <label><span>Ao lado da etiqueta</span><input type="text" data-campo="data" value="${v(p.data)}"><small>Ex.: Lançamento 7D</small></label>
-    </div>
-    <label><span>Título</span><textarea data-campo="titulo">${p.titulo || ''}</textarea></label>
-    <label><span>Contexto do cliente</span><textarea data-campo="contexto">${p.contexto || ''}</textarea>
-      <small>Uma linha dando o tamanho do cliente. O gringo não conhece a marca.</small></label>
-    <div class="linha linha--2">
-      <label><span>Disciplinas</span><input type="text" data-campo="disciplinas" value="${v(p.disciplinas)}"><small>Separadas por ·</small></label>
-      <label><span>Link</span><input type="text" data-campo="link" value="${v(p.link)}"></label>
-    </div>
-    <label><span>Imagem</span><input type="text" data-campo="imagem" value="${v(p.imagem)}">
-      <small>Cole o endereço da aba Fotos.</small></label>`;
-
-  d.querySelector('[data-remover]').onclick = () => { conteudo.projetos.splice(i, 1); montarProjetos(); };
-  for (const b of d.querySelectorAll('[data-mover]')) {
-    b.onclick = () => {
-      const j = i + Number(b.dataset.mover);
-      if (j < 0 || j >= conteudo.projetos.length) return;
-      const l = conteudo.projetos;
-      [l[i], l[j]] = [l[j], l[i]];
-      montarProjetos();
-    };
-  }
-  for (const c of d.querySelectorAll('[data-campo]')) {
-    c.oninput = () => {
-      conteudo.projetos[i][c.dataset.campo] = c.value;
-      if (c.dataset.campo === 'imagem') d.querySelector('.previa').src = c.value;
-    };
-  }
+  d.innerHTML = ''
+    + '<div class="item__topo">'
+    + '<img class="previa previa--larga" src="' + esc(p.imagem) + '" alt="" onerror="this.removeAttribute(\'src\')">'
+    + '<span class="item__n">' + String(i + 1).padStart(2, '0') + '</span>'
+    + '<button class="mini" type="button" data-foto>Trocar imagem</button>'
+    + '<button class="mini" type="button" data-mover="-1">&uarr;</button>'
+    + '<button class="mini" type="button" data-mover="1">&darr;</button>'
+    + '<button class="mini mini--perigo" type="button" data-remover>Remover</button>'
+    + '</div>'
+    + '<div class="linha linha--2">'
+    + '<label><span>Etiqueta</span><input type="text" data-campo="tag" value="' + esc(p.tag) + '"><small>Ex.: Landing Page</small></label>'
+    + '<label><span>Ao lado</span><input type="text" data-campo="data" value="' + esc(p.data) + '"><small>Ex.: Lancamento 7D</small></label>'
+    + '</div>'
+    + '<label><span>Titulo</span><textarea data-campo="titulo">' + (p.titulo || '') + '</textarea></label>'
+    + '<label><span>Contexto do cliente</span><textarea data-campo="contexto">' + (p.contexto || '') + '</textarea>'
+    + '<small>Uma linha dando o tamanho do cliente.</small></label>'
+    + '<div class="linha linha--2">'
+    + '<label><span>Disciplinas</span><input type="text" data-campo="disciplinas" value="' + esc(p.disciplinas) + '"></label>'
+    + '<label><span>Link</span><input type="text" data-campo="link" value="' + esc(p.link) + '"></label>'
+    + '</div>';
+  ligarItem(d, conteudo.projetos, i, montarProjetos, 'imagem');
   return d;
 }
 
-/* ---------- fotos ---------- */
+function ligarItem(d, lista, i, remontar, campoFoto) {
+  d.querySelector('[data-remover]').onclick = () => { lista.splice(i, 1); marcarEstado(); remontar(); };
+  for (const b of d.querySelectorAll('[data-mover]')) {
+    b.onclick = () => {
+      const j = i + Number(b.dataset.mover);
+      if (j < 0 || j >= lista.length) return;
+      const t = lista[i]; lista[i] = lista[j]; lista[j] = t;
+      marcarEstado(); remontar();
+    };
+  }
+  d.querySelector('[data-foto]').onclick = async () => {
+    const url = await escolherImagem();
+    if (url) { lista[i][campoFoto] = url; marcarEstado(); remontar(); }
+  };
+  for (const c of d.querySelectorAll('[data-campo]')) {
+    c.oninput = () => { lista[i][c.dataset.campo] = c.value; marcarEstado(); };
+  }
+}
+
 async function carregarGaleria() {
   try {
     const d = await api('/api/imagens');
@@ -418,95 +420,114 @@ async function carregarGaleria() {
     for (const im of imgs) {
       const el = document.createElement('div');
       el.className = 'foto-adm';
-      el.innerHTML = `
-        <img src="${im.url}" alt="" loading="lazy">
-        <div class="foto-adm__pe">
-          <span class="foto-adm__nome" title="${im.chave}">${im.chave.split('/').pop()}</span>
-          <button class="mini" type="button" data-copiar>Copiar</button>
-          <button class="mini mini--perigo" type="button" data-apagar>×</button>
-        </div>`;
+      el.innerHTML = '<img src="' + im.url + '" alt="" loading="lazy">'
+        + '<div class="foto-adm__pe">'
+        + '<span class="foto-adm__nome" title="' + im.chave + '">' + im.chave.split('/').pop() + '</span>'
+        + '<button class="mini" type="button" data-copiar>Copiar</button>'
+        + '<button class="mini mini--perigo" type="button" data-apagar>&times;</button>'
+        + '</div>';
       el.querySelector('[data-copiar]').onclick = async () => {
-        await navigator.clipboard.writeText(im.url);
-        avisar('Endereço copiado: ' + im.url);
+        await navigator.clipboard.writeText(im.url); avisar('Endereco copiado.');
       };
       el.querySelector('[data-apagar]').onclick = async () => {
-        if (!confirm('Apagar esta imagem? Onde ela estiver em uso, o espaço fica vazio.')) return;
+        if (!confirm('Apagar esta imagem? Onde ela estiver em uso, o espaco fica vazio.')) return;
         try {
           await api('/api/imagens?chave=' + encodeURIComponent(im.chave), { method: 'DELETE' });
           avisar('Imagem apagada.'); carregarGaleria();
-        } catch (err) { avisar('Não apaguei — ' + err.message, 'erro'); }
+        } catch (err) { avisar('Nao apaguei — ' + err.message, 'erro'); }
       };
       g.appendChild(el);
     }
   } catch (e) {
-    avisar('Não listei as imagens — ' + e.message, 'erro');
+    avisar('Nao listei as imagens — ' + e.message, 'erro');
   }
 }
 
 async function enviar(arquivos) {
-  const pasta = $('#pasta').value;
+  const paraEscolha = $('#arquivo').dataset.paraEscolha === '1';
+  $('#arquivo').dataset.paraEscolha = '0';
+  let ultima = null;
   for (const a of arquivos) {
     const fd = new FormData();
     fd.append('arquivo', a);
-    fd.append('pasta', pasta);
-    avisar('Enviando ' + a.name + '…');
+    fd.append('pasta', $('#pasta').value);
+    avisar('Enviando ' + a.name + '...');
     try {
       const d = await api('/api/imagens', { method: 'POST', body: fd });
+      ultima = d.url;
       avisar('Enviada: ' + d.url);
-    } catch (e) {
-      avisar('Falhou o envio de ' + a.name + ': ' + e.message, 'erro');
-    }
+    } catch (e) { avisar('Falhou ' + a.name + ' — ' + e.message, 'erro'); }
   }
   carregarGaleria();
+  if (paraEscolha && ultima) fecharEscolher(ultima);
+  else if (paraEscolha) pintarEscolher();
 }
 
-/* ---------- salvar ---------- */
 async function salvar() {
-  colherTextos();
   const b = $('#salvar');
-  b.disabled = true; b.textContent = 'Salvando…';
+  b.disabled = true; b.textContent = 'Salvando...';
   try {
     await api('/api/conteudo', {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(conteudo),
     });
-    avisar('Salvo. O site já está com as alterações — recarregue para ver.');
+    salvo = JSON.stringify(conteudo);
+    marcarEstado();
+    avisar('Salvo. O site ja esta com as alteracoes.');
   } catch (e) {
-    avisar('Não salvou: ' + e.message, 'erro');
+    avisar('Nao salvou — ' + e.message, 'erro');
   } finally {
     b.disabled = false; b.textContent = 'Salvar';
   }
 }
 
-/* ---------- início ---------- */
 async function iniciar() {
   try {
     conteudo = await api('/api/conteudo');
     if (!conteudo || typeof conteudo !== 'object') conteudo = {};
   } catch (e) {
     conteudo = {};
-    avisar('Não carreguei o conteúdo salvo — ' + e.message, 'erro');
+    avisar('Nao carreguei o conteudo salvo — ' + e.message, 'erro');
   }
-  montarTextos(); montarClientes(); montarProjetos(); carregarGaleria();
+  salvo = JSON.stringify(conteudo);
+  marcarEstado();
+  carregarQuadro(); montarClientes(); montarProjetos(); carregarGaleria();
 }
 
 $('#salvar').onclick = salvar;
-$('[data-novo="cliente"]').onclick = () => {
-  (conteudo.clientes ||= []).push({ nome: '', handle: '', foto: '' });
-  montarClientes();
-};
-$('[data-novo="projeto"]').onclick = () => {
-  (conteudo.projetos ||= []).push({ tag: '', data: '', titulo: '', contexto: '', disciplinas: '', imagem: '', link: '' });
-  montarProjetos();
+$('#recarregar').onclick = carregarQuadro;
+$('#desfazer').onclick = () => {
+  if (!confirm('Descartar tudo que voce mudou desde o ultimo salvamento?')) return;
+  conteudo = JSON.parse(salvo);
+  marcarEstado(); carregarQuadro(); montarClientes(); montarProjetos();
 };
 
-for (const aba of $$('.aba')) {
-  aba.onclick = () => {
-    for (const a of $$('.aba')) a.setAttribute('aria-selected', String(a === aba));
-    for (const p of $$('.painel')) p.hidden = p.id !== 'painel-' + aba.dataset.alvo;
+for (const b of $$('#versoes button')) {
+  b.onclick = () => {
+    for (const o of $$('#versoes button')) o.setAttribute('aria-selected', String(o === b));
+    versao = b.dataset.versao;
+    carregarQuadro();
   };
 }
+
+for (const b of $$('#abas button')) {
+  b.onclick = () => {
+    for (const o of $$('#abas button')) o.setAttribute('aria-selected', String(o === b));
+    for (const p of $$('.painel')) p.hidden = p.id !== 'painel-' + b.dataset.alvo;
+  };
+}
+
+$('[data-novo="cliente"]').onclick = () => {
+  if (!conteudo.clientes) conteudo.clientes = [];
+  conteudo.clientes.push({ nome: '', handle: '', foto: '' });
+  marcarEstado(); montarClientes();
+};
+$('[data-novo="projeto"]').onclick = () => {
+  if (!conteudo.projetos) conteudo.projetos = [];
+  conteudo.projetos.push({ tag: '', data: '', titulo: '', contexto: '', disciplinas: '', imagem: '', link: '' });
+  marcarEstado(); montarProjetos();
+};
 
 const solta = $('#solta'), arquivo = $('#arquivo');
 solta.onclick = () => arquivo.click();
@@ -519,8 +540,7 @@ solta.ondrop = (e) => {
 };
 
 addEventListener('beforeunload', (e) => {
-  // não perde edição por engano
-  if ($('#salvar').disabled) { e.preventDefault(); e.returnValue = ''; }
+  if (sujo()) { e.preventDefault(); e.returnValue = ''; }
 });
 
 iniciar();
