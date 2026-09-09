@@ -115,6 +115,67 @@ resultado com número. É o número que vende.
 
 **Métricas** — seção `01`, bloco `.metricas`.
 
+## Painel de edição
+
+Em `links.samuelfreire.com.br/admin`. Edita textos, sobe fotos e gerencia
+clientes e projetos — do computador ou do celular.
+
+### Como funciona
+
+O painel **não escreve nos arquivos do repositório**. Ele salva no Cloudflare:
+textos no **KV**, imagens no **R2**. Uma Function (`functions/_middleware.js`)
+injeta esse conteúdo no HTML **no servidor**, antes de a página chegar ao
+visitante — por isso o site continua funcionando sem JavaScript e sem perder
+SEO.
+
+A consequência importante: **o HTML do repositório é o padrão**. O KV guarda
+só o que foi editado. Se o KV estiver vazio, a Function cair ou a chave não
+existir, o texto original do HTML permanece. Nada quebra, e o git continua
+sendo a fonte da verdade.
+
+```
+Painel → KV (textos) + R2 (imagens)
+                ↓
+        Function injeta no HTML
+                ↓
+            visitante
+```
+
+### O que você precisa configurar no Cloudflare
+
+Isto eu não consigo fazer por você — são cliques no painel deles.
+
+**1. KV** — *Workers & Pages* → *KV* → *Create namespace*, nome `conteudo-site`.
+Depois, no projeto do Pages → *Settings* → *Functions* → *KV namespace bindings*:
+variável **`CONTEUDO`** apontando para ele.
+
+**2. R2** — *R2* → *Create bucket*, nome `midia-site`.
+No projeto → *Settings* → *Functions* → *R2 bucket bindings*:
+variável **`MIDIA`** apontando para ele.
+
+**3. Access — é isto que tranca o painel.** *Zero Trust* → *Access* →
+*Applications* → *Add an application* → *Self-hosted*:
+
+- Domínio: `links.samuelfreire.com.br`, caminho `admin`
+- Adicione uma segunda: mesmo domínio, caminho `api`
+- Política: *Allow* → *Emails* → `samuelfreirebr@gmail.com`
+
+Sem esse passo o painel fica **aberto para qualquer um**. A API recusa
+requisição sem o cabeçalho do Access, mas isso é a segunda tranca, não a
+primeira — configure o Access.
+
+### Usando
+
+- **Textos** — campo vazio mantém o que já está no site. Quebra de linha
+  vira `<br>` sozinha.
+- **Fotos** — arraste para a área tracejada. Copie o endereço e cole no
+  campo de foto do cliente ou do projeto.
+- **Clientes e projetos** — adicionar, remover e reordenar com as setas.
+  Cliente sem foto mostra as iniciais; sem `@`, o arroba some.
+
+Cada salvamento guarda a versão anterior em `site:anterior` no KV — se algo
+sair errado, dá para recuperar por lá.
+
 ## Publicar
 
 Dois caminhos. Os arquivos dos dois já estão no repositório.
@@ -133,6 +194,10 @@ e não precisa de Docker nem de servidor.
 
 O arquivo `_headers` já está aqui e o Pages o lê sozinho: os dois
 `index.html` ficam sem cache e os assets com cache longo.
+
+> **O painel exige Cloudflare Pages.** Ele roda em Functions, que são do
+> Pages — no Portainer o site funciona, mas `/admin` não. Se for por esse
+> caminho, os textos voltam a ser editados no HTML.
 
 ### Portainer — se preferir seu próprio servidor
 

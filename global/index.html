@@ -24,11 +24,11 @@
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 
 <!-- Ordem obrigatória: tokens → base → site -->
-<link rel="stylesheet" href="/styles/tokens.css?v=20260909g">
-<link rel="stylesheet" href="/styles/base.css?v=20260909g">
-<link rel="stylesheet" href="/styles/site.css?v=20260909g">
+<link rel="stylesheet" href="/styles/tokens.css?v=20260909h">
+<link rel="stylesheet" href="/styles/base.css?v=20260909h">
+<link rel="stylesheet" href="/styles/site.css?v=20260909h">
 <!-- Última: só o que for exclusivo desta versão. -->
-<link rel="stylesheet" href="/styles/global.css?v=20260909g">
+<link rel="stylesheet" href="/styles/global.css?v=20260909h">
 </head>
 
 <body>
@@ -79,14 +79,14 @@
       <img class="hero__avatar" src="/img/favicon.png" alt="Samuel Freire" width="244" height="244" fetchpriority="high">
       <div class="hero__id-txt">
         <p class="hero__name marca"><b>Samuel</b><i>Freire</i></p>
-        <p class="hero__role">Digital Design &amp; Brand Experience</p>
+        <p class="hero__role" data-edit="global.hero.papel">Digital Design &amp; Brand Experience</p>
       </div>
       <span class="status" role="status">
         <span class="status__dot" aria-hidden="true"></span>Disponível para projetos
       </span>
     </div>
 
-    <h1 class="display hero__title reveal" style="--delay:.08s">
+    <h1 class="display hero__title reveal" style="--delay:.08s" data-edit="global.hero.titulo">
       More than design.<br>
       <span class="hero__title-2">Business optimization.</span>
     </h1>
@@ -149,19 +149,19 @@
          traços opacos. É o traço que dá o ritmo, não a grade. -->
     <div class="sobre">
       <div class="sobre__col">
-        <h2 class="sobre__t reveal">Brand Designer<br>e Estrategista.</h2>
-        <p class="sobre__p reveal">
+        <h2 class="sobre__t reveal" data-edit="global.sobre.titulo">Brand Designer<br>e Estrategista.</h2>
+        <p class="sobre__p reveal" data-edit="global.sobre.p1">
           Sou Samuel Freire, com experiência na criação de websites, identidades visuais, impressos
           e <span class="strong">ferramentas digitais para negócios</span>.
         </p>
 
-        <p class="sobre__p reveal">
+        <p class="sobre__p reveal" data-edit="global.sobre.p2">
           Ao longo da trajetória recebi a confiança de empresas e times de design, desenvolvendo
           projetos para negócios no mundo todo, com foco na América do Norte — em maior parte
           empresas de <span class="strong">construction, remodeling e home improvement</span>.
         </p>
 
-        <p class="sobre__p reveal">
+        <p class="sobre__p reveal" data-edit="global.sobre.p3">
           Minha atuação combina design, tecnologia e business: da construção de uma marca e sua
           presença digital ao desenvolvimento de ferramentas, automações e soluções com AI.
         </p>
@@ -169,7 +169,7 @@
 
       <figure class="sobre__foto reveal">
           <img src="/img/samuel-retrato.jpg" alt="Retrato de Samuel Freire" width="928" height="1152" loading="lazy">
-          <figcaption class="small">Samuel Freire — Digital Designer &amp; Strategist</figcaption>
+          <figcaption class="small" data-edit="global.sobre.legenda">Samuel Freire — Digital Designer &amp; Strategist</figcaption>
         </figure>
     </div>
 
@@ -294,7 +294,7 @@
          o que foi feito → resultado com número. É o número que vende.
          A imagem entra em .projeto__media (retrato, 630×803 ou 4:5).
          ------------------------------------------------------------------ -->
-    <ol class="projetos mt-2xl">
+    <ol class="projetos mt-2xl" data-lista="projetos">
 
       <li class="projeto reveal">
         <a class="projeto__link" href="https://www.behance.net/samuelfreirebr" target="_blank" rel="noopener">
@@ -356,7 +356,7 @@
 
   <!-- Faixa de bastidores: retrato vertical, cantos de 24px, respiro generoso -->
   <div class="tira mt-2xl" data-tira>
-    <ul class="tira__trilha" data-trilha>
+    <ul class="tira__trilha" data-trilha data-lista="bastidores">
       <li><img src="/img/bastidores-01.webp" alt="" width="630" height="803" loading="lazy"></li>
       <li><img src="/img/bastidores-02.webp" alt="" width="630" height="803" loading="lazy"></li>
       <li><img src="/img/bastidores-03.webp" alt="" width="630" height="803" loading="lazy"></li>
@@ -397,9 +397,13 @@
         <span class="porque__idx">02</span>
         <h3 class="h3 porque__t">Comunicação clara</h3>
         <p class="body">
-          Você sempre sabe o que estamos fazendo, por que estamos fazendo, o que vem depois
-          e quando cada etapa será entregue.
+          Você sempre sabe em que pé está o projeto.
         </p>
+        <ol class="sempre">
+          <li><span>01</span> What we're doing</li>
+          <li><span>02</span> Why we're doing it</li>
+          <li><span>03</span> What happens next</li>
+        </ol>
       </li>
       <li class="porque reveal" style="--delay:.14s">
         <span class="porque__idx">03</span>
@@ -411,15 +415,6 @@
       </li>
     </ul>
 
-    <!-- You will always know -->
-    <div class="sempre mt-2xl reveal">
-      <p class="eyebrow">You will always know</p>
-      <ol class="sempre__lista mt-lg">
-        <li><span class="sempre__n">01</span> What we're doing</li>
-        <li><span class="sempre__n">02</span> Why we're doing it</li>
-        <li><span class="sempre__n">03</span> What happens next</li>
-      </ol>
-    </div>
 
   </div>
 </section>
@@ -486,7 +481,7 @@
 
     <div class="sec-head">
       <p class="eyebrow reveal"><span class="idx">06</span> — Contato</p>
-      <h2 class="h1 mt-lg reveal">Let's<br>Build It.</h2>
+      <h2 class="h1 mt-lg reveal" data-edit="global.contato.titulo">Let's<br>Build It.</h2>
       <p class="lead mt-lg reveal" style="--delay:.08s">
         Me conte o que o seu negócio precisa resolver. O primeiro passo é uma conversa.
       </p>
@@ -535,7 +530,7 @@
 <!-- ============================================================ FOOTER -->
 <footer class="rodape band-invert on-dark">
   <div class="wrap rodape__in">
-    <p class="small rodape__marca"><span class="marca"><b>Samuel</b><i>Freire</i></span> — Digital design &amp; brand experience</p>
+    <p class="small rodape__marca" data-edit="global.rodape.marca"><span class="marca"><b>Samuel</b><i>Freire</i></span> — Digital design &amp; brand experience</p>
     <p class="small rodape__ano">© <span data-ano>2026</span> · Todos os direitos reservados</p>
   </div>
 </footer>
@@ -543,6 +538,6 @@
 
 <!-- Lenis: opcional. Se o CDN cair, a rolagem nativa continua. -->
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js" defer></script>
-<script src="/js/main.js?v=20260909g" defer></script>
+<script src="/js/main.js?v=20260909h" defer></script>
 </body>
 </html>

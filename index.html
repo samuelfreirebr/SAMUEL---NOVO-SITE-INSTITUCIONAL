@@ -20,11 +20,11 @@
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 
 <!-- Ordem obrigatória: tokens → base → site -->
-<link rel="stylesheet" href="/styles/tokens.css?v=20260909g">
-<link rel="stylesheet" href="/styles/base.css?v=20260909g">
-<link rel="stylesheet" href="/styles/site.css?v=20260909g">
+<link rel="stylesheet" href="/styles/tokens.css?v=20260909h">
+<link rel="stylesheet" href="/styles/base.css?v=20260909h">
+<link rel="stylesheet" href="/styles/site.css?v=20260909h">
 <!-- Última: só o que for exclusivo desta versão. -->
-<link rel="stylesheet" href="/styles/br.css?v=20260909g">
+<link rel="stylesheet" href="/styles/br.css?v=20260909h">
 </head>
 
 <body>
@@ -71,7 +71,7 @@
       <img class="hero__avatar" src="/img/favicon.png" alt="Samuel Freire" width="244" height="244" fetchpriority="high">
       <div class="hero__id-txt">
         <p class="hero__name marca"><b>Samuel</b><i>Freire</i></p>
-        <p class="hero__role">Web Designer</p>
+        <p class="hero__role" data-edit="br.hero.papel">Web Designer</p>
       </div>
       <span class="status" role="status">
         <span class="status__dot" aria-hidden="true"></span>Disponível para projetos
@@ -80,7 +80,7 @@
 
     <div>
 
-      <h1 class="display hero__title reveal" style="--delay:.1s">
+      <h1 class="display hero__title reveal" style="--delay:.1s" data-edit="br.hero.titulo">
         Crio landing pages para lançamentos de 7D com foco em
         <span class="hero__title-2">escala e previsibilidade</span>
       </h1>
@@ -92,7 +92,7 @@
            duplique um <li> e ajuste nome, @ e src. Sem @, é só omitir o <em>;
            sem foto, omita o <img> que as iniciais ficam no lugar. -->
       <div class="clientes reveal" data-esteira data-velocidade="24" style="--delay:.06s">
-        <ul class="clientes__trilha" data-trilha>
+        <ul class="clientes__trilha" data-trilha data-lista="clientes">
           <li class="cliente">
             <span class="cliente__foto" data-inicial="LR"><img src="/img/clientes/leoirodrigues.jpg" alt="" width="160" height="160" loading="lazy"></span>
             <span class="cliente__txt"><b>Leonardo Rodrigues</b><em>@leoirodrigues</em></span>
@@ -198,19 +198,19 @@
          traços opacos. É o traço que dá o ritmo, não a grade. -->
     <div class="sobre">
       <div class="sobre__col">
-        <h2 class="sobre__t reveal">Prazer,<br>sou o Samuel.</h2>
-        <p class="sobre__p reveal">
+        <h2 class="sobre__t reveal" data-edit="br.sobre.titulo">Prazer,<br>sou o Samuel.</h2>
+        <p class="sobre__p reveal" data-edit="br.sobre.p1">
           Se você ainda não me conhece, muito prazer, sou Samuel. Trabalho como designer há 5 anos
           e, nos últimos 3 anos, venho dividindo minha operação entre
           <span class="strong">lançamentos presenciais (eventos) e Webdesign</span>.
         </p>
 
-        <p class="sobre__p reveal">
+        <p class="sobre__p reveal" data-edit="br.sobre.p2">
           Em 2023, realizei meu primeiro evento presencial, cuidando de tudo, do design ao pitch.
           Agora, em 2025, já estamos em nossa 5ª edição.
         </p>
 
-        <p class="sobre__p reveal">
+        <p class="sobre__p reveal" data-edit="br.sobre.p3">
           Hoje, minha atuação no Webdesign carrega toda minha experiência com infoprodutos e eventos,
           unindo <span class="strong">branding e performance</span> para grandes nomes do digital.
           Tive o privilégio de contribuir com muitos projetos e é uma honra ter você aqui.
@@ -219,7 +219,7 @@
 
       <figure class="sobre__foto reveal">
           <img src="/img/samuel-retrato.jpg" alt="Retrato de Samuel Freire" width="928" height="1152" loading="lazy">
-          <figcaption class="small">Samuel Freire — Web Designer</figcaption>
+          <figcaption class="small" data-edit="br.sobre.legenda">Samuel Freire — Web Designer</figcaption>
         </figure>
     </div>
 
@@ -229,7 +229,7 @@
 <!-- ============================================================ BASTIDORES -->
 <section class="bastidores" aria-label="Bastidores">
   <div class="tira" data-esteira data-velocidade="-30">
-    <ul class="tira__trilha" data-trilha>
+    <ul class="tira__trilha" data-trilha data-lista="bastidores">
       <li><img src="/img/bastidores-01.webp" alt="" width="630" height="803" loading="lazy"></li>
       <li><img src="/img/bastidores-02.webp" alt="" width="630" height="803" loading="lazy"></li>
       <li><img src="/img/bastidores-03.webp" alt="" width="630" height="803" loading="lazy"></li>
@@ -248,7 +248,7 @@
 
     <div class="sec-head">
       <p class="eyebrow reveal"><span class="idx">02</span> — Contato</p>
-      <h2 class="h1 mt-lg reveal">Vamos<br>conversar.</h2>
+      <h2 class="h1 mt-lg reveal" data-edit="br.contato.titulo">Vamos<br>conversar.</h2>
       <p class="lead mt-lg reveal" style="--delay:.08s">
         Me conta o que você precisa. O primeiro passo é uma conversa.
       </p>
@@ -297,7 +297,7 @@
 <!-- ============================================================ FOOTER -->
 <footer class="rodape band-invert on-dark">
   <div class="wrap rodape__in">
-    <p class="small rodape__marca"><span class="marca"><b>Samuel</b><i>Freire</i></span> — Web Designer</p>
+    <p class="small rodape__marca" data-edit="br.rodape.marca"><span class="marca"><b>Samuel</b><i>Freire</i></span> — Web Designer</p>
     <p class="small rodape__ano">© <span data-ano>2026</span> · Todos os direitos reservados</p>
   </div>
 </footer>
@@ -305,6 +305,6 @@
 
 <!-- Lenis: opcional. Se o CDN cair, a rolagem nativa continua. -->
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js" defer></script>
-<script src="/js/main.js?v=20260909g" defer></script>
+<script src="/js/main.js?v=20260909h" defer></script>
 </body>
 </html>

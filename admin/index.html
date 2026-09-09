@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Painel — Samuel Freire</title>
+
+<link rel="icon" href="/img/favicon.png" type="image/png">
+<link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/styles/tokens.css?v=20260909h">
+<link rel="stylesheet" href="/styles/base.css?v=20260909h">
+
+<style>
+  body { background: var(--bg-2); }
+
+  .topo {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; gap: var(--sp-md);
+    padding: var(--sp-md) var(--gutter);
+    background: var(--bg);
+    border-bottom: var(--hair) solid var(--line);
+  }
+  .topo h1 { font-size: 1.0625rem; letter-spacing: -.04em; margin-right: auto; }
+  .topo h1 i { font-style: italic; font-weight: var(--w-book); }
+
+  .aviso {
+    display: none;
+    padding: var(--sp-sm) var(--gutter);
+    font-size: var(--t-small);
+    border-bottom: var(--hair) solid var(--line);
+  }
+  .aviso[data-tipo="erro"] { background: var(--brand-wash); color: var(--ink); }
+  .aviso[data-tipo="ok"]   { background: var(--bg-2); color: var(--muted); }
+  .aviso.mostra { display: block; }
+
+  main { max-width: 980px; margin-inline: auto; padding: var(--sp-xl) var(--gutter) var(--sp-3xl); }
+
+  .abas { display: flex; flex-wrap: wrap; gap: var(--sp-2xs); margin-bottom: var(--sp-xl); }
+  .aba {
+    padding: .6em 1.1em; border-radius: var(--radius-pill);
+    font-size: var(--t-small); font-weight: var(--w-semi);
+    box-shadow: inset 0 0 0 var(--hair) var(--line-2); background: var(--bg);
+  }
+  .aba[aria-selected="true"] { background: var(--ink); color: #fff; box-shadow: none; }
+
+  .painel[hidden] { display: none; }
+
+  fieldset {
+    border: 0; padding: 0; margin: 0 0 var(--sp-2xl);
+  }
+  legend {
+    font-size: var(--t-eyebrow); font-weight: var(--w-semi);
+    letter-spacing: .16em; text-transform: uppercase; color: var(--muted);
+    padding-bottom: var(--sp-sm); margin-bottom: var(--sp-md);
+    border-bottom: var(--hair-2) solid var(--ink); width: 100%;
+  }
+
+  label { display: block; margin-bottom: var(--sp-md); }
+  label > span {
+    display: block; font-size: var(--t-small); font-weight: var(--w-semi);
+    margin-bottom: var(--sp-2xs);
+  }
+  label > small { display: block; color: var(--muted); font-size: var(--t-eyebrow); margin-top: 4px; }
+
+  input[type=text], textarea, select {
+    width: 100%; padding: .7em .85em;
+    background: var(--bg); color: var(--ink);
+    border: var(--hair) solid var(--line-2); border-radius: var(--radius-img);
+    font-size: var(--t-body); line-height: 1.5;
+  }
+  textarea { min-height: 5.5em; resize: vertical; }
+  input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+
+  .linha { display: grid; gap: var(--sp-md); }
+  @media (min-width: 700px) { .linha--2 { grid-template-columns: 1fr 1fr; } }
+
+  /* ---- itens de lista (clientes, projetos) ---- */
+  .item {
+    background: var(--bg); border: var(--hair) solid var(--line);
+    border-radius: var(--radius-img); padding: var(--sp-md); margin-bottom: var(--sp-md);
+  }
+  .item__topo { display: flex; align-items: center; gap: var(--sp-sm); margin-bottom: var(--sp-md); }
+  .item__n { font-size: var(--t-eyebrow); font-weight: var(--w-bold); letter-spacing: .12em; color: var(--muted); margin-right: auto; }
+
+  .mini {
+    padding: .45em .8em; border-radius: var(--radius-pill);
+    font-size: var(--t-eyebrow); font-weight: var(--w-semi);
+    box-shadow: inset 0 0 0 var(--hair) var(--line-2); background: var(--bg);
+  }
+  .mini:hover { background: var(--ink); color: #fff; box-shadow: none; }
+  .mini--perigo:hover { background: var(--brand); color: #fff; }
+
+  .previa { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: var(--bg-2); flex: none; }
+  .previa--larga { width: 96px; height: 120px; border-radius: var(--radius-img); }
+
+  /* ---- galeria ---- */
+  .galeria-adm { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: var(--sp-md); }
+  .foto-adm { background: var(--bg); border: var(--hair) solid var(--line); border-radius: var(--radius-img); overflow: hidden; }
+  .foto-adm img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+  .foto-adm__pe { display: flex; align-items: center; gap: var(--sp-2xs); padding: var(--sp-2xs); }
+  .foto-adm__nome { font-size: 10px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+
+  .solta {
+    display: grid; place-items: center; gap: var(--sp-2xs);
+    padding: var(--sp-xl); margin-bottom: var(--sp-lg);
+    border: 2px dashed var(--line-2); border-radius: var(--radius-img);
+    background: var(--bg); color: var(--muted); font-size: var(--t-small);
+    cursor: pointer;
+  }
+  .solta.ativa { border-color: var(--brand); color: var(--ink); }
+
+  .vazio { color: var(--muted); font-size: var(--t-small); padding: var(--sp-lg) 0; }
+</style>
+</head>
+
+<body>
+
+<header class="topo">
+  <h1>Painel <i>Samuel Freire</i></h1>
+  <a class="mini" href="/" target="_blank">Ver site</a>
+  <a class="mini" href="/global/" target="_blank">Ver global</a>
+  <button class="btn btn--brand" id="salvar" type="button">Salvar</button>
+</header>
+
+<p class="aviso" id="aviso" role="status"></p>
+
+<main>
+  <div class="abas" role="tablist">
+    <button class="aba" role="tab" aria-selected="true"  data-alvo="textos">Textos</button>
+    <button class="aba" role="tab" aria-selected="false" data-alvo="clientes">Clientes</button>
+    <button class="aba" role="tab" aria-selected="false" data-alvo="projetos">Projetos</button>
+    <button class="aba" role="tab" aria-selected="false" data-alvo="fotos">Fotos</button>
+  </div>
+
+  <!-- ---------------------------------------------------- TEXTOS -->
+  <section class="painel" id="painel-textos">
+    <p class="vazio" id="dica-textos">
+      Campo em branco mantém o texto que já está no site. Quebra de linha vira
+      <code>&lt;br&gt;</code> automaticamente.
+    </p>
+    <div id="campos"></div>
+  </section>
+
+  <!-- -------------------------------------------------- CLIENTES -->
+  <section class="painel" id="painel-clientes" hidden>
+    <fieldset>
+      <legend>Clientes do carrossel</legend>
+      <div id="lista-clientes"></div>
+      <button class="mini" type="button" data-novo="cliente">+ Adicionar cliente</button>
+    </fieldset>
+  </section>
+
+  <!-- -------------------------------------------------- PROJETOS -->
+  <section class="painel" id="painel-projetos" hidden>
+    <fieldset>
+      <legend>Projetos em destaque</legend>
+      <div id="lista-projetos"></div>
+      <button class="mini" type="button" data-novo="projeto">+ Adicionar projeto</button>
+    </fieldset>
+  </section>
+
+  <!-- ----------------------------------------------------- FOTOS -->
+  <section class="painel" id="painel-fotos" hidden>
+    <fieldset>
+      <legend>Enviar imagem</legend>
+      <label>
+        <span>Pasta</span>
+        <select id="pasta">
+          <option value="clientes">clientes</option>
+          <option value="projetos">projetos</option>
+          <option value="bastidores">bastidores</option>
+          <option value="geral">geral</option>
+        </select>
+      </label>
+      <div class="solta" id="solta">
+        <b>Arraste as imagens aqui</b>
+        <span>ou clique para escolher — JPG, PNG, WebP ou AVIF, até 6 MB</span>
+      </div>
+      <input type="file" id="arquivo" accept="image/*" multiple hidden>
+    </fieldset>
+
+    <fieldset>
+      <legend>Imagens enviadas</legend>
+      <div class="galeria-adm" id="galeria"></div>
+      <p class="vazio" id="galeria-vazia">Nenhuma imagem enviada ainda.</p>
+    </fieldset>
+  </section>
+</main>
+
+<script>
+/* ============================================================
+   Painel. Sem framework, como o resto do site.
+
+   O que ele NÃO faz de propósito: não escreve nos arquivos do
+   repositório. Tudo que você salva vai para o KV e para o R2, e
+   o site lê de lá. Assim o git continua sendo a fonte do padrão,
+   e um erro aqui nunca apaga o trabalho versionado.
+   ============================================================ */
+
+const $ = (s, r = document) => r.querySelector(s);
+
+/* No servidor local as Functions não existem: a API devolve o HTML da
+   página 404. Sem isto, o painel mostrava "Unexpected token '<'", que
+   não diz nada a quem está usando. */
+const LOCAL = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+async function api(url, opcoes) {
+  const r = await fetch(url, opcoes);
+  const texto = await r.text();
+  let dado;
+  try {
+    dado = JSON.parse(texto);
+  } catch (e) {
+    throw new Error(LOCAL
+      ? 'as Functions do Cloudflare não rodam no servidor local. Publique no Pages para o painel funcionar.'
+      : 'o servidor respondeu algo que não é JSON — verifique se as Functions foram publicadas.');
+  }
+  if (!r.ok) throw new Error(dado.erro || ('erro ' + r.status));
+  return dado;
+}
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+let conteudo = {};
+
+/* ---------- campos de texto, por versão ---------- */
+const CAMPOS = [
+  ['Versão BR — links.samuelfreire.com.br', [
+    ['br.hero.papel',     'Papel (abaixo do nome)',      'linha'],
+    ['br.hero.titulo',    'Manchete do topo',            'bloco'],
+    ['br.sobre.titulo',   'Título do Sobre',             'bloco'],
+    ['br.sobre.p1',       'Sobre — 1º parágrafo',        'bloco'],
+    ['br.sobre.p2',       'Sobre — 2º parágrafo',        'bloco'],
+    ['br.sobre.p3',       'Sobre — 3º parágrafo',        'bloco'],
+    ['br.sobre.legenda',  'Legenda da foto',             'linha'],
+    ['br.contato.titulo', 'Título do Contato',           'bloco'],
+    ['br.rodape.marca',   'Rodapé',                      'linha'],
+  ]],
+  ['Versão global — /global', [
+    ['global.hero.papel',     'Papel (abaixo do nome)',  'linha'],
+    ['global.hero.titulo',    'Manchete do topo',        'bloco'],
+    ['global.sobre.titulo',   'Título do Sobre',         'bloco'],
+    ['global.sobre.p1',       'Sobre — 1º parágrafo',    'bloco'],
+    ['global.sobre.p2',       'Sobre — 2º parágrafo',    'bloco'],
+    ['global.sobre.p3',       'Sobre — 3º parágrafo',    'bloco'],
+    ['global.sobre.legenda',  'Legenda da foto',         'linha'],
+    ['global.contato.titulo', 'Título do Contato',       'bloco'],
+    ['global.rodape.marca',   'Rodapé',                  'linha'],
+  ]],
+];
+
+function pegar(caminho) {
+  return caminho.split('.').reduce((o, k) => (o && typeof o === 'object' ? o[k] : undefined), conteudo);
+}
+function definir(caminho, valor) {
+  const partes = caminho.split('.');
+  const ultima = partes.pop();
+  let alvo = conteudo;
+  for (const p of partes) {
+    if (typeof alvo[p] !== 'object' || alvo[p] === null) alvo[p] = {};
+    alvo = alvo[p];
+  }
+  if (valor === '') delete alvo[ultima]; else alvo[ultima] = valor;
+}
+
+function avisar(texto, tipo = 'ok') {
+  const el = $('#aviso');
+  el.textContent = texto;
+  el.dataset.tipo = tipo;
+  el.classList.add('mostra');
+  if (tipo === 'ok') setTimeout(() => el.classList.remove('mostra'), 4000);
+}
+
+/* ---------- montagem dos campos ---------- */
+function montarTextos() {
+  const raiz = $('#campos');
+  raiz.innerHTML = '';
+  for (const [titulo, campos] of CAMPOS) {
+    const fs = document.createElement('fieldset');
+    fs.innerHTML = `<legend>${titulo}</legend>`;
+    for (const [chave, rotulo, tipo] of campos) {
+      const valor = pegar(chave);
+      const l = document.createElement('label');
+      const controle = tipo === 'bloco'
+        ? `<textarea data-chave="${chave}"></textarea>`
+        : `<input type="text" data-chave="${chave}">`;
+      l.innerHTML = `<span>${rotulo}</span>${controle}`;
+      const c = l.querySelector('[data-chave]');
+      // <br> vira quebra de linha na edição, e volta a <br> ao salvar
+      c.value = (valor || '').replace(/<br\s*\/?>/gi, '\n');
+      fs.appendChild(l);
+    }
+    raiz.appendChild(fs);
+  }
+}
+
+function colherTextos() {
+  for (const c of $$('#campos [data-chave]')) {
+    const v = c.value.trim().replace(/\n/g, '<br>');
+    definir(c.dataset.chave, v);
+  }
+}
+
+/* ---------- clientes ---------- */
+function montarClientes() {
+  const raiz = $('#lista-clientes');
+  raiz.innerHTML = '';
+  const itens = conteudo.clientes || [];
+  if (!itens.length) {
+    raiz.innerHTML = '<p class="vazio">Nenhum cliente ainda. A lista do site continua a que está no HTML.</p>';
+  }
+  itens.forEach((c, i) => raiz.appendChild(itemCliente(c, i)));
+}
+
+function itemCliente(c, i) {
+  const d = document.createElement('div');
+  d.className = 'item';
+  d.innerHTML = `
+    <div class="item__topo">
+      <img class="previa" src="${c.foto || ''}" alt="" onerror="this.removeAttribute('src')">
+      <span class="item__n">${String(i + 1).padStart(2, '0')}</span>
+      <button class="mini" type="button" data-mover="-1">↑</button>
+      <button class="mini" type="button" data-mover="1">↓</button>
+      <button class="mini mini--perigo" type="button" data-remover>Remover</button>
+    </div>
+    <div class="linha linha--2">
+      <label><span>Nome</span><input type="text" data-campo="nome" value="${(c.nome || '').replace(/"/g, '&quot;')}"></label>
+      <label><span>@ do Instagram</span><input type="text" data-campo="handle" value="${(c.handle || '').replace(/"/g, '&quot;')}">
+        <small>Deixe vazio se a pessoa não tem — o @ some do card.</small></label>
+    </div>
+    <label><span>Foto</span><input type="text" data-campo="foto" value="${(c.foto || '').replace(/"/g, '&quot;')}">
+      <small>Cole o endereço da aba Fotos. Vazio: aparecem as iniciais.</small></label>`;
+
+  d.querySelector('[data-remover]').onclick = () => {
+    conteudo.clientes.splice(i, 1); montarClientes();
+  };
+  for (const b of d.querySelectorAll('[data-mover]')) {
+    b.onclick = () => {
+      const j = i + Number(b.dataset.mover);
+      if (j < 0 || j >= conteudo.clientes.length) return;
+      const l = conteudo.clientes;
+      [l[i], l[j]] = [l[j], l[i]];
+      montarClientes();
+    };
+  }
+  for (const c2 of d.querySelectorAll('[data-campo]')) {
+    c2.oninput = () => {
+      conteudo.clientes[i][c2.dataset.campo] = c2.value;
+      if (c2.dataset.campo === 'foto') d.querySelector('.previa').src = c2.value;
+    };
+  }
+  return d;
+}
+
+/* ---------- projetos ---------- */
+function montarProjetos() {
+  const raiz = $('#lista-projetos');
+  raiz.innerHTML = '';
+  const itens = conteudo.projetos || [];
+  if (!itens.length) {
+    raiz.innerHTML = '<p class="vazio">Nenhum projeto ainda. A lista do site continua a que está no HTML.</p>';
+  }
+  itens.forEach((p, i) => raiz.appendChild(itemProjeto(p, i)));
+}
+
+function itemProjeto(p, i) {
+  const v = (x) => (x || '').replace(/"/g, '&quot;');
+  const d = document.createElement('div');
+  d.className = 'item';
+  d.innerHTML = `
+    <div class="item__topo">
+      <img class="previa previa--larga" src="${p.imagem || ''}" alt="" onerror="this.removeAttribute('src')">
+      <span class="item__n">${String(i + 1).padStart(2, '0')}</span>
+      <button class="mini" type="button" data-mover="-1">↑</button>
+      <button class="mini" type="button" data-mover="1">↓</button>
+      <button class="mini mini--perigo" type="button" data-remover>Remover</button>
+    </div>
+    <div class="linha linha--2">
+      <label><span>Etiqueta</span><input type="text" data-campo="tag" value="${v(p.tag)}"><small>Ex.: Landing Page</small></label>
+      <label><span>Ao lado da etiqueta</span><input type="text" data-campo="data" value="${v(p.data)}"><small>Ex.: Lançamento 7D</small></label>
+    </div>
+    <label><span>Título</span><textarea data-campo="titulo">${p.titulo || ''}</textarea></label>
+    <label><span>Contexto do cliente</span><textarea data-campo="contexto">${p.contexto || ''}</textarea>
+      <small>Uma linha dando o tamanho do cliente. O gringo não conhece a marca.</small></label>
+    <div class="linha linha--2">
+      <label><span>Disciplinas</span><input type="text" data-campo="disciplinas" value="${v(p.disciplinas)}"><small>Separadas por ·</small></label>
+      <label><span>Link</span><input type="text" data-campo="link" value="${v(p.link)}"></label>
+    </div>
+    <label><span>Imagem</span><input type="text" data-campo="imagem" value="${v(p.imagem)}">
+      <small>Cole o endereço da aba Fotos.</small></label>`;
+
+  d.querySelector('[data-remover]').onclick = () => { conteudo.projetos.splice(i, 1); montarProjetos(); };
+  for (const b of d.querySelectorAll('[data-mover]')) {
+    b.onclick = () => {
+      const j = i + Number(b.dataset.mover);
+      if (j < 0 || j >= conteudo.projetos.length) return;
+      const l = conteudo.projetos;
+      [l[i], l[j]] = [l[j], l[i]];
+      montarProjetos();
+    };
+  }
+  for (const c of d.querySelectorAll('[data-campo]')) {
+    c.oninput = () => {
+      conteudo.projetos[i][c.dataset.campo] = c.value;
+      if (c.dataset.campo === 'imagem') d.querySelector('.previa').src = c.value;
+    };
+  }
+  return d;
+}
+
+/* ---------- fotos ---------- */
+async function carregarGaleria() {
+  try {
+    const d = await api('/api/imagens');
+    const g = $('#galeria');
+    g.innerHTML = '';
+    const imgs = d.imagens || [];
+    $('#galeria-vazia').hidden = imgs.length > 0;
+    for (const im of imgs) {
+      const el = document.createElement('div');
+      el.className = 'foto-adm';
+      el.innerHTML = `
+        <img src="${im.url}" alt="" loading="lazy">
+        <div class="foto-adm__pe">
+          <span class="foto-adm__nome" title="${im.chave}">${im.chave.split('/').pop()}</span>
+          <button class="mini" type="button" data-copiar>Copiar</button>
+          <button class="mini mini--perigo" type="button" data-apagar>×</button>
+        </div>`;
+      el.querySelector('[data-copiar]').onclick = async () => {
+        await navigator.clipboard.writeText(im.url);
+        avisar('Endereço copiado: ' + im.url);
+      };
+      el.querySelector('[data-apagar]').onclick = async () => {
+        if (!confirm('Apagar esta imagem? Onde ela estiver em uso, o espaço fica vazio.')) return;
+        try {
+          await api('/api/imagens?chave=' + encodeURIComponent(im.chave), { method: 'DELETE' });
+          avisar('Imagem apagada.'); carregarGaleria();
+        } catch (err) { avisar('Não apaguei — ' + err.message, 'erro'); }
+      };
+      g.appendChild(el);
+    }
+  } catch (e) {
+    avisar('Não listei as imagens — ' + e.message, 'erro');
+  }
+}
+
+async function enviar(arquivos) {
+  const pasta = $('#pasta').value;
+  for (const a of arquivos) {
+    const fd = new FormData();
+    fd.append('arquivo', a);
+    fd.append('pasta', pasta);
+    avisar('Enviando ' + a.name + '…');
+    try {
+      const d = await api('/api/imagens', { method: 'POST', body: fd });
+      avisar('Enviada: ' + d.url);
+    } catch (e) {
+      avisar('Falhou o envio de ' + a.name + ': ' + e.message, 'erro');
+    }
+  }
+  carregarGaleria();
+}
+
+/* ---------- salvar ---------- */
+async function salvar() {
+  colherTextos();
+  const b = $('#salvar');
+  b.disabled = true; b.textContent = 'Salvando…';
+  try {
+    await api('/api/conteudo', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(conteudo),
+    });
+    avisar('Salvo. O site já está com as alterações — recarregue para ver.');
+  } catch (e) {
+    avisar('Não salvou: ' + e.message, 'erro');
+  } finally {
+    b.disabled = false; b.textContent = 'Salvar';
+  }
+}
+
+/* ---------- início ---------- */
+async function iniciar() {
+  try {
+    conteudo = await api('/api/conteudo');
+    if (!conteudo || typeof conteudo !== 'object') conteudo = {};
+  } catch (e) {
+    conteudo = {};
+    avisar('Não carreguei o conteúdo salvo — ' + e.message, 'erro');
+  }
+  montarTextos(); montarClientes(); montarProjetos(); carregarGaleria();
+}
+
+$('#salvar').onclick = salvar;
+$('[data-novo="cliente"]').onclick = () => {
+  (conteudo.clientes ||= []).push({ nome: '', handle: '', foto: '' });
+  montarClientes();
+};
+$('[data-novo="projeto"]').onclick = () => {
+  (conteudo.projetos ||= []).push({ tag: '', data: '', titulo: '', contexto: '', disciplinas: '', imagem: '', link: '' });
+  montarProjetos();
+};
+
+for (const aba of $$('.aba')) {
+  aba.onclick = () => {
+    for (const a of $$('.aba')) a.setAttribute('aria-selected', String(a === aba));
+    for (const p of $$('.painel')) p.hidden = p.id !== 'painel-' + aba.dataset.alvo;
+  };
+}
+
+const solta = $('#solta'), arquivo = $('#arquivo');
+solta.onclick = () => arquivo.click();
+arquivo.onchange = () => { enviar([...arquivo.files]); arquivo.value = ''; };
+solta.ondragover = (e) => { e.preventDefault(); solta.classList.add('ativa'); };
+solta.ondragleave = () => solta.classList.remove('ativa');
+solta.ondrop = (e) => {
+  e.preventDefault(); solta.classList.remove('ativa');
+  enviar([...e.dataTransfer.files].filter((f) => f.type.startsWith('image/')));
+};
+
+addEventListener('beforeunload', (e) => {
+  // não perde edição por engano
+  if ($('#salvar').disabled) { e.preventDefault(); e.returnValue = ''; }
+});
+
+iniciar();
+</script>
+</body>
+</html>

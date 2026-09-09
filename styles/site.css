@@ -641,24 +641,31 @@
 }
 .porque__t { margin-bottom: var(--sp-sm); }
 
-.sempre { border-top: var(--hair) solid var(--line-2); padding-top: var(--sp-xl); }
-.sempre__lista {
-  display: grid;
-  gap: var(--sp-md);
-  font-size: clamp(1.25rem, 2.4vw, 2rem);
-  font-weight: var(--w-black);
-  letter-spacing: -.035em;
-}
-@media (min-width: 800px) { .sempre__lista { grid-template-columns: repeat(3, 1fr); } }
-.sempre__lista li {
-  display: flex;
-  align-items: baseline;
-  gap: var(--sp-md);
+/* Os três pontos vivem dentro do card de Comunicação clara: é dele que
+   eles falam. Soltos no rodapé da seção, repetiam o assunto. */
+.sempre {
+  margin-top: var(--sp-lg);
   padding-top: var(--sp-md);
   border-top: var(--hair-2) solid var(--brand);
+  display: grid;
+  gap: var(--sp-2xs);
 }
-.sempre__n { font-size: var(--t-small); font-weight: var(--w-bold); letter-spacing: .12em; color: var(--muted); }
-
+.sempre li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-sm);
+  padding-block: var(--sp-2xs);
+  font-size: var(--t-small);
+  font-weight: var(--w-bold);
+  letter-spacing: -.02em;
+}
+.sempre li + li { border-top: var(--hair) solid var(--line-2); }
+.sempre span {
+  font-size: var(--t-eyebrow);
+  font-weight: var(--w-bold);
+  letter-spacing: .1em;
+  color: var(--muted);
+}
 
 /* ============================================================ 05 PROCESSO */
 
