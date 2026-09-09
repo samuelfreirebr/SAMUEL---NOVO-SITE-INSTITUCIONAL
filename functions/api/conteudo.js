@@ -1,4 +1,4 @@
-import { autorizado, recusar, json } from './_auth.js';
+import { json } from './_auth.js';
 
 /* GET  devolve o que está salvo (o painel usa para preencher os campos)
    PUT  grava o JSON inteiro                                          */
@@ -10,7 +10,6 @@ export async function onRequestGet({ env }) {
 }
 
 export async function onRequestPut({ request, env }) {
-  if (!autorizado(request)) return recusar();
   if (!env.CONTEUDO) return json({ erro: 'KV CONTEUDO não está ligado a este projeto.' }, 500);
 
   let dado;

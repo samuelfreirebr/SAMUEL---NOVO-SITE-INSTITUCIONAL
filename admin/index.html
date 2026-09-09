@@ -53,6 +53,9 @@
   .aviso[data-tipo="erro"] { background: var(--brand); color: #fff; }
   .aviso[data-tipo="ok"] { background: var(--ink); color: #fff; }
   .aviso.mostra { display: block; }
+  #local { display: block; background: var(--brand); color: #fff; }
+  #local[hidden] { display: none; }
+  #local code { background: rgba(255,255,255,.22); padding: 0 .3em; border-radius: 3px; }
 
   .corpo { flex: 1; min-height: 0; display: flex; }
   .painel { flex: 1; min-height: 0; overflow: auto; }
@@ -136,7 +139,6 @@
     <button type="button" aria-selected="true"  data-alvo="site">Editar site</button>
     <button type="button" aria-selected="false" data-alvo="clientes">Clientes</button>
     <button type="button" aria-selected="false" data-alvo="projetos">Projetos</button>
-    <button type="button" aria-selected="false" data-alvo="fotos">Fotos</button>
   </div>
 
   <button class="mini" type="button" id="recarregar">Recarregar</button>
@@ -144,6 +146,12 @@
   <button class="btn btn--brand" type="button" id="salvar">Salvar</button>
 </header>
 
+<p class="aviso" id="local" hidden>
+  <b>Modo local.</b> As Functions do Cloudflare não rodam em
+  <code>localhost</code>, então <b>salvar e enviar foto não funcionam aqui</b> —
+  dá para editar e ver o resultado, mas nada persiste. Publique no Pages para o
+  painel funcionar de verdade.
+</p>
 <p class="aviso" id="aviso" role="status"></p>
 
 <div class="corpo">
@@ -176,42 +184,21 @@
     </div>
   </section>
 
-  <section class="painel" id="painel-fotos" hidden>
-    <div class="form">
-      <fieldset>
-        <legend>Enviar imagem</legend>
-        <label><span>Pasta</span>
-          <select id="pasta">
-            <option value="clientes">clientes</option>
-            <option value="projetos">projetos</option>
-            <option value="bastidores">bastidores</option>
-            <option value="geral">geral</option>
-          </select>
-        </label>
-        <div class="solta" id="solta">
-          <b>Arraste as imagens aqui</b>
-          <span>ou clique para escolher — JPG, PNG, WebP ou AVIF, at&eacute; 6 MB</span>
-        </div>
-        <input type="file" id="arquivo" accept="image/*" multiple hidden>
-      </fieldset>
-      <fieldset>
-        <legend>Imagens enviadas</legend>
-        <div class="galeria-adm" id="galeria"></div>
-        <p class="vazio" id="galeria-vazia">Nenhuma imagem enviada ainda.</p>
-      </fieldset>
-    </div>
-  </section>
 </div>
 
 <dialog id="escolher">
   <div class="modal__topo">
-    <b>Escolher imagem</b>
-    <button class="mini" type="button" id="escolher-subir">Enviar nova</button>
+    <b id="escolher-titulo">Escolher imagem</b>
     <button class="mini" type="button" id="escolher-fechar">Fechar</button>
   </div>
   <div class="modal__corpo">
+    <div class="solta" id="solta">
+      <b>Arraste a nova foto aqui</b>
+      <span>ou clique para escolher &mdash; JPG, PNG, WebP ou AVIF, at&eacute; 6 MB</span>
+    </div>
+    <input type="file" id="arquivo" accept="image/*" multiple hidden>
     <div class="galeria-adm" id="escolher-galeria"></div>
-    <p class="vazio" id="escolher-vazia">Nenhuma imagem enviada ainda. Use &ldquo;Enviar nova&rdquo;.</p>
+    <p class="vazio" id="escolher-vazia">Nenhuma imagem enviada ainda.</p>
   </div>
 </dialog>
 
@@ -286,14 +273,71 @@ function carregarQuadro() {
       const v = pegar(img.getAttribute('data-edit-img'));
       if (typeof v === 'string' && v !== '') img.src = v;
     }
+    importarDoQuadro(doc);
     const info = ligarEditor(q, definir, escolherImagem);
     if (info) avisar('Pronto para editar: ' + info.textos + ' textos e ' + info.imagens + ' fotos nesta versao.');
   };
 }
 
-let resolverEscolha = null;
+/* O painel começa vazio, mas o site já tem clientes e projetos escritos no
+   HTML. Sem isto, a aba Clientes mostrava "nenhum cliente" enquanto o
+   carrossel rodava com treze — e a única saída era recadastrar tudo.
+   Aqui a lista atual é lida do próprio quadro e vira ponto de partida.
+   Os clones da esteira têm aria-hidden: ficam de fora. */
+function importarDoQuadro(doc) {
+  if (!conteudo.clientes || !conteudo.clientes.length) {
+    const lis = [...doc.querySelectorAll('.clientes__trilha > li:not([aria-hidden])')];
+    if (lis.length) {
+      conteudo.clientes = lis.map((li) => {
+        const img = li.querySelector('img');
+        const foto = li.querySelector('.cliente__foto');
+        return {
+          nome: (li.querySelector('b') || {}).textContent || '',
+          handle: (li.querySelector('em') || {}).textContent || '',
+          foto: img ? new URL(img.getAttribute('src'), location.origin).pathname : '',
+          inicial: foto ? foto.getAttribute('data-inicial') || '' : '',
+        };
+      });
+      montarClientes();
+    }
+  }
 
-async function escolherImagem() {
+  if (!conteudo.projetos || !conteudo.projetos.length) {
+    const lis = [...doc.querySelectorAll('.projetos > li')];
+    if (lis.length) {
+      conteudo.projetos = lis.map((li) => {
+        const img = li.querySelector('img');
+        const t = (sel) => (li.querySelector(sel) || {}).textContent || '';
+        const a = li.querySelector('a');
+        return {
+          tag: t('.tag').trim(),
+          data: t('.projeto__data').trim(),
+          titulo: t('.projeto__titulo').trim(),
+          contexto: t('.projeto__ctx').trim(),
+          disciplinas: t('.projeto__disc').trim(),
+          imagem: img ? new URL(img.getAttribute('src'), location.origin).pathname : '',
+          link: a ? a.getAttribute('href') || '' : '',
+        };
+      });
+      montarProjetos();
+    }
+  }
+
+  // Importar não é editar: o botão Salvar não deve acender por isso.
+  salvo = JSON.stringify(conteudo);
+  marcarEstado();
+}
+
+let resolverEscolha = null;
+let pastaAtual = 'geral';
+
+async function escolherImagem(chaveOuPasta) {
+  // A pasta sai do contexto: foto de cliente vai para clientes/, e por aí.
+  pastaAtual = /cliente/i.test(chaveOuPasta || '') ? 'clientes'
+             : /projeto/i.test(chaveOuPasta || '') ? 'projetos'
+             : /bastidor/i.test(chaveOuPasta || '') ? 'bastidores'
+             : 'geral';
+  $('#escolher-titulo').textContent = 'Escolher imagem — ' + pastaAtual;
   await pintarEscolher();
   $('#escolher').showModal();
   return new Promise((r) => { resolverEscolha = r; });
@@ -313,6 +357,18 @@ async function pintarEscolher() {
     b.innerHTML = '<img src="' + im.url + '" alt="" loading="lazy">'
       + '<div class="foto-adm__pe"><span class="foto-adm__nome">' + im.chave.split('/').pop() + '</span></div>';
     b.onclick = () => fecharEscolher(im.url);
+    const x = document.createElement('button');
+    x.type = 'button'; x.className = 'mini mini--perigo'; x.textContent = '×';
+    x.title = 'Apagar do acervo';
+    x.onclick = async (ev) => {
+      ev.stopPropagation();
+      if (!confirm('Apagar esta imagem do acervo? Onde estiver em uso, o espaço fica vazio.')) return;
+      try {
+        await api('/api/imagens?chave=' + encodeURIComponent(im.chave), { method: 'DELETE' });
+        pintarEscolher();
+      } catch (err) { avisar('Não apaguei — ' + err.message, 'erro'); }
+    };
+    b.querySelector('.foto-adm__pe').appendChild(x);
     g.appendChild(b);
   }
 }
@@ -323,7 +379,6 @@ function fecharEscolher(url) {
 }
 $('#escolher-fechar').onclick = () => fecharEscolher(null);
 $('#escolher').addEventListener('cancel', () => fecharEscolher(null));
-$('#escolher-subir').onclick = () => { $('#arquivo').dataset.paraEscolha = '1'; $('#arquivo').click(); };
 
 function esc(x) { return (x || '').replace(/"/g, '&quot;'); }
 
@@ -402,7 +457,7 @@ function ligarItem(d, lista, i, remontar, campoFoto) {
     };
   }
   d.querySelector('[data-foto]').onclick = async () => {
-    const url = await escolherImagem();
+    const url = await escolherImagem(campoFoto === 'foto' ? 'cliente' : 'projeto');
     if (url) { lista[i][campoFoto] = url; marcarEstado(); remontar(); }
   };
   for (const c of d.querySelectorAll('[data-campo]')) {
@@ -410,47 +465,12 @@ function ligarItem(d, lista, i, remontar, campoFoto) {
   }
 }
 
-async function carregarGaleria() {
-  try {
-    const d = await api('/api/imagens');
-    const g = $('#galeria');
-    g.innerHTML = '';
-    const imgs = d.imagens || [];
-    $('#galeria-vazia').hidden = imgs.length > 0;
-    for (const im of imgs) {
-      const el = document.createElement('div');
-      el.className = 'foto-adm';
-      el.innerHTML = '<img src="' + im.url + '" alt="" loading="lazy">'
-        + '<div class="foto-adm__pe">'
-        + '<span class="foto-adm__nome" title="' + im.chave + '">' + im.chave.split('/').pop() + '</span>'
-        + '<button class="mini" type="button" data-copiar>Copiar</button>'
-        + '<button class="mini mini--perigo" type="button" data-apagar>&times;</button>'
-        + '</div>';
-      el.querySelector('[data-copiar]').onclick = async () => {
-        await navigator.clipboard.writeText(im.url); avisar('Endereco copiado.');
-      };
-      el.querySelector('[data-apagar]').onclick = async () => {
-        if (!confirm('Apagar esta imagem? Onde ela estiver em uso, o espaco fica vazio.')) return;
-        try {
-          await api('/api/imagens?chave=' + encodeURIComponent(im.chave), { method: 'DELETE' });
-          avisar('Imagem apagada.'); carregarGaleria();
-        } catch (err) { avisar('Nao apaguei — ' + err.message, 'erro'); }
-      };
-      g.appendChild(el);
-    }
-  } catch (e) {
-    avisar('Nao listei as imagens — ' + e.message, 'erro');
-  }
-}
-
 async function enviar(arquivos) {
-  const paraEscolha = $('#arquivo').dataset.paraEscolha === '1';
-  $('#arquivo').dataset.paraEscolha = '0';
   let ultima = null;
   for (const a of arquivos) {
     const fd = new FormData();
     fd.append('arquivo', a);
-    fd.append('pasta', $('#pasta').value);
+    fd.append('pasta', pastaAtual);
     avisar('Enviando ' + a.name + '...');
     try {
       const d = await api('/api/imagens', { method: 'POST', body: fd });
@@ -458,9 +478,7 @@ async function enviar(arquivos) {
       avisar('Enviada: ' + d.url);
     } catch (e) { avisar('Falhou ' + a.name + ' — ' + e.message, 'erro'); }
   }
-  carregarGaleria();
-  if (paraEscolha && ultima) fecharEscolher(ultima);
-  else if (paraEscolha) pintarEscolher();
+  if (ultima) fecharEscolher(ultima); else pintarEscolher();
 }
 
 async function salvar() {
@@ -483,16 +501,17 @@ async function salvar() {
 }
 
 async function iniciar() {
+  $('#local').hidden = !LOCAL;
   try {
     conteudo = await api('/api/conteudo');
     if (!conteudo || typeof conteudo !== 'object') conteudo = {};
   } catch (e) {
     conteudo = {};
-    avisar('Nao carreguei o conteudo salvo — ' + e.message, 'erro');
+    if (!LOCAL) avisar('Nao carreguei o conteudo salvo — ' + e.message, 'erro');
   }
   salvo = JSON.stringify(conteudo);
   marcarEstado();
-  carregarQuadro(); montarClientes(); montarProjetos(); carregarGaleria();
+  carregarQuadro(); montarClientes(); montarProjetos();
 }
 
 $('#salvar').onclick = salvar;

@@ -153,16 +153,25 @@ variável **`CONTEUDO`** apontando para ele.
 No projeto → *Settings* → *Functions* → *R2 bucket bindings*:
 variável **`MIDIA`** apontando para ele.
 
-**3. Access — é isto que tranca o painel.** *Zero Trust* → *Access* →
-*Applications* → *Add an application* → *Self-hosted*:
+**3. Senha do painel** — no projeto do Pages → *Settings* →
+*Environment variables* → *Add variable*, como **Secret**:
 
-- Domínio: `links.samuelfreire.com.br`, caminho `admin`
-- Adicione uma segunda: mesmo domínio, caminho `api`
-- Política: *Allow* → *Emails* → `samuelfreirebr@gmail.com`
+| Nome | Valor |
+|---|---|
+| `SENHA_PAINEL` | a senha que você escolher |
 
-Sem esse passo o painel fica **aberto para qualquer um**. A API recusa
-requisição sem o cabeçalho do Access, mas isso é a segunda tranca, não a
-primeira — configure o Access.
+O usuário é `samuel`. O navegador pede as duas coisas ao abrir `/admin`.
+
+**Enquanto essa variável não existir, o painel fica trancado para todo mundo**
+— inclusive para você. É de propósito: uma proteção que depende de alguém
+lembrar de ligar não é proteção. A tela avisa o que fazer.
+
+**4. Cloudflare Access (opcional, mais forte)** — se quiser login pelo Google
+em vez de senha: *Zero Trust* → *Access* → *Applications* → *Self-hosted*,
+domínio `links.samuelfreire.com.br`, caminhos `admin` e `api`, política
+*Allow* → *Emails* → `samuelfreirebr@gmail.com`.
+
+Qualquer uma das duas chaves abre o painel; basta ter uma.
 
 ### Usando
 

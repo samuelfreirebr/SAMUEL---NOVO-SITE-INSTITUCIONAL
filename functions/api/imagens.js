@@ -1,4 +1,4 @@
-import { autorizado, recusar, json } from './_auth.js';
+import { json } from './_auth.js';
 
 /* GET     lista o que está no R2
    POST    sobe uma imagem (multipart: campo "arquivo", campo "pasta")
@@ -19,7 +19,6 @@ export async function onRequestGet({ env }) {
 }
 
 export async function onRequestPost({ request, env }) {
-  if (!autorizado(request)) return recusar();
   if (!env.MIDIA) return json({ erro: 'Bucket R2 MIDIA não está ligado.' }, 500);
 
   const form = await request.formData();
@@ -51,7 +50,6 @@ export async function onRequestPost({ request, env }) {
 }
 
 export async function onRequestDelete({ request, env }) {
-  if (!autorizado(request)) return recusar();
   if (!env.MIDIA) return json({ erro: 'Bucket R2 MIDIA não está ligado.' }, 500);
 
   const chave = new URL(request.url).searchParams.get('chave');
