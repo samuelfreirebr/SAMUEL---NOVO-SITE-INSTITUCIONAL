@@ -201,6 +201,34 @@ nada disso.
 Cada salvamento guarda a versão anterior em `site:anterior` no KV — se algo
 sair errado, dá para recuperar por lá.
 
+## Diagnóstico: `/estado`
+
+Abra `links.samuelfreire.com.br/estado`. É a forma mais rápida de saber o que
+está no ar. Fica fora de `/api` de propósito — se o painel estiver trancado por
+falta de senha, esta URL ainda responde.
+
+**Devolveu JSON** — as Functions estão rodando. O campo `faltando` diz o que
+ainda precisa ser ligado:
+
+```json
+{ "functions": true, "senhaConfigurada": false,
+  "kvLigado": true, "r2Ligado": true,
+  "faltando": ["SENHA_PAINEL (variável secreta)"], "pronto": false }
+```
+
+**Devolveu a página do site, ou erro 404** — as Functions **não** estão
+rodando. É a causa de: painel abrindo sem pedir senha, e "o servidor
+respondeu algo que não é JSON" ao salvar. Verifique, no projeto do Pages:
+
+1. *Settings* → *Builds & deployments* → **Build output directory** precisa
+   ser a raiz (`/`), não uma subpasta. A pasta `functions/` tem que ficar na
+   raiz do que é publicado.
+2. *Deployments* → o último deploy é de um commit que **já contém**
+   `functions/`? Se for anterior, force um novo com *Retry deployment*.
+3. O projeto está conectado ao Git? Projetos criados por *Direct Upload*
+   (arrastar pasta) só executam Functions se a pasta `functions/` tiver sido
+   incluída no envio.
+
 ## Publicar
 
 Dois caminhos. Os arquivos dos dois já estão no repositório.
