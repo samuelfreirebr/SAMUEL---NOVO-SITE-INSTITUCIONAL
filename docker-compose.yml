@@ -1,0 +1,8 @@
+# Stack do Portainer. Aponte para o repositório e suba.
+services:
+  site:
+    build: .
+    container_name: samuel-site
+    restart: unless-stopped
+    ports:
+      - "8080:80"

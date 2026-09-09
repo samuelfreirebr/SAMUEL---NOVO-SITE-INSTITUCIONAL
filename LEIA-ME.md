@@ -115,6 +115,48 @@ resultado com número. É o número que vende.
 
 **Métricas** — seção `01`, bloco `.metricas`.
 
+## Publicar
+
+Dois caminhos. Os arquivos dos dois já estão no repositório.
+
+### Cloudflare Pages — o mais simples
+
+Você já usa Cloudflare para a regra de geo, então tudo fica no mesmo lugar
+e não precisa de Docker nem de servidor.
+
+1. Cloudflare → **Workers & Pages** → *Create* → *Pages* → *Connect to Git*
+2. Escolha este repositório
+3. Build settings: **deixe tudo vazio**. Não há build — são arquivos
+   estáticos. *Build command* em branco, *output directory* `/`
+4. Deploy
+5. *Custom domains* → adicione `links.samuelfreire.com.br`
+
+O arquivo `_headers` já está aqui e o Pages o lê sozinho: os dois
+`index.html` ficam sem cache e os assets com cache longo.
+
+### Portainer — se preferir seu próprio servidor
+
+`Dockerfile`, `nginx.conf` e `docker-compose.yml` estão prontos.
+
+1. Portainer → *Stacks* → *Add stack* → *Repository*
+2. Aponte para este repositório, arquivo `docker-compose.yml`
+3. Deploy. O site sobe na porta **8080** do host
+4. Aponte o proxy/DNS de `links.samuelfreire.com.br` para essa porta
+
+> Estes arquivos **não foram testados** — o Docker não estava rodando na
+> máquina onde o site foi construído. A configuração está correta no papel,
+> mas o primeiro `docker build` é seu.
+
+### O que não pode faltar em nenhum dos dois
+
+Os dois `index.html` **não podem ser cacheados**. Eles são quem aponta para
+a versão dos assets; HTML velho em cache serve CSS velho e o layout quebra de
+formas confusas — aconteceu várias vezes durante o desenvolvimento. Os assets,
+ao contrário, podem ter cache eterno, porque mudam de URL a cada alteração.
+
+Depois de publicar, a regra de geo do Cloudflare entra por cima — veja
+*Duas versões, um app*.
+
 ## Versão dos assets
 
 Os `<link>` de CSS e o `<script>` levam `?v=…` no fim:
