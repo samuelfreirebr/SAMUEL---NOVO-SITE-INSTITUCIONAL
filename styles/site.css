@@ -166,6 +166,11 @@
 }
 .hero__title-2 { color: var(--muted); }
 
+/* O subtítulo agora vive fora do rodapé, colado no título. */
+/* Sem margem própria: o vão já vem do gap do .hero__in, e somar os dois
+   afastava o subtítulo mais do título do que dos botões. */
+.hero > .wrap > .lead { max-width: 46ch; }
+
 .hero__foot {
   display: flex;
   flex-direction: column;
@@ -297,8 +302,18 @@
 
 /* ============================================================ CABEÇALHO DE SEÇÃO */
 
-.sec-head { max-width: 24ch; }
-.sec-head .lead { max-width: 40ch; }
+/* O cap estreito é do título, não do parágrafo: herdado, ele espremia a
+   lead em seis linhas curtas e deixava metade da largura vazia. */
+.sec-head { max-width: none; }
+.sec-head > h2 { max-width: 14ch; }
+.sec-head .lead { max-width: 46ch; }
+/* Sem título acima, a lead vira a abertura da seção: ganha corpo. */
+#porque .sec-head .lead {
+  font-size: clamp(1.5rem, 2.8vw, 2.5rem);
+  line-height: 1.25;
+  letter-spacing: -.03em;
+  max-width: 26ch;
+}
 
 .sec-head--row {
   max-width: none;
@@ -461,6 +476,9 @@
   padding-block: var(--sp-2xs);
   border-bottom: var(--hair) solid var(--line-invert);
 }
+/* O último item já é fechado pela borda da própria frente: com os dois,
+   saíam dois traços colados entre um tópico e o seguinte. */
+.frente__itens li:last-child { border-bottom: 0; }
 .frente__itens li::before {
   content: "";
   flex: none;
@@ -481,6 +499,10 @@
 }
 @media (min-width: 800px) { .balanco { grid-template-columns: 1fr 1fr; gap: var(--sp-2xl); } }
 .balanco__intro { max-width: 40ch; }
+/* O bloco vinha órfão: a pilha já rolou e o título da frente 04 saiu de
+   cena, então ele precisa se identificar sozinho. */
+.balanco__rotulo { margin-bottom: var(--sp-md); }
+@media (min-width: 800px) { .balanco__rotulo { grid-column: 1; } }
 .balanco__lista {
   display: flex;
   flex-direction: column;
@@ -575,7 +597,6 @@
 
 /* A esteira de bastidores é faixa própria: dentro do Sobre ela sozinha
    somava 400px e estourava a dobra. */
-.bastidores { padding-bottom: var(--section-y-s); }
 
 /* ---------- Tira de bastidores ---------- */
 
@@ -868,4 +889,10 @@
    ============================================================ */
 
 main > .hero ~ * { position: relative; z-index: 1; }
-.bastidores { background: var(--bg); }
+/* Padding, não margem: a margem de um filho escapa da seção quando ela
+   não tem borda nem padding no topo, e o vão que sobrava deixava o hero
+   grudado aparecer por baixo. */
+.bastidores {
+  background: var(--bg);
+  padding-block: var(--section-y-s);
+}

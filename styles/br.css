@@ -55,11 +55,6 @@
 }
 
 
-/* ---------- Tira de bastidores -------------------------------------
-   Aqui ela fecha a seção Sobre, então precisa do respiro que antes
-   vinha da classe utilitária.                                      */
-
-.tira { margin-top: var(--sp-2xl); }
 
 
 /* ---------- Ajuste de dobra no celular -----------------------------
