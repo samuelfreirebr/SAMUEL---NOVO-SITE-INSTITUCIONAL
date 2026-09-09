@@ -281,6 +281,19 @@
 
   /* ---------- 7. Miudezas -------------------------------------------- */
 
+  // Foto de cliente que não decodifica sai de cena: o span guarda as
+  // iniciais em data-inicial, então a lista continua legível.
+  function blindarFotos() {
+    var fotos = document.querySelectorAll('.cliente__foto img');
+    for (var i = 0; i < fotos.length; i++) {
+      (function (img) {
+        if (img.complete && img.naturalWidth === 0) { img.remove(); return; }
+        img.addEventListener('error', function () { img.remove(); });
+      })(fotos[i]);
+    }
+  }
+
+
   function ano() {
     var el = document.querySelector('[data-ano]');
     if (el) el.textContent = String(new Date().getFullYear());
@@ -291,6 +304,7 @@
 
   function iniciar() {
     ano();
+    blindarFotos();
 
     // A partir daqui o CSS pode animar. Se este arquivo falhar antes,
     // .reveal nunca fica invisível e a página segue inteira.

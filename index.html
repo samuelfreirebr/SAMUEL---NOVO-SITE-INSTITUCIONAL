@@ -20,11 +20,11 @@
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 
 <!-- Ordem obrigatória: tokens → base → site -->
-<link rel="stylesheet" href="/styles/tokens.css?v=20260908x">
-<link rel="stylesheet" href="/styles/base.css?v=20260908x">
-<link rel="stylesheet" href="/styles/site.css?v=20260908x">
+<link rel="stylesheet" href="/styles/tokens.css?v=20260909b">
+<link rel="stylesheet" href="/styles/base.css?v=20260909b">
+<link rel="stylesheet" href="/styles/site.css?v=20260909b">
 <!-- Última: só o que for exclusivo desta versão. -->
-<link rel="stylesheet" href="/styles/br.css?v=20260908x">
+<link rel="stylesheet" href="/styles/br.css?v=20260909b">
 </head>
 
 <body>
@@ -88,39 +88,58 @@
     </div>
 
     <div class="hero__foot">
-      <!-- ================================================================
-           CARROSSEL DE CLIENTES  —  PREENCHER
-
-           As entradas abaixo são EXEMPLO, não são clientes reais. Troque
-           pelos seus antes de publicar.
-
-           Para cada pessoa:
-             1. salve a foto de perfil em  img/clientes/<apelido>.webp
-                (quadrada, 200x200 basta — o Instagram não deixa extrair
-                 pelo link, e as URLs do CDN deles expiram)
-             2. duplique um <li> e ajuste nome, @ e src
-             3. sem foto? apague o <img> e deixe só data-inicial:
-                as iniciais aparecem no lugar
-
-           Uma linha por pessoa. A esteira se repete sozinha.
-           ================================================================ -->
+      <!-- Clientes. Para acrescentar: salve a foto em img/clientes/<apelido>.jpg,
+           duplique um <li> e ajuste nome, @ e src. Sem foto, apague o <img>
+           que as iniciais de data-inicial ficam no lugar. -->
       <div class="clientes reveal" data-esteira data-velocidade="24" style="--delay:.06s">
         <ul class="clientes__trilha" data-trilha>
           <li class="cliente">
-            <span class="cliente__foto" data-inicial="C1"></span>
-            <span class="cliente__txt"><b>Cliente exemplo</b><em>@usuario</em></span>
+            <span class="cliente__foto" data-inicial="LR"><img src="/img/clientes/leoirodrigues.jpg" alt="" width="80" height="80" loading="lazy"></span>
+            <span class="cliente__txt"><b>Leonardo Rodrigues</b><em>@leoirodrigues</em></span>
           </li>
           <li class="cliente">
-            <span class="cliente__foto" data-inicial="C2"></span>
-            <span class="cliente__txt"><b>Cliente exemplo</b><em>@usuario</em></span>
+            <span class="cliente__foto" data-inicial="MF"><img src="/img/clientes/masteryfloors.jpg" alt="" width="80" height="80" loading="lazy"></span>
+            <span class="cliente__txt"><b>Mastery Floors®</b><em>@masteryfloors</em></span>
           </li>
           <li class="cliente">
-            <span class="cliente__foto" data-inicial="C3"></span>
-            <span class="cliente__txt"><b>Cliente exemplo</b><em>@usuario</em></span>
+            <span class="cliente__foto" data-inicial="DJ"></span>
+            <span class="cliente__txt"><b>Dra June Favarin</b><em>@drajunefavarin</em></span>
           </li>
           <li class="cliente">
-            <span class="cliente__foto" data-inicial="C4"></span>
-            <span class="cliente__txt"><b>Cliente exemplo</b><em>@usuario</em></span>
+            <span class="cliente__foto" data-inicial="AP"><img src="/img/clientes/anapaulapujol.jpg" alt="" width="80" height="80" loading="lazy"></span>
+            <span class="cliente__txt"><b>Ana Paula Pujol</b><em>@anapaulapujol</em></span>
+          </li>
+          <li class="cliente">
+            <span class="cliente__foto" data-inicial="DV"><img src="/img/clientes/dermatovulvaracademy.jpg" alt="" width="80" height="80" loading="lazy"></span>
+            <span class="cliente__txt"><b>Dra Vivian Amaral</b><em>@dermatovulvaracademy</em></span>
+          </li>
+          <li class="cliente">
+            <span class="cliente__foto" data-inicial="FN"><img src="/img/clientes/cfcacademybr.jpg" alt="" width="80" height="80" loading="lazy"></span>
+            <span class="cliente__txt"><b>Felipe Nunes</b><em>@cfcacademybr</em></span>
+          </li>
+          <li class="cliente">
+            <span class="cliente__foto" data-inicial="CM"><img src="/img/clientes/_carlosrob.jpg" alt="" width="80" height="80" loading="lazy"></span>
+            <span class="cliente__txt"><b>CR - Mídias</b><em>@_carlosrob</em></span>
+          </li>
+          <li class="cliente">
+            <span class="cliente__foto" data-inicial="JT"><img src="/img/clientes/jhonata_teixeira.jpg" alt="" width="80" height="80" loading="lazy"></span>
+            <span class="cliente__txt"><b>Jhonata Teixeira</b><em>@jhonata_teixeira</em></span>
+          </li>
+          <li class="cliente">
+            <span class="cliente__foto" data-inicial="ED"><img src="/img/clientes/engenhariadedados.jpg" alt="" width="80" height="80" loading="lazy"></span>
+            <span class="cliente__txt"><b>Engenharia de Dados</b><em>@engenhariadedados</em></span>
+          </li>
+          <li class="cliente">
+            <span class="cliente__foto" data-inicial="MF"></span>
+            <span class="cliente__txt"><b>Millena Farias</b><em>@millenafariasmkt</em></span>
+          </li>
+          <li class="cliente">
+            <span class="cliente__foto" data-inicial="SM"></span>
+            <span class="cliente__txt"><b>SW MED</b><em>@swmarketingmedico</em></span>
+          </li>
+          <li class="cliente">
+            <span class="cliente__foto" data-inicial="CA"><img src="/img/clientes/allves.carol.jpg" alt="" width="80" height="80" loading="lazy"></span>
+            <span class="cliente__txt"><b>Carol Alves</b><em>@allves.carol</em></span>
           </li>
         </ul>
       </div>
@@ -282,6 +301,6 @@
 
 <!-- Lenis: opcional. Se o CDN cair, a rolagem nativa continua. -->
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js" defer></script>
-<script src="/js/main.js?v=20260908x" defer></script>
+<script src="/js/main.js?v=20260909b" defer></script>
 </body>
 </html>

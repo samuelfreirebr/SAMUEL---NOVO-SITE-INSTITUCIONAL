@@ -12,3 +12,6 @@
 # Arquivos-fonte pesados que não vão para a hospedagem.
 # O que é servido está em img/ — aqui ficam só os originais.
 _originais/
+
+# Fonte dos perfis: as fotos já foram extraídas para img/clientes/
+perfis_instagram.html
