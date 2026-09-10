@@ -16,6 +16,7 @@
 #
 #  E em Environment variables, antes do deploy:
 #    SENHA_PAINEL     a senha do painel
+#    PORTA_HOST       80 se nao houver proxy na frente (padrao 8080)
 # ============================================================
 
 services:
@@ -25,7 +26,9 @@ services:
     container_name: samuel-site
     restart: unless-stopped
     ports:
-      - "8080:3000"
+      # Porta do host. Sem proxy na frente, ponha PORTA_HOST=80 nas
+      # variaveis da stack para o site abrir sem :8080 no endereco.
+      - "${PORTA_HOST:-8080}:3000"
     environment:
       # Obrigatoria. Sem ela a stack nao sobe, de proposito:
       # uma tranca que depende de alguem lembrar de ligar nao tranca.
