@@ -1,7 +1,12 @@
 .git
-.claude
+.gitignore
+.wrangler
 _originais
+functions
+node_modules
 *.md
 verificar.sh
-perfis_instagram.html
 Apresentacao Comercial.dc.html
+perfis_instagram.html
+.DS_Store
+**/.DS_Store

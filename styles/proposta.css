@@ -1,0 +1,267 @@
+/* ============================================================
+   Proposta comercial.
+
+   Mesmo sistema do site: tokens.css e base.css entram antes e
+   trazem tipografia, botões, faixas e hairlines. Aqui só mora o
+   arranjo dos blocos que existem apenas na proposta.
+
+   Nenhuma cor ou medida crua — tudo sai de var(). Sem gradiente,
+   sem sombra, sem card flutuante: separação é hairline.
+   ============================================================ */
+
+/* ---------- Topo ------------------------------------------------------ */
+
+.prop-topo {
+  border-bottom: var(--hair) solid var(--line);
+  background: var(--bg);
+}
+.prop-topo__in {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-md);
+  min-height: var(--nav-h);
+}
+.prop-topo__marca {
+  font-size: var(--t-small);
+  font-weight: var(--w-black);
+  letter-spacing: -.03em;
+  color: var(--ink);
+}
+.prop-topo__marca em { font-style: normal; color: var(--brand); margin-left: .28em; }
+
+@media (max-width: 640px) { .prop-topo__tag { display: none; } }
+
+/* ---------- Capa ------------------------------------------------------ */
+
+.prop-capa { padding-block: clamp(3.5rem, 9vw, 9rem) var(--section-y-s); }
+
+.prop-capa__titulo {
+  margin-top: var(--sp-lg);
+  max-width: 18ch;
+}
+.prop-capa__sub {
+  margin-top: var(--sp-lg);
+  max-width: var(--maxw-text);
+  color: var(--muted);
+}
+
+.prop-capa__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: var(--sp-lg);
+  margin-top: var(--sp-2xl);
+  padding-top: var(--sp-md);
+  border-top: var(--hair) solid var(--line);
+  max-width: 52rem;
+}
+.prop-capa__meta dd { margin: 0; margin-top: var(--sp-2xs); }
+
+/* ---------- Escopo ---------------------------------------------------- */
+
+.prop-lista {
+  list-style: none;
+  margin-top: var(--sp-xl);
+  border-top: var(--hair) solid var(--line);
+}
+.prop-item {
+  display: grid;
+  /* minmax(0,…) porque um título longo faz a coluna fr estourar:
+     fr respeita o min-content e a régua de numeração desalinha. */
+  grid-template-columns: clamp(3rem, 6vw, 6rem) minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--sp-md);
+  padding-block: clamp(var(--sp-lg), 3.5vw, var(--sp-xl));
+  border-bottom: var(--hair) solid var(--line);
+}
+.prop-item__num {
+  font-size: var(--t-small);
+  font-weight: var(--w-bold);
+  color: var(--brand);
+  letter-spacing: .04em;
+  padding-top: .35em;
+}
+.prop-item__desc {
+  margin-top: var(--sp-sm);
+  max-width: var(--maxw-text);
+  color: var(--muted);
+}
+.prop-item__marca {
+  font-size: var(--t-eyebrow);
+  font-weight: var(--w-semi);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-top: .55em;
+}
+@media (max-width: 720px) {
+  .prop-item { grid-template-columns: clamp(2.25rem, 9vw, 3rem) minmax(0, 1fr); }
+  .prop-item__marca { grid-column: 2; padding-top: 0; margin-top: var(--sp-xs); }
+}
+
+/* ---------- O que cada entregável inclui ------------------------------ */
+
+.prop-inclui__grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: var(--sp-xl);
+  margin-top: var(--sp-xl);
+}
+.prop-checks { list-style: none; display: grid; gap: var(--sp-sm); }
+.prop-check {
+  position: relative;
+  padding-left: calc(var(--tick) + var(--sp-sm));
+  font-size: var(--t-body);
+  line-height: var(--lh-body);
+  letter-spacing: var(--ls-body);
+  color: var(--muted-invert);
+}
+/* Quadradinho de 9px: o detalhe gráfico do sistema, nada maior. */
+.prop-check::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: calc(var(--lh-body) * .5em - var(--tick) * .5);
+  width: var(--tick);
+  height: var(--tick);
+  background: var(--brand);
+}
+.prop-grupo__titulo {
+  color: #FFFFFF;
+  font-weight: var(--w-semi);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  padding-bottom: var(--sp-sm);
+  margin-bottom: var(--sp-md);
+  border-bottom: var(--hair) solid var(--line-invert);
+}
+
+/* ---------- Investimento ---------------------------------------------- */
+
+.prop-investimento__grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: var(--sp-2xl);
+  align-items: start;
+}
+.prop-valor .rule--strong { margin-bottom: var(--sp-md); }
+.prop-valor__n {
+  margin-top: var(--sp-md);
+  font-size: var(--t-metric);
+  font-weight: var(--w-black);
+  letter-spacing: var(--ls-display);
+  line-height: .9;
+  color: var(--ink);
+}
+.prop-valor__nota {
+  margin-top: var(--sp-lg);
+  max-width: var(--maxw-text);
+  color: var(--muted);
+}
+.prop-pagamento__chamada { max-width: 16ch; }
+.prop-campo {
+  margin-top: var(--sp-xl);
+  padding-top: var(--sp-md);
+  border-top: var(--hair) solid var(--line);
+}
+.prop-campo .eyebrow { margin-bottom: var(--sp-sm); }
+.prop-nota { margin-top: var(--sp-2xs); color: var(--muted); }
+
+.prop-conta { display: grid; gap: var(--sp-xs); }
+.prop-conta > div {
+  display: grid;
+  grid-template-columns: minmax(0, 11rem) minmax(0, 1fr);
+  gap: var(--sp-sm);
+}
+.prop-conta dt { font-size: var(--t-small); color: var(--muted); }
+.prop-conta dd {
+  margin: 0;
+  font-size: var(--t-small);
+  font-weight: var(--w-semi);
+  color: var(--ink);
+  /* Número de conta se lê dígito a dígito: tabular evita o pulo. */
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 560px) { .prop-conta > div { grid-template-columns: minmax(0, 1fr); gap: var(--sp-3xs); } }
+
+/* ---------- Condições -------------------------------------------------- */
+
+.prop-condicoes { background: var(--bg-2); }
+.prop-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: var(--sp-xl);
+  margin-top: var(--sp-xl);
+}
+.prop-card { border-top: var(--hair-2) solid var(--ink); padding-top: var(--sp-md); }
+.prop-card__tick {
+  display: block;
+  width: var(--bullet);
+  height: var(--bullet);
+  border-radius: 50%;
+  background: var(--brand);
+  margin-bottom: var(--sp-md);
+}
+.prop-card__titulo { margin-bottom: var(--sp-sm); }
+.prop-card p + p { margin-top: var(--sp-sm); }
+.prop-card .body { color: var(--muted); }
+
+/* ---------- Quem assina ------------------------------------------------ */
+
+.prop-sobre__grade {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, .65fr);
+  gap: clamp(var(--sp-xl), 6vw, var(--sp-3xl));
+  align-items: start;
+}
+@media (max-width: 900px) { .prop-sobre__grade { grid-template-columns: minmax(0, 1fr); } }
+
+.prop-sobre__p { margin-top: var(--sp-lg); max-width: var(--maxw-text); color: var(--ink-2); }
+.prop-sobre__txt .eyebrow + .prop-sobre__p { margin-top: var(--sp-xl); }
+
+.prop-retrato {
+  border-radius: var(--radius-img);
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+}
+.prop-retrato img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.prop-assina { margin-top: var(--sp-xl); }
+.prop-assina .rule { margin-bottom: var(--sp-md); }
+.prop-assina__papel { color: var(--muted); }
+.prop-assina__nome {
+  margin-top: var(--sp-2xs);
+  font-size: var(--t-h3);
+  font-weight: var(--w-black);
+  letter-spacing: var(--ls-h3);
+  line-height: var(--lh-h3);
+  color: var(--ink);
+}
+.prop-assina__nome em { font-style: normal; color: var(--brand); margin-left: .3em; }
+
+/* ---------- Encerramento e rodapé -------------------------------------- */
+
+.prop-fim__frase { max-width: 20ch; }
+.prop-fim .btn { margin-top: var(--sp-xl); }
+
+.prop-rodape {
+  padding-block: var(--sp-xl);
+  border-top: var(--hair) solid var(--line);
+  background: var(--bg);
+}
+.prop-rodape .small { color: var(--muted); }
+
+/* ---------- Impressão --------------------------------------------------- */
+
+/* A proposta é lida e virá PDF. Sem isso, as faixas escuras saem
+   como blocos de tinta e as revelações escondem seções inteiras. */
+@media print {
+  .prop-topo { position: static; }
+  .section { padding-block: var(--sp-xl); break-inside: avoid; }
+  .band-invert, .band-brand { background: var(--bg) !important; color: var(--ink) !important; }
+  .band-invert .prop-check, .band-invert .eyebrow { color: var(--ink) !important; }
+  .prop-grupo__titulo { color: var(--ink) !important; border-color: var(--line) !important; }
+  .reveal { opacity: 1 !important; transform: none !important; }
+  .prop-item, .prop-card, .prop-sobre__grade { break-inside: avoid; }
+}

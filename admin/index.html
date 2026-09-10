@@ -139,6 +139,7 @@
     <button type="button" aria-selected="true"  data-alvo="site">Editar site</button>
     <button type="button" aria-selected="false" data-alvo="clientes">Clientes</button>
     <button type="button" aria-selected="false" data-alvo="projetos">Projetos</button>
+    <button type="button" aria-selected="false" data-alvo="propostas">Propostas</button>
   </div>
 
   <button class="mini" type="button" id="recarregar">Recarregar</button>
@@ -147,10 +148,9 @@
 </header>
 
 <p class="aviso" id="local" hidden>
-  <b>Modo local.</b> As Functions do Cloudflare não rodam em
-  <code>localhost</code>, então <b>salvar e enviar foto não funcionam aqui</b> —
-  dá para editar e ver o resultado, mas nada persiste. Publique no Pages para o
-  painel funcionar de verdade.
+  <b>Modo local.</b> Voc&ecirc; est&aacute; no servidor da sua m&aacute;quina. Tudo funciona
+  &mdash; salvar, enviar foto, criar proposta &mdash; mas grava na pasta de dados
+  local, n&atilde;o no servidor de produ&ccedil;&atilde;o.
 </p>
 <p class="aviso" id="aviso" role="status"></p>
 
@@ -171,6 +171,22 @@
         <div id="lista-clientes"></div>
         <button class="mini" type="button" data-novo="cliente">+ Adicionar cliente</button>
       </fieldset>
+    </div>
+  </section>
+
+  <section class="painel" id="painel-propostas" hidden>
+    <div class="form">
+      <fieldset>
+        <legend>Propostas</legend>
+        <p class="dica">
+          Cada proposta vira uma p&aacute;gina pr&oacute;pria em <code>/propostas/&lt;id&gt;</code>.
+          Ela n&atilde;o aparece no site nem no Google &mdash; s&oacute; quem tem o link abre.
+          <b>Propostas salvam sozinhas</b>, no bot&atilde;o de dentro, n&atilde;o no Salvar l&aacute; de cima.
+        </p>
+        <div id="lista-propostas"></div>
+        <button class="mini" type="button" data-novo="proposta">+ Nova proposta</button>
+      </fieldset>
+      <div id="editor-proposta"></div>
     </div>
   </section>
 
@@ -218,8 +234,8 @@ async function api(url, opcoes) {
   try { dado = JSON.parse(texto); }
   catch (e) {
     throw new Error(LOCAL
-      ? 'as Functions do Cloudflare nao rodam no servidor local. Publique no Pages para o painel funcionar.'
-      : 'o servidor respondeu algo que nao e JSON — verifique se as Functions foram publicadas.');
+      ? 'o servidor local nao respondeu JSON. Rode "node servidor/servidor.js" com SENHA_PAINEL definida.'
+      : 'o servidor respondeu algo que nao e JSON.');
   }
   if (!r.ok) throw new Error(dado.erro || ('erro ' + r.status));
   return dado;
@@ -333,7 +349,8 @@ let pastaAtual = 'geral';
 
 async function escolherImagem(chaveOuPasta) {
   // A pasta sai do contexto: foto de cliente vai para clientes/, e por aí.
-  pastaAtual = /cliente/i.test(chaveOuPasta || '') ? 'clientes'
+  pastaAtual = /proposta/i.test(chaveOuPasta || '') ? 'propostas'
+             : /cliente/i.test(chaveOuPasta || '') ? 'clientes'
              : /projeto/i.test(chaveOuPasta || '') ? 'projetos'
              : /bastidor/i.test(chaveOuPasta || '') ? 'bastidores'
              : 'geral';
@@ -514,6 +531,381 @@ async function iniciar() {
   carregarQuadro(); montarClientes(); montarProjetos();
 }
 
+
+/* ============================================================
+   Propostas.
+
+   Vivem fora do conteudo do site: cada uma e um registro
+   proprio, salvo no seu botao, e vira a pagina /propostas/<id>.
+   Por isso o Salvar la de cima nao mexe nelas — misturar os dois
+   faria uma correcao de texto do site publicar uma proposta pela
+   metade.
+   ============================================================ */
+
+let propostas = [];
+let proposta = null;
+let propostaSalva = '';
+
+const propostaSuja = () => Boolean(proposta) && JSON.stringify(proposta) !== propostaSalva;
+
+const apelidar = (t) => (t || '')
+  .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+
+const linhasPara = (v) => (Array.isArray(v) ? v : []).join('\n');
+const paraLinhas = (t) => String(t || '').split('\n').map((l) => l.trim()).filter(Boolean);
+
+async function carregarPropostas() {
+  try { propostas = (await api('/api/propostas')).propostas || []; }
+  catch (e) { propostas = []; avisar('Nao listei as propostas — ' + e.message, 'erro'); }
+  montarListaPropostas();
+}
+
+function montarListaPropostas() {
+  const raiz = $('#lista-propostas');
+  raiz.innerHTML = '';
+  if (!propostas.length) {
+    raiz.innerHTML = '<p class="vazio">Nenhuma proposta ainda. Crie a primeira abaixo.</p>';
+    return;
+  }
+  for (const p of propostas) {
+    const d = document.createElement('div');
+    d.className = 'item';
+    d.innerHTML = ''
+      + '<div class="item__topo">'
+      + '<span class="item__n">' + (p.publicada === false ? 'rascunho' : 'no ar') + '</span>'
+      + '<b style="flex:1">' + esc(p.cliente || p.id) + '</b>'
+      + '<button class="mini" type="button" data-abrir>Editar</button>'
+      + '<a class="mini" target="_blank" rel="noopener" href="/propostas/' + esc(p.id) + '">Ver</a>'
+      + '<button class="mini" type="button" data-duplicar>Duplicar</button>'
+      + '<button class="mini mini--perigo" type="button" data-apagar>Apagar</button>'
+      + '</div>'
+      + '<small>/propostas/' + esc(p.id) + (p.atualizadaEm ? ' &middot; alterada em ' + esc(new Date(p.atualizadaEm).toLocaleString('pt-BR')) : '') + '</small>';
+    d.querySelector('[data-abrir]').onclick = () => abrirProposta(p.id);
+    d.querySelector('[data-duplicar]').onclick = () => duplicarProposta(p.id);
+    d.querySelector('[data-apagar]').onclick = () => apagarPropostaAdm(p);
+    raiz.appendChild(d);
+  }
+}
+
+async function abrirProposta(id) {
+  if (!confirmarDescarte()) return;
+  try {
+    proposta = await api('/api/propostas/' + encodeURIComponent(id));
+    propostaSalva = JSON.stringify(proposta);
+    montarEditorProposta();
+  } catch (e) { avisar('Nao abri a proposta — ' + e.message, 'erro'); }
+}
+
+async function duplicarProposta(id) {
+  if (!confirmarDescarte()) return;
+  try {
+    const base = await api('/api/propostas/' + encodeURIComponent(id));
+    delete base.criadaEm; delete base.atualizadaEm;
+    base.id = ''; base.cliente = '';
+    base.publicada = false;          // copia nasce fechada, para nao ir ao ar sem revisao
+    proposta = base;
+    propostaSalva = '';
+    montarEditorProposta();
+    avisar('Copia aberta. Troque o cliente e o endereco antes de salvar.');
+  } catch (e) { avisar('Nao dupliquei — ' + e.message, 'erro'); }
+}
+
+function novaProposta() {
+  if (!confirmarDescarte()) return;
+  proposta = {
+    id: '', cliente: '', publicada: false,
+    titulo: '', subtitulo: '', preparadaPara: '',
+    escopo: [], inclui: { titulo: 'Cada entregavel inclui', itens: [], grupos: [] },
+    investimento: { rotulo: 'Investimento', valor: '', nota: '' },
+    pagamento: { chamada: '', forma: '', etapas: '', conta: [] },
+    condicoes: [],
+    sobre: { foto: '', texto: '' },
+    assinatura: { papel: 'Responsavel pelo projeto', nome: 'Samuel', sobrenome: 'Freire' },
+  };
+  propostaSalva = '';
+  montarEditorProposta();
+}
+
+function confirmarDescarte() {
+  if (!propostaSuja()) return true;
+  return confirm('Voce tem alteracoes nao salvas nesta proposta. Descartar?');
+}
+
+function apagarPropostaAdm(p) {
+  if (!confirm('Apagar a proposta de ' + (p.cliente || p.id) + '? O link para de funcionar.')) return;
+  api('/api/propostas/' + encodeURIComponent(p.id), { method: 'DELETE' })
+    .then(() => {
+      if (proposta && proposta.id === p.id) { proposta = null; $('#editor-proposta').innerHTML = ''; }
+      avisar('Proposta apagada.');
+      carregarPropostas();
+    })
+    .catch((e) => avisar('Nao apaguei — ' + e.message, 'erro'));
+}
+
+/* ---------- o formulario ---------- */
+
+function campo(rot, valor, caminho, dica, tipo) {
+  const t = tipo === 'area' ? 'textarea' : 'input';
+  return '<label><span>' + rot + '</span>'
+    + (t === 'textarea'
+        ? '<textarea data-p="' + caminho + '">' + (valor || '') + '</textarea>'
+        : '<input type="text" data-p="' + caminho + '" value="' + esc(valor) + '">')
+    + (dica ? '<small>' + dica + '</small>' : '') + '</label>';
+}
+
+function montarEditorProposta() {
+  const raiz = $('#editor-proposta');
+  if (!proposta) { raiz.innerHTML = ''; return; }
+  const p = proposta;
+  const inc = p.inclui || (p.inclui = {});
+  const inv = p.investimento || (p.investimento = {});
+  const pag = p.pagamento || (p.pagamento = {});
+  const sob = p.sobre || (p.sobre = {});
+  const ass = p.assinatura || (p.assinatura = {});
+
+  raiz.innerHTML = ''
+    + '<fieldset><legend>' + (p.id ? 'Editando: ' + esc(p.cliente || p.id) : 'Nova proposta') + '</legend>'
+
+    + '<div class="linha linha--2">'
+    + campo('Cliente', p.cliente, 'cliente', 'Aparece na capa e no titulo da aba.')
+    + campo('Endereco', p.id, 'id', 'Vira /propostas/&lt;endereco&gt;. So minusculas, numeros e hifen.')
+    + '</div>'
+
+    + '<label><span>Situacao</span><select data-p="publicada">'
+    + '<option value="1"' + (p.publicada !== false ? ' selected' : '') + '>No ar &mdash; quem tem o link abre</option>'
+    + '<option value="0"' + (p.publicada === false ? ' selected' : '') + '>Rascunho &mdash; so voce, logado, abre</option>'
+    + '</select></label>'
+
+    + campo('Titulo da capa', p.titulo, 'titulo', 'A frase grande. Ex.: Escala nao e acaso. E posicionamento.', 'area')
+    + campo('Subtitulo', p.subtitulo, 'subtitulo', 'Uma linha dizendo o que a proposta cobre.', 'area')
+    + '<div class="linha linha--2">'
+    + campo('Preparada para', p.preparadaPara, 'preparadaPara')
+    + campo('Validade', p.validade, 'validade', 'Opcional. Ex.: 15 dias.')
+    + '</div>'
+    + '</fieldset>'
+
+    + '<fieldset><legend>Escopo &mdash; o que sera entregue</legend>'
+    + '<div id="lista-escopo"></div>'
+    + '<button class="mini" type="button" data-add="escopo">+ Adicionar entregavel</button>'
+    + '</fieldset>'
+
+    + '<fieldset><legend>O que cada entregavel inclui</legend>'
+    + campo('Titulo do bloco', inc.titulo, 'inclui.titulo')
+    + '<label><span>Itens</span><textarea data-p="inclui.itens" data-lista>' + linhasPara(inc.itens) + '</textarea>'
+    + '<small>Um por linha.</small></label>'
+    + '<div id="lista-grupos"></div>'
+    + '<button class="mini" type="button" data-add="grupo">+ Adicionar subgrupo</button>'
+    + '</fieldset>'
+
+    + '<fieldset><legend>Investimento</legend>'
+    + '<div class="linha linha--2">'
+    + campo('Rotulo', inv.rotulo, 'investimento.rotulo')
+    + campo('Valor', inv.valor, 'investimento.valor', 'O numero grande. Ex.: 2&times; $750')
+    + '</div>'
+    + campo('Observacao', inv.nota, 'investimento.nota', 'Suporte, o que esta incluso, etc.', 'area')
+    + '</fieldset>'
+
+    + '<fieldset><legend>Pagamento</legend>'
+    + campo('Frase de abertura', pag.chamada, 'pagamento.chamada')
+    + '<div class="linha linha--2">'
+    + campo('Forma', pag.forma, 'pagamento.forma', 'Ex.: 2 parcelas (50% / 50%)')
+    + campo('Etapas', pag.etapas, 'pagamento.etapas', 'Ex.: Inicio do projeto + finalizacao')
+    + '</div>'
+    + '<label><span>Dados da conta</span><textarea data-p="pagamento.conta" data-pares>'
+    + (pag.conta || []).map((c) => c[0] + ': ' + c[1]).join('\n')
+    + '</textarea><small>Um por linha, no formato <code>Rotulo: valor</code>.</small></label>'
+    + '</fieldset>'
+
+    + '<fieldset><legend>Condicoes</legend>'
+    + '<div id="lista-condicoes"></div>'
+    + '<button class="mini" type="button" data-add="condicao">+ Adicionar condicao</button>'
+    + '</fieldset>'
+
+    + '<fieldset><legend>Quem assina</legend>'
+    + '<div class="item__topo">'
+    + '<img class="previa" src="' + esc(sob.foto) + '" alt="" onerror="this.removeAttribute(\'src\')">'
+    + '<button class="mini" type="button" data-foto-proposta>Trocar retrato</button>'
+    + '</div>'
+    + campo('Texto', sob.texto, 'sobre.texto', 'Uma linha em branco separa paragrafos.', 'area')
+    + '<div class="linha linha--2">'
+    + campo('Papel', ass.papel, 'assinatura.papel')
+    + campo('Nome', ass.nome, 'assinatura.nome')
+    + '</div>'
+    + campo('Sobrenome', ass.sobrenome, 'assinatura.sobrenome', 'Sai em laranja, do lado do nome.')
+    + '</fieldset>'
+
+    + '<fieldset><legend>Encerramento</legend>'
+    + campo('Frase final', p.encerramento, 'encerramento', 'Opcional. Vai na faixa laranja do fim.', 'area')
+    + '<div class="linha linha--2">'
+    + campo('Botao', (p.contato || {}).rotulo, 'contato.rotulo', 'Ex.: Falar comigo')
+    + campo('Link do botao', (p.contato || {}).link, 'contato.link', 'Ex.: https://wa.me/...')
+    + '</div>'
+    + '</fieldset>'
+
+    + '<div class="item__topo">'
+    + '<button class="btn btn--brand" type="button" id="salvar-proposta">Salvar proposta</button>'
+    + '<a class="mini" id="ver-proposta" target="_blank" rel="noopener" href="/propostas/' + esc(p.id) + '">Ver a pagina</a>'
+    + '<button class="mini" type="button" id="fechar-proposta">Fechar</button>'
+    + '</div>';
+
+  montarEscopo(); montarGrupos(); montarCondicoes();
+  ligarCamposProposta(raiz);
+
+  raiz.querySelector('[data-add="escopo"]').onclick = () => {
+    (p.escopo ||= []).push({ titulo: '', descricao: '', marca: '' }); montarEscopo();
+  };
+  raiz.querySelector('[data-add="grupo"]').onclick = () => {
+    (inc.grupos ||= []).push({ titulo: '', itens: [] }); montarGrupos();
+  };
+  raiz.querySelector('[data-add="condicao"]').onclick = () => {
+    (p.condicoes ||= []).push({ titulo: '', texto: '' }); montarCondicoes();
+  };
+  raiz.querySelector('[data-foto-proposta]').onclick = async () => {
+    const url = await escolherImagem('proposta');
+    if (url) { sob.foto = url; montarEditorProposta(); }
+  };
+  $('#salvar-proposta').onclick = salvarProposta;
+  $('#fechar-proposta').onclick = () => {
+    if (!confirmarDescarte()) return;
+    proposta = null; raiz.innerHTML = '';
+  };
+}
+
+/* Campos simples: escrevem direto no caminho indicado no data-p. */
+function ligarCamposProposta(raiz) {
+  for (const c of raiz.querySelectorAll('[data-p]')) {
+    const caminho = c.dataset.p;
+    const escrever = () => {
+      let v = c.value;
+      if (c.dataset.lista !== undefined) v = paraLinhas(v);
+      else if (c.dataset.pares !== undefined) {
+        v = paraLinhas(v).map((l) => {
+          const i = l.indexOf(':');
+          return i < 0 ? [l, ''] : [l.slice(0, i).trim(), l.slice(i + 1).trim()];
+        });
+      } else if (caminho === 'publicada') v = c.value === '1';
+      const partes = caminho.split('.');
+      let o = proposta;
+      for (const k of partes.slice(0, -1)) o = (o[k] ||= {});
+      o[partes.at(-1)] = v;
+      if (caminho === 'id' || caminho === 'cliente') atualizarLinkProposta();
+    };
+    c.oninput = escrever;
+    c.onchange = escrever;
+  }
+  // Endereco em branco: sugere a partir do nome do cliente.
+  const cli = raiz.querySelector('[data-p="cliente"]');
+  const end = raiz.querySelector('[data-p="id"]');
+  if (cli && end) cli.addEventListener('blur', () => {
+    if (!end.value.trim() && cli.value.trim()) {
+      end.value = apelidar(cli.value); proposta.id = end.value; atualizarLinkProposta();
+    }
+  });
+}
+
+function atualizarLinkProposta() {
+  const a = $('#ver-proposta');
+  if (a) a.href = '/propostas/' + (proposta.id || '');
+}
+
+function itemRepetido(rotulo, i, lista, remontar, campos) {
+  const d = document.createElement('div');
+  d.className = 'item';
+  d.innerHTML = '<div class="item__topo">'
+    + '<span class="item__n">' + String(i + 1).padStart(2, '0') + '</span>'
+    + '<b style="flex:1">' + rotulo + '</b>'
+    + '<button class="mini" type="button" data-mover="-1">&uarr;</button>'
+    + '<button class="mini" type="button" data-mover="1">&darr;</button>'
+    + '<button class="mini mini--perigo" type="button" data-remover>Remover</button>'
+    + '</div>' + campos;
+  d.querySelector('[data-remover]').onclick = () => { lista.splice(i, 1); remontar(); };
+  for (const b of d.querySelectorAll('[data-mover]')) b.onclick = () => {
+    const j = i + Number(b.dataset.mover);
+    if (j < 0 || j >= lista.length) return;
+    [lista[i], lista[j]] = [lista[j], lista[i]];
+    remontar();
+  };
+  return d;
+}
+
+function montarEscopo() {
+  const raiz = $('#lista-escopo'); if (!raiz) return;
+  const lista = proposta.escopo ||= [];
+  raiz.innerHTML = lista.length ? '' : '<p class="vazio">Nenhum entregavel ainda.</p>';
+  lista.forEach((it, i) => {
+    const d = itemRepetido('Entregavel', i, lista, montarEscopo,
+      campo('Titulo', it.titulo, '')
+      + '<div class="linha linha--2">'
+      + campo('Descricao', it.descricao, '')
+      + campo('Etiqueta', it.marca, '', 'Ex.: Identidade, Web, Impresso')
+      + '</div>');
+    const cs = d.querySelectorAll('input, textarea');
+    ['titulo', 'descricao', 'marca'].forEach((k, n) => {
+      cs[n].removeAttribute('data-p');
+      cs[n].oninput = () => { it[k] = cs[n].value; };
+    });
+    raiz.appendChild(d);
+  });
+}
+
+function montarGrupos() {
+  const raiz = $('#lista-grupos'); if (!raiz) return;
+  const lista = proposta.inclui.grupos ||= [];
+  raiz.innerHTML = '';
+  lista.forEach((g, i) => {
+    const d = itemRepetido('Subgrupo', i, lista, montarGrupos,
+      campo('Titulo', g.titulo, '')
+      + '<label><span>Itens</span><textarea>' + linhasPara(g.itens) + '</textarea><small>Um por linha.</small></label>');
+    const inp = d.querySelector('input'), area = d.querySelector('textarea');
+    inp.removeAttribute('data-p'); area.removeAttribute('data-p');
+    inp.oninput = () => { g.titulo = inp.value; };
+    area.oninput = () => { g.itens = paraLinhas(area.value); };
+    raiz.appendChild(d);
+  });
+}
+
+function montarCondicoes() {
+  const raiz = $('#lista-condicoes'); if (!raiz) return;
+  const lista = proposta.condicoes ||= [];
+  raiz.innerHTML = lista.length ? '' : '<p class="vazio">Nenhuma condicao ainda.</p>';
+  lista.forEach((c, i) => {
+    const d = itemRepetido('Condicao', i, lista, montarCondicoes,
+      campo('Titulo', c.titulo, '')
+      + campo('Texto', c.texto, '', 'Uma linha em branco separa paragrafos.', 'area'));
+    const inp = d.querySelector('input'), area = d.querySelector('textarea');
+    inp.removeAttribute('data-p'); area.removeAttribute('data-p');
+    inp.oninput = () => { c.titulo = inp.value; };
+    area.oninput = () => { c.texto = area.value; };
+    raiz.appendChild(d);
+  });
+}
+
+async function salvarProposta() {
+  if (!proposta.id) { avisar('Falta o endereco da proposta.', 'erro'); return; }
+  if (!/^[a-z0-9][a-z0-9-]{1,60}$/.test(proposta.id)) {
+    avisar('Endereco invalido: use so minusculas, numeros e hifen.', 'erro'); return;
+  }
+  const b = $('#salvar-proposta');
+  b.disabled = true; b.textContent = 'Salvando...';
+  try {
+    const r = await api('/api/propostas', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(proposta),
+    });
+    proposta = r.proposta;
+    propostaSalva = JSON.stringify(proposta);
+    avisar('Proposta salva. Esta no ar em ' + r.url);
+    await carregarPropostas();
+    montarEditorProposta();
+  } catch (e) {
+    avisar('Nao salvou a proposta — ' + e.message, 'erro');
+  } finally {
+    b.disabled = false; b.textContent = 'Salvar proposta';
+  }
+}
+
 $('#salvar').onclick = salvar;
 $('#recarregar').onclick = carregarQuadro;
 $('#desfazer').onclick = () => {
@@ -534,6 +926,9 @@ for (const b of $$('#abas button')) {
   b.onclick = () => {
     for (const o of $$('#abas button')) o.setAttribute('aria-selected', String(o === b));
     for (const p of $$('.painel')) p.hidden = p.id !== 'painel-' + b.dataset.alvo;
+    // A lista vem do servidor, nao do conteudo do site: recarrega
+    // ao abrir para nao mostrar propostas que ja foram apagadas.
+    if (b.dataset.alvo === 'propostas') carregarPropostas();
   };
 }
 
@@ -542,6 +937,7 @@ $('[data-novo="cliente"]').onclick = () => {
   conteudo.clientes.push({ nome: '', handle: '', foto: '' });
   marcarEstado(); montarClientes();
 };
+$('[data-novo="proposta"]').onclick = novaProposta;
 $('[data-novo="projeto"]').onclick = () => {
   if (!conteudo.projetos) conteudo.projetos = [];
   conteudo.projetos.push({ tag: '', data: '', titulo: '', contexto: '', disciplinas: '', imagem: '', link: '' });
@@ -559,7 +955,7 @@ solta.ondrop = (e) => {
 };
 
 addEventListener('beforeunload', (e) => {
-  if (sujo()) { e.preventDefault(); e.returnValue = ''; }
+  if (sujo() || propostaSuja()) { e.preventDefault(); e.returnValue = ''; }
 });
 
 iniciar();

@@ -1,8 +1,33 @@
-# Stack do Portainer. Aponte para o repositório e suba.
+# ============================================================
+#  Stack do Portainer.
+#
+#  Antes de subir, defina SENHA_PAINEL no campo de variáveis de
+#  ambiente da stack. Sem ela o site funciona, mas /admin e /api
+#  ficam trancados para todo mundo — inclusive para você.
+#
+#  Em Stacks → Add stack → Repository, aponte para
+#  https://github.com/samuelfreirebr/SAMUEL---NOVO-SITE-INSTITUCIONAL
+#  e use este arquivo como compose path.
+# ============================================================
+
 services:
   site:
     build: .
     container_name: samuel-site
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "8080:3000"
+    environment:
+      # Obrigatória. Defina no Portainer, não aqui dentro.
+      SENHA_PAINEL: ${SENHA_PAINEL:?defina SENHA_PAINEL nas variaveis da stack}
+      USUARIO_PAINEL: ${USUARIO_PAINEL:-samuel}
+      # Desvio automático BR/global. Só funciona atrás da Cloudflare
+      # em modo proxy, que é quem envia o cabeçalho de país.
+      ROTEAR_POR_PAIS: ${ROTEAR_POR_PAIS:-1}
+    volumes:
+      # Textos, imagens enviadas e propostas. É este volume que você
+      # copia para fazer backup — perdê-lo é perder as edições.
+      - dados:/dados
+
+volumes:
+  dados:

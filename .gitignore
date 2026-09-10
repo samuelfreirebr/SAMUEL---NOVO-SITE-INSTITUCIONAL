@@ -15,3 +15,6 @@ _originais/
 
 # Fonte dos perfis: as fotos já foram extraídas para img/clientes/
 perfis_instagram.html
+
+# Pasta de dados quando se roda o servidor na própria máquina
+dados-local/
