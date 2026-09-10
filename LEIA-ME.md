@@ -317,6 +317,30 @@ Tudo num container: site, painel e propostas. Não há build, não há
 depende de alguém lembrar de ligar não é proteção, e foi assim que o
 `/admin` ficou aberto na versão anterior.
 
+#### Repository, não Web editor
+
+O `docker-compose.yml` manda **construir** a imagem (`build: .`). Para
+isso o Portainer precisa ter os arquivos do projeto, e ele só os tem
+quando clona o repositório. No *Web editor* não existe pasta nenhuma: o
+build falha mesmo com o YAML certo.
+
+Se aparecer:
+
+```
+YAMLSyntaxError: Document contains trailing content
+not separated by a ... or --- line
+```
+
+foi o `Dockerfile` colado no campo do compose. São arquivos diferentes com
+papéis diferentes: o `Dockerfile` diz *como montar a imagem*, o
+`docker-compose.yml` diz *como rodar o container*. O Portainer quer o
+segundo — e, em modo *Repository*, nem isso precisa ser colado: basta o
+caminho `docker-compose.yml`.
+
+Lido como YAML, a primeira linha do Dockerfile (`FROM node:22-alpine`)
+vira um valor solto e a seguinte (`WORKDIR /app`) vira "conteúdo
+sobrando". Daí a mensagem.
+
 #### O volume `dados`
 
 O que o painel salva mora num volume do Docker, não na imagem:
