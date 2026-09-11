@@ -248,14 +248,16 @@
      em vez de três: é o que faz a barra caber na primeira dobra. */
   .hero__btns { width: 100%; gap: var(--sp-xs); }
   .hero__btns .btn--brand { flex: 1 0 100%; }
-  /* Os dois de baixo crescem a partir do próprio conteúdo, nunca abaixo
-     dele: com base 0 o botão ficava mais estreito que o texto + círculo
-     e a seta vazava pela borda. */
-  .hero__btns .btn--ghost { flex: 1 1 auto; }
-  /* No celular o botão é mais alto e o círculo maior: é o alvo do dedo.
-     Menos ar entre texto e círculo, para os dois caberem lado a lado. */
+  /* Os dois de baixo dividem a linha em metades iguais, sempre — num
+     celular de 360px eles empilhavam. Para caberem na metade, ficam um
+     pouco mais compactos que o laranja: círculo menor, menos ar. */
+  .hero__btns .btn--ghost { flex: 1 1 0; min-width: 0; overflow: hidden; }
+  /* No celular o botão é mais alto e o círculo maior: é o alvo do dedo. */
   .hero__btns .btn { min-height: 3.6rem; padding: .5em .5em .5em 1.1em; }
   .hero__btns .btn .arrow { width: 2.5rem; height: 2.5rem; padding: .7rem; margin-left: var(--sp-2xs); }
+  .hero__btns .btn--ghost { padding-left: .9em; font-size: .875rem; gap: var(--sp-2xs); }
+  /* space-between já separa texto e círculo; a margem só somava largura */
+  .hero__btns .btn--ghost .arrow { width: 2.25rem; height: 2.25rem; padding: .625rem; margin-left: 0; }
 }
 
 /* O hero tem muita coisa: identidade, status, display, frase e a barra de

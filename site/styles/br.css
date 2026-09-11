@@ -15,9 +15,9 @@
    é outra — o peso e o aperto continuam os mesmos.                 */
 
 .hero__title {
-  /* Maior que antes (era 4.6vw). O teto em vh segura em telas baixas:
-     a manchete não pode empurrar os botões para fora da dobra. */
-  font-size: min(clamp(2.25rem, 5.6vw, 5.5rem), 15vh);
+  /* O teto em vh segura em telas baixas: a manchete não pode empurrar
+     os botões para fora da dobra. */
+  font-size: min(clamp(2rem, 4.6vw, 4.5rem), 13vh);
   letter-spacing: var(--ls-h1);
   line-height: .98;
   /* 24ch cabe "lançamentos de 7D com foco em" numa linha só. Com 20ch
