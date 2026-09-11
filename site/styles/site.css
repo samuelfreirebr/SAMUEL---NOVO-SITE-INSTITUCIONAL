@@ -237,6 +237,15 @@
 .hero__btns .btn--brand:hover .arrow { background: #FFFFFF; color: var(--ink); }
 .hero__btns .btn--ghost:hover .arrow { background: var(--brand); color: #FFFFFF; }
 
+/* "Sobre mim" desce a página: a seta aponta para baixo (o ícone é ↗,
+   135° vira ↓) e no hover só afunda um pouco, sem girar. */
+.hero__btns .btn--desce .arrow { transform: rotate(135deg); }
+.hero__btns .btn--desce:hover .arrow { transform: translateY(2px) rotate(135deg); }
+
+/* Portfólio: só a logo do Behance e o nome, sem seta. Centralizado
+   para não sobrar um vazio à direita onde a seta ficava. */
+.hero__btns .btn--logo { justify-content: center; padding-right: 1.2em; }
+
 @media (prefers-reduced-motion: reduce) {
   .hero__btns .btn .arrow { transition: none; }
   .hero__btns .btn:hover .arrow { transform: none; }
@@ -256,6 +265,7 @@
   .hero__btns .btn { min-height: 3.6rem; padding: .5em .5em .5em 1.1em; }
   .hero__btns .btn .arrow { width: 2.5rem; height: 2.5rem; padding: .7rem; margin-left: var(--sp-2xs); }
   .hero__btns .btn--ghost { padding-left: .9em; font-size: .875rem; gap: var(--sp-2xs); }
+  .hero__btns .btn--logo { padding-right: .9em; }
   /* space-between já separa texto e círculo; a margem só somava largura */
   .hero__btns .btn--ghost .arrow { width: 2.25rem; height: 2.25rem; padding: .625rem; margin-left: 0; }
 }

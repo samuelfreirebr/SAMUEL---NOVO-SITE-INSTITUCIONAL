@@ -153,6 +153,7 @@
   line-height: .9;
   color: var(--ink);
 }
+.prop-valor__apoio { margin-top: var(--sp-sm); color: var(--muted); }
 .prop-valor__nota {
   margin-top: var(--sp-lg);
   max-width: var(--maxw-text);
