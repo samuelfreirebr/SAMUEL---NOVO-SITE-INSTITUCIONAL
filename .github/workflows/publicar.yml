@@ -1,0 +1,56 @@
+# ============================================================
+#  Toda vez que chega código na main: confere que o servidor
+#  compila, monta a imagem e publica no ghcr.io. O Portainer
+#  baixa de lá com "Update the stack".
+#
+#  Primeira publicação: o pacote nasce PRIVADO no ghcr.io.
+#  github.com → Packages → links → Package settings →
+#  Change visibility → Public. Só uma vez.
+# ============================================================
+
+name: Publicar imagem
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      # Sem build nem dependência, o único jeito de a imagem sair
+      # quebrada é erro de sintaxe. Barra aqui, antes de gastar
+      # tempo montando imagem.
+      - name: Conferir o servidor
+        run: |
+          for f in servidor/*.js; do node --check "$f"; done
+          node --input-type=module -e "await import('./servidor/injetar.js'); await import('./servidor/proposta-html.js'); console.log('módulos carregam')"
+
+      - name: Entrar no ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Nome de imagem não aceita maiúscula, e o usuário do GitHub pode ter.
+      - name: Nome da imagem
+        id: nome
+        run: echo "imagem=ghcr.io/$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')/links" >> "$GITHUB_OUTPUT"
+
+      - name: Montar e publicar
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.nome.outputs.imagem }}:latest
+            ${{ steps.nome.outputs.imagem }}:${{ github.sha }}

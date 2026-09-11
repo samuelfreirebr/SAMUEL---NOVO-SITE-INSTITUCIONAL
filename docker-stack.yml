@@ -1,0 +1,58 @@
+# ============================================================
+#  Stack do Portainer (Swarm).
+#
+#  Portainer → Stacks → Add stack → Web editor → colar este
+#  arquivo → Environment variables → Deploy.
+#
+#  Variáveis a preencher:
+#    SENHA_PAINEL     obrigatória — a senha do /admin
+#
+#  A imagem vem do ghcr.io, montada pela Action a cada push na
+#  main. Para atualizar: git push → Action verde → Update the
+#  stack com "Re-pull image" marcado. O volume não é tocado.
+#
+#  Traefik cuida do domínio e do certificado. Na Cloudflare o
+#  registro A de links.samuelfreire.com.br precisa estar com a
+#  nuvem CINZA (DNS only) — laranja quebra o Let's Encrypt.
+# ============================================================
+
+services:
+  app:
+    image: ghcr.io/samuelfreirebr/links:latest
+    networks:
+      - SamuelFreire_RedeInterna
+    environment:
+      # O servidor escuta em todas as interfaces por padrão, mas
+      # fica explícito: é a regra 1 do jeito de publicar.
+      - HOSTNAME=0.0.0.0
+      - PORTA=3000
+      - PASTA_SITE=/app/site
+      - PASTA_DADOS=/dados
+      - SENHA_PAINEL=${SENHA_PAINEL:?defina SENHA_PAINEL nas variaveis da stack}
+      - USUARIO_PAINEL=${USUARIO_PAINEL:-samuel}
+      # Sem a Cloudflare na frente não chega cabeçalho de país;
+      # fica ligado para funcionar sozinho se ela voltar.
+      - ROTEAR_POR_PAIS=${ROTEAR_POR_PAIS:-1}
+    volumes:
+      # Textos, imagens enviadas e propostas. Sobrevive a update.
+      - links_dados:/dados
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=SamuelFreire_RedeInterna
+        - traefik.http.routers.links.rule=Host(`links.samuelfreire.com.br`)
+        - traefik.http.routers.links.entrypoints=websecure
+        - traefik.http.routers.links.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.links.service=links
+        - traefik.http.services.links.loadbalancer.server.port=3000
+
+volumes:
+  links_dados:
+
+networks:
+  SamuelFreire_RedeInterna:
+    external: true

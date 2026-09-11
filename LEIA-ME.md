@@ -33,6 +33,7 @@ servidor/              o servidor Node que roda no Portainer (zero dependências
   sementes/              propostas que já vêm no repositório
 
 material/              arquivos de trabalho — não vão ao ar
+  publicacao.md                    como os aplicativos do Samuel são publicados
   apresentacao-comercial.dc.html   a apresentação de onde saiu a copy
   perfis-instagram.html            fonte das fotos dos clientes (fora do git)
   originais/                       imagens em tamanho original (fora do git)
@@ -42,7 +43,8 @@ cloudflare-antigo/     o painel na versão para Cloudflare Pages
   _headers               cache do Pages
 
 Dockerfile             monta a imagem: só site/ e servidor/ entram
-docker-compose.yml     a stack do Portainer
+docker-stack.yml       a stack do Portainer (Swarm + Traefik)
+.github/workflows/     a Action que monta a imagem e publica no ghcr.io
 verificar.sh           confere marcação e assets das duas versões
 ```
 
@@ -315,52 +317,40 @@ stack no Portainer.
 
 ## Publicar
 
-### Portainer — o caminho de hoje
+Segue o mesmo caminho dos outros aplicativos — o documento completo está
+em `material/publicacao.md`. Em uma frase: o GitHub monta a imagem e guarda
+no ghcr.io; o Portainer, no servidor, baixa e sobe; o Traefik entrega o
+domínio e cuida do certificado.
 
-Tudo num container: site, painel e propostas. Não há build, não há
-`npm install`, não há dependência — só Node servindo os arquivos.
+```
+git push → Action → ghcr.io/samuelfreirebr/links → Portainer → Traefik → links.samuelfreire.com.br
+```
 
-1. Portainer → *Stacks* → *Add stack* → *Repository*
-2. Aponte para este repositório e use `docker-compose.yml`
-3. Em **Environment variables**, crie:
+### Primeira publicação
 
-   | Nome | Valor |
-   |---|---|
-   | `SENHA_PAINEL` | a senha do painel — escolha uma longa |
-   | `USUARIO_PAINEL` | opcional, o padrão é `samuel` |
+1. **Push.** A Action "Publicar imagem" roda sozinha. Confira em
+   *Actions* que ficou verde — se ficar vermelha, a imagem não existe.
+2. **Tornar o pacote público.** github.com → *Packages* → `links` →
+   *Package settings* → *Change visibility* → *Public*. Só uma vez. Sem
+   isso o servidor recebe `pull access denied` e a task fica `rejected`.
+3. **Cloudflare.** O registro A de `links.samuelfreire.com.br` apontando
+   para o IP do servidor, com a **nuvem cinza** (DNS only). Laranja quebra
+   a validação do certificado pelo Traefik.
+4. **Portainer.** *Stacks* → *Add stack* → **Web editor** → colar o
+   `docker-stack.yml` inteiro → em *Environment variables* criar
+   `SENHA_PAINEL` → *Deploy the stack*.
+5. Esperar uns 40 segundos e abrir `links.samuelfreire.com.br/estado`.
 
-4. Deploy. O site sobe na porta **8080** do host
-5. Aponte o proxy/DNS de `links.samuelfreire.com.br` para essa porta
-
-**Sem `SENHA_PAINEL` a stack não sobe.** É de propósito: uma proteção que
-depende de alguém lembrar de ligar não é proteção, e foi assim que o
+**Sem `SENHA_PAINEL` a stack não sobe.** É de propósito: uma tranca que
+depende de alguém lembrar de ligar não tranca, e foi assim que o
 `/admin` ficou aberto na versão anterior.
 
-#### Repository, não Web editor
+### Atualizar depois
 
-O `docker-compose.yml` manda **construir** a imagem (`build: .`). Para
-isso o Portainer precisa ter os arquivos do projeto, e ele só os tem
-quando clona o repositório. No *Web editor* não existe pasta nenhuma: o
-build falha mesmo com o YAML certo.
+`git push` → esperar a Action → Portainer → a stack → **Update the stack**
+com *Re-pull image and redeploy* marcado. O volume não é tocado.
 
-Se aparecer:
-
-```
-YAMLSyntaxError: Document contains trailing content
-not separated by a ... or --- line
-```
-
-foi o `Dockerfile` colado no campo do compose. São arquivos diferentes com
-papéis diferentes: o `Dockerfile` diz *como montar a imagem*, o
-`docker-compose.yml` diz *como rodar o container*. O Portainer quer o
-segundo — e, em modo *Repository*, nem isso precisa ser colado: basta o
-caminho `docker-compose.yml`.
-
-Lido como YAML, a primeira linha do Dockerfile (`FROM node:22-alpine`)
-vira um valor solto e a seguinte (`WORKDIR /app`) vira "conteúdo
-sobrando". Daí a mensagem.
-
-#### O volume `dados`
+### O volume `links_dados`
 
 O que o painel salva mora num volume do Docker, não na imagem:
 
@@ -372,38 +362,40 @@ O que o painel salva mora num volume do Docker, não na imagem:
   img/<pasta>/<arquivo>    as fotos que você enviou
 ```
 
-Rebuild, update e restart da stack não encostam nele. **Backup é copiar
-essa pasta** — em Portainer, *Volumes* → `dados` → *Browse*. Remover o
-volume apaga as edições e as propostas; o site volta ao texto do
-repositório, sem quebrar.
+Update, rebuild e restart não encostam nele. **Backup é copiar essa
+pasta** — em Portainer, *Volumes* → `links_links_dados` → *Browse*.
+Remover o volume apaga as edições e as propostas; o site volta ao texto
+do repositório, sem quebrar.
 
-#### Atualizar depois de mexer no código
+### O desvio BR/global sem a Cloudflare na frente
 
-*Stacks* → a stack → **Update the stack** com *Re-pull image and redeploy*
-marcado. O volume sobrevive.
+Quem dizia de que país vinha a visita era o cabeçalho `CF-IPCountry`, que
+só existe com a nuvem laranja ligada. Com ela cinza, como o padrão manda,
+**não há desvio automático**: `/` serve sempre a BR e `/global` continua
+acessível pelo endereço. O código do desvio fica no servidor, dormindo —
+se um dia a Cloudflare voltar para a frente, ele acorda sozinho.
+
+### Se der errado
+
+| O que aparece | Quem fala | O que fazer |
+|---|---|---|
+| `404 page not found`, texto puro | Traefik | o app não subiu — ver o serviço em `0/1`, ler os logs |
+| `502 Bad Gateway` | Traefik | o app subiu mas não está na rede `SamuelFreire_RedeInterna` |
+| Task `rejected` | Swarm | pacote privado no ghcr.io, ou a Action não terminou |
+| Erro de certificado / 526 | Traefik ou Cloudflare | nuvem laranja ligada — deixar cinza |
+| `/estado` com `senhaConfigurada: false` | o app | falta `SENHA_PAINEL` na stack |
 
 ### Cloudflare Pages — o caminho antigo
 
-A pasta `cloudflare-antigo/functions/` é a versão do painel escrita para Cloudflare Pages,
-com KV e R2. Continua no repositório e continua válida, mas **não é o que
-o Docker usa** — ela fica de fora da imagem.
+A pasta `cloudflare-antigo/functions/` é a versão do painel escrita para
+Cloudflare Pages, com KV e R2. Continua no repositório e continua válida,
+mas **não é o que o Docker usa** — ela fica de fora da imagem.
 
 Se um dia voltar para lá, atenção ao que deu errado da última vez: o
 projeto foi criado como **Worker** (`npx wrangler deploy`), não como
 **Pages**. O wrangler perguntou se a pasta `functions` devia ser tratada
 como Functions, respondeu `no` sozinho por estar em modo não interativo, e
-subiu o repositório inteiro como arquivo estático — inclusive `.git`. Tem
-que ser *Workers & Pages* → *Create* → **Pages** → *Connect to Git*, com
-build command vazio e output directory `/`.
-
-### Cloudflare na frente, servidor atrás
-
-Dá para juntar os dois: o servidor continua no Portainer e a Cloudflare
-fica só como DNS em modo proxy. É isso que mantém o desvio automático
-BR/global, porque quem diz de que país veio a visita é o cabeçalho
-`CF-IPCountry`, que só a Cloudflare envia. Sem ela, `/` sempre serve a
-versão BR e `/global` continua acessível pelo endereço. Para desligar o
-desvio de vez, ponha `ROTEAR_POR_PAIS=0` nas variáveis da stack.
+subiu o repositório inteiro como arquivo estático — inclusive `.git`.
 
 ### O que não pode faltar em nenhum dos dois
 
@@ -473,12 +465,13 @@ versão, em `site/`. Os dois arquivos são independentes.
 
 ### O que configurar no Cloudflare
 
-> **Com o site no Portainer, o desvio já vem pronto no servidor.** Basta a
-> Cloudflare estar em modo proxy no DNS: ela envia o cabeçalho
-> `CF-IPCountry` e o servidor serve a global para quem não é do Brasil, sem
-> mudar a URL. Não precisa de Worker nem de regra. Para desligar, ponha
-> `ROTEAR_POR_PAIS=0` nas variáveis da stack. O que segue vale para o caso
-> de você preferir resolver isso na própria Cloudflare.
+> **O servidor já sabe fazer o desvio** — basta receber o cabeçalho
+> `CF-IPCountry`, que a Cloudflare envia quando está em modo proxy (nuvem
+> laranja). Mas o padrão de publicação pede nuvem **cinza**, e aí o
+> cabeçalho não chega: sem desvio automático. Ligar a laranja para ter o
+> desvio implica resolver o certificado de outro jeito (modo *Full* na
+> Cloudflare, por exemplo). É uma decisão sua; o código está pronto para os
+> dois casos. `ROTEAR_POR_PAIS=0` desliga de vez.
 
 Duas formas, e a escolha muda o que o visitante vê:
 
