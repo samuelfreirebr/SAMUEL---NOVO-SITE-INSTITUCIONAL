@@ -287,3 +287,14 @@ h1, h2, h3, h4 {
     transition-duration: .001ms !important;
   }
 }
+
+
+/* ---------- Quebra de linha por dispositivo ---------------------------
+   O painel insere <br class="so-celular"> ou <br class="so-pc"> no
+   texto: cada uma só existe no seu lado. A largura é a mesma que o
+   injetor usa para o tamanho de fonte por dispositivo (640px).       */
+.so-celular { display: none; }
+@media (max-width: 640px) {
+  .so-celular { display: inline; }
+  .so-pc { display: none; }
+}

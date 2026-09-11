@@ -109,5 +109,35 @@ export function injetar(html, conteudo) {
     TAG.lastIndex = fecha;
   }
 
-  return saida + html.slice(cursor);
+  saida += html.slice(cursor);
+  return injetarEstilos(saida, conteudo.estilos);
+}
+
+/* Tamanho de texto por dispositivo, escolhido no painel:
+     estilos: { "br.hero.titulo": { pc: "72px", celular: "34px" } }
+   Vira um <style> no <head>, uma regra por chave. Nada no markup
+   muda — e sem estilos salvos, nada é injetado.                  */
+const LARGURA_CELULAR = '640px';
+const LARGURA_PC = '641px';
+const valorCss = (v) => /^[\d.]+(px|rem|em|vw|%)$/.test(String(v).trim()) ? String(v).trim() : null;
+
+function injetarEstilos(html, estilos) {
+  if (!estilos || typeof estilos !== 'object') return html;
+  const pc = [], cel = [];
+  for (const [chave, e] of Object.entries(estilos)) {
+    if (!e || typeof e !== 'object' || !/^[\w.-]+$/.test(chave)) continue;
+    const sel = `[data-edit="${chave}"]`;
+    const fp = valorCss(e.pc), fc = valorCss(e.celular);
+    if (fp) pc.push(`${sel}{font-size:${fp} !important}`);
+    if (fc) cel.push(`${sel}{font-size:${fc} !important}`);
+  }
+  if (!pc.length && !cel.length) return html;
+  // Cada lado só muda quando é mexido: a regra do PC não vale no
+  // celular, e a do celular não vale no PC. Sem a media do PC, um
+  // aumento feito no PC vazava para o celular até ele ser ajustado.
+  const css = (pc.length ? `@media (min-width:${LARGURA_PC}){${pc.join('')}}` : '')
+    + (cel.length ? `@media (max-width:${LARGURA_CELULAR}){${cel.join('')}}` : '');
+  const i = html.indexOf('</head>');
+  if (i < 0) return html;
+  return html.slice(0, i) + `<style data-painel-estilos>${css}</style>\n` + html.slice(i);
 }

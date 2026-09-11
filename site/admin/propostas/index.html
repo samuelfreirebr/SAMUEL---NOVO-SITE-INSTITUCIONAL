@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Propostas — Painel Samuel Freire</title>
+<link rel="icon" href="/img/favicon.png" type="image/png">
+<link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/styles/tokens.css?v=20260909h">
+<link rel="stylesheet" href="/styles/base.css?v=20260911a">
+<link rel="stylesheet" href="/admin/painel.css?v=1">
+</head>
+<body>
+
+<header class="topo">
+  <h1><a href="/admin/">Painel</a> <i>Samuel Freire</i><span class="sec">Propostas</span></h1>
+  <button class="mini" type="button" id="nova">+ Nova proposta</button>
+  <button class="mini" type="button" id="editar-modelo" title="O que toda proposta nova já traz preenchido">Modelo</button>
+  <button class="mini" type="button" id="sair">Sair</button>
+</header>
+
+<p class="aviso" id="aviso" role="status"></p>
+
+<div class="corpo">
+  <section class="painel">
+    <div class="form">
+
+      <fieldset id="bloco-lista">
+        <legend>Suas propostas</legend>
+        <div class="lista-prop" id="lista"></div>
+      </fieldset>
+
+      <div id="editor"></div>
+
+    </div>
+  </section>
+</div>
+
+<dialog id="escolher">
+  <div class="modal__topo">
+    <b>Escolher imagem</b>
+    <button class="mini" type="button" id="escolher-fechar">Fechar</button>
+  </div>
+  <div class="modal__corpo">
+    <div class="solta" id="solta">
+      <b>Arraste a foto aqui</b>
+      <span>ou clique para escolher &mdash; JPG, PNG, WebP ou AVIF, at&eacute; 6 MB</span>
+    </div>
+    <input type="file" id="arquivo" accept="image/*" hidden>
+    <div class="galeria-adm" id="galeria"></div>
+    <p class="vazio" id="galeria-vazia" hidden>Nenhuma imagem enviada ainda.</p>
+  </div>
+</dialog>
+
+<script type="module">
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+/* ---------- API ---------- */
+async function api(url, opcoes) {
+  const r = await fetch(url, opcoes);
+  const texto = await r.text();
+  let dado;
+  try { dado = JSON.parse(texto); }
+  catch (e) { throw new Error('o servidor respondeu algo que nao e JSON.'); }
+  if (r.status === 401) { location.replace('/admin/entrar?voltar=' + encodeURIComponent(location.pathname)); throw new Error('sessao encerrada'); }
+  if (!r.ok) throw new Error(dado.erro || ('erro ' + r.status));
+  return dado;
+}
+function avisar(texto, tipo = 'ok') {
+  const el = $('#aviso');
+  el.textContent = texto; el.dataset.tipo = tipo; el.classList.add('mostra');
+  if (tipo === 'ok') setTimeout(() => el.classList.remove('mostra'), 3500);
+}
+const esc = (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+const clonar = (o) => JSON.parse(JSON.stringify(o));
+const apelidar = (t) => (t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+const linhasPara = (v) => (Array.isArray(v) ? v : []).join('\n');
+const paraLinhas = (t) => String(t || '').split('\n').map((l) => l.trim()).filter(Boolean);
+
+/* ---------- estado ---------- */
+let modelo = {};
+let propostas = [];
+let proposta = null;        // a aberta no editor
+let salva = '';
+let editandoModelo = false; // o editor está mostrando o modelo, não uma proposta
+const suja = () => Boolean(proposta) && JSON.stringify(proposta) !== salva;
+
+// Campos que pertencem ao MODELO (o que toda proposta nova já traz).
+// Cliente, endereço, título, situação são de cada proposta.
+const CAMPOS_MODELO = ['subtitulo', 'escopo', 'inclui', 'investimento', 'pagamento', 'condicoes', 'sobre', 'assinatura', 'encerramento', 'contato'];
+
+/* ---------- lista ---------- */
+async function carregar() {
+  try {
+    [modelo, propostas] = await Promise.all([
+      api('/api/modelo-proposta'),
+      api('/api/propostas').then((d) => d.propostas || []),
+    ]);
+  } catch (e) { if (!/sessao/.test(e.message)) avisar('Nao carreguei — ' + e.message, 'erro'); }
+  montarLista();
+}
+
+function montarLista() {
+  const raiz = $('#lista');
+  raiz.innerHTML = '';
+  if (!propostas.length) {
+    raiz.innerHTML = '<p class="vazio">Nenhuma proposta ainda. Clique em <b>+ Nova proposta</b> — ela já vem preenchida com o seu modelo.</p>';
+    return;
+  }
+  for (const p of propostas) {
+    const d = document.createElement('div');
+    d.className = 'prop-card';
+    d.innerHTML = ''
+      + '<span class="prop-card__estado" data-ar="' + (p.publicada !== false ? 1 : 0) + '">' + (p.publicada !== false ? 'no ar' : 'rascunho') + '</span>'
+      + '<div><div class="prop-card__nome">' + esc(p.cliente || p.id) + '</div>'
+      + '<div class="prop-card__url">/propostas/' + esc(p.id) + (p.atualizadaEm ? ' &middot; ' + esc(new Date(p.atualizadaEm).toLocaleDateString('pt-BR')) : '') + '</div></div>'
+      + '<div class="prop-card__acoes">'
+      + '<button class="mini" type="button" data-abrir>Editar</button>'
+      + '<a class="mini" target="_blank" rel="noopener" href="/propostas/' + esc(p.id) + '">Ver</a>'
+      + '<button class="mini" type="button" data-copiar title="Copiar o link">Link</button>'
+      + '<button class="mini" type="button" data-duplicar>Duplicar</button>'
+      + '<button class="mini mini--perigo" type="button" data-apagar>Apagar</button>'
+      + '</div>';
+    d.querySelector('[data-abrir]').onclick = () => abrir(p.id);
+    d.querySelector('[data-duplicar]').onclick = () => duplicar(p.id);
+    d.querySelector('[data-apagar]').onclick = () => apagar(p);
+    d.querySelector('[data-copiar]').onclick = async () => {
+      try { await navigator.clipboard.writeText(location.origin + '/propostas/' + p.id); avisar('Link copiado.'); }
+      catch (e) { avisar(location.origin + '/propostas/' + p.id); }
+    };
+    raiz.appendChild(d);
+  }
+}
+
+function confirmarDescarte() {
+  if (!suja()) return true;
+  return confirm('Ha alteracoes nao salvas. Descartar?');
+}
+
+/* ---------- abrir / nova / duplicar / apagar ---------- */
+async function abrir(id) {
+  if (!confirmarDescarte()) return;
+  try {
+    proposta = await api('/api/propostas/' + encodeURIComponent(id));
+    editandoModelo = false;
+    salva = JSON.stringify(proposta);
+    montarEditor();
+    $('#editor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) { avisar('Nao abri — ' + e.message, 'erro'); }
+}
+
+function nova() {
+  if (!confirmarDescarte()) return;
+  // Nasce do modelo: tudo preenchido, só falta quem é o cliente.
+  proposta = { id: '', cliente: '', titulo: '', preparadaPara: '', validade: '', publicada: false, ...clonar(modelo) };
+  editandoModelo = false;
+  salva = '';
+  montarEditor();
+  $('#editor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(() => $('[data-p="cliente"]')?.focus(), 300);
+}
+
+async function duplicar(id) {
+  if (!confirmarDescarte()) return;
+  try {
+    const base = await api('/api/propostas/' + encodeURIComponent(id));
+    delete base.criadaEm; delete base.atualizadaEm;
+    base.id = ''; base.cliente = ''; base.publicada = false;   // copia nasce fechada
+    proposta = base; editandoModelo = false; salva = '';
+    montarEditor();
+    avisar('Copia aberta. Troque o cliente e o endereco antes de salvar.');
+  } catch (e) { avisar('Nao dupliquei — ' + e.message, 'erro'); }
+}
+
+function apagar(p) {
+  if (!confirm('Apagar a proposta de ' + (p.cliente || p.id) + '? O link para de funcionar.')) return;
+  api('/api/propostas/' + encodeURIComponent(p.id), { method: 'DELETE' })
+    .then(() => { if (proposta?.id === p.id) { proposta = null; $('#editor').innerHTML = ''; } avisar('Apagada.'); carregar(); })
+    .catch((e) => avisar('Nao apaguei — ' + e.message, 'erro'));
+}
+
+function editarModelo() {
+  if (!confirmarDescarte()) return;
+  proposta = clonar(modelo);
+  editandoModelo = true;
+  salva = JSON.stringify(proposta);
+  montarEditor();
+  $('#editor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ---------- o formulario ---------- */
+function campo(rot, valor, caminho, dica, tipo) {
+  return '<label><span>' + rot + '</span>'
+    + (tipo === 'area'
+        ? '<textarea data-p="' + caminho + '">' + esc(valor) + '</textarea>'
+        : '<input type="' + (tipo || 'text') + '" data-p="' + caminho + '" value="' + esc(valor) + '">')
+    + (dica ? '<small>' + dica + '</small>' : '') + '</label>';
+}
+
+const PARCELAS = [1, 2, 3, 4, 5, 6, 10, 12];
+const MOEDAS = ['R$', '$', '€'];
+
+function montarEditor() {
+  const raiz = $('#editor');
+  if (!proposta) { raiz.innerHTML = ''; return; }
+  const p = proposta;
+  const inc = p.inclui ||= { titulo: 'Cada entregavel inclui', itens: [], grupos: [] };
+  const inv = p.investimento ||= { rotulo: 'Investimento', moeda: 'R$', parcelas: 1, valorParcela: 0 };
+  const pag = p.pagamento ||= {};
+  const sob = p.sobre ||= {};
+  const ass = p.assinatura ||= {};
+  const con = p.contato ||= {};
+
+  raiz.innerHTML = ''
+    + (editandoModelo
+      ? '<fieldset><legend>Modelo &mdash; o que toda proposta nova j&aacute; traz</legend>'
+        + '<p class="dica" style="background:none;border:0;padding:0 0 var(--sp-md)">Mude aqui o que se repete: escopo, o que inclui, condi&ccedil;&otilde;es, seu texto, a frase final. As propostas j&aacute; criadas n&atilde;o mudam &mdash; s&oacute; as pr&oacute;ximas.</p>'
+        + '</fieldset>'
+      : '<fieldset><legend>' + (p.id ? 'Editando: ' + esc(p.cliente || p.id) : 'Nova proposta') + '</legend>'
+        + '<div class="linha linha--2">'
+        + campo('Cliente', p.cliente, 'cliente', 'Aparece na capa e no titulo da aba.')
+        + campo('Endereco', p.id, 'id', 'Vira /propostas/&lt;endereco&gt;. Preenche sozinho a partir do cliente.')
+        + '</div>'
+        + '<label><span>Situacao</span><select data-p="publicada">'
+        + '<option value="1"' + (p.publicada !== false ? ' selected' : '') + '>No ar &mdash; quem tem o link abre</option>'
+        + '<option value="0"' + (p.publicada === false ? ' selected' : '') + '>Rascunho &mdash; so voce, logado, abre</option>'
+        + '</select></label>'
+        + campo('Titulo da capa', p.titulo, 'titulo', 'A frase grande. Ex.: Escala nao e acaso. E posicionamento.', 'area')
+        + '<div class="linha linha--2">'
+        + campo('Preparada para', p.preparadaPara, 'preparadaPara')
+        + campo('Validade', p.validade, 'validade', 'Opcional. Ex.: 15 dias.')
+        + '</div>'
+        + '</fieldset>')
+
+    + '<fieldset><legend>Capa</legend>'
+    + campo('Subtitulo', p.subtitulo, 'subtitulo', 'Uma linha dizendo o que a proposta cobre.', 'area')
+    + '</fieldset>'
+
+    + '<fieldset><legend>Escopo &mdash; o que sera entregue</legend>'
+    + '<div id="lista-escopo"></div>'
+    + '<button class="mini" type="button" data-add="escopo">+ Adicionar entregavel</button>'
+    + '</fieldset>'
+
+    + '<fieldset><legend>O que cada entregavel inclui</legend>'
+    + campo('Titulo do bloco', inc.titulo, 'inclui.titulo')
+    + '<label><span>Itens</span><textarea data-p="inclui.itens" data-lista rows="8">' + esc(linhasPara(inc.itens)) + '</textarea><small>Um por linha.</small></label>'
+    + '<div id="lista-grupos"></div>'
+    + '<button class="mini" type="button" data-add="grupo">+ Adicionar subgrupo</button>'
+    + '</fieldset>'
+
+    + '<fieldset><legend>Investimento</legend>'
+    + '<div class="linha linha--2">'
+    + '<div><label><span>Moeda</span></label><div class="opcoes" id="moedas">' + MOEDAS.map((m) => '<button type="button" data-moeda="' + m + '" aria-pressed="' + (inv.moeda === m) + '">' + m + '</button>').join('') + '</div></div>'
+    + '<div><label><span>Parcelas</span></label><div class="opcoes" id="parcelas">' + PARCELAS.map((n) => '<button type="button" data-parcelas="' + n + '" aria-pressed="' + (Number(inv.parcelas || 1) === n) + '">' + (n === 1 ? 'A vista' : n + '&times;') + '</button>').join('') + '</div></div>'
+    + '</div>'
+    + '<div class="linha linha--2">'
+    + campo('Valor de cada parcela', inv.valorParcela || '', 'investimento.valorParcela', 'So o numero. Ex.: 750', 'number')
+    + campo('Rotulo', inv.rotulo, 'investimento.rotulo')
+    + '</div>'
+    + '<div class="valor-previa"><b id="previa-valor"></b><small id="previa-apoio"></small></div>'
+    + campo('Observacao', inv.nota, 'investimento.nota', 'Suporte, o que esta incluso, etc.', 'area')
+    + '</fieldset>'
+
+    + '<fieldset><legend>Pagamento</legend>'
+    + campo('Frase de abertura', pag.chamada, 'pagamento.chamada')
+    + '<div class="linha linha--2">'
+    + campo('Forma', pag.forma, 'pagamento.forma', 'Ex.: 2 parcelas (50% / 50%)')
+    + campo('Etapas', pag.etapas, 'pagamento.etapas', 'Ex.: Inicio do projeto + finalizacao')
+    + '</div>'
+    + '<label><span>Dados da conta</span><textarea data-p="pagamento.conta" data-pares>' + esc((pag.conta || []).map((c) => c[0] + ': ' + c[1]).join('\n')) + '</textarea><small>Um por linha, no formato <code>Rotulo: valor</code>.</small></label>'
+    + '</fieldset>'
+
+    + '<fieldset><legend>Condicoes</legend>'
+    + '<div id="lista-condicoes"></div>'
+    + '<button class="mini" type="button" data-add="condicao">+ Adicionar condicao</button>'
+    + '</fieldset>'
+
+    + '<fieldset><legend>Quem assina</legend>'
+    + '<div class="item__topo">'
+    + '<img class="previa" src="' + esc(sob.foto) + '" alt="" onerror="this.removeAttribute(\'src\')">'
+    + '<button class="mini" type="button" id="trocar-retrato">Trocar retrato</button>'
+    + '</div>'
+    + campo('Texto sobre voce', sob.texto, 'sobre.texto', 'Uma linha em branco separa paragrafos.', 'area')
+    + '<div class="linha linha--3">'
+    + campo('Papel', ass.papel, 'assinatura.papel')
+    + campo('Nome', ass.nome, 'assinatura.nome')
+    + campo('Sobrenome', ass.sobrenome, 'assinatura.sobrenome', 'Sai em laranja.')
+    + '</div>'
+    + '</fieldset>'
+
+    + '<fieldset><legend>Encerramento</legend>'
+    + campo('Frase final', p.encerramento, 'encerramento', 'Vai na faixa laranja do fim.', 'area')
+    + '<div class="linha linha--2">'
+    + campo('Botao', con.rotulo, 'contato.rotulo', 'Ex.: Falar com o Samuel')
+    + campo('Link do botao', con.link, 'contato.link', 'Ex.: https://wa.me/...')
+    + '</div>'
+    + '</fieldset>'
+
+    + '<div class="barra-fixa">'
+    + (editandoModelo
+      ? '<button class="btn btn--brand" type="button" id="salvar-modelo">Salvar modelo</button>'
+      : '<button class="btn btn--brand" type="button" id="salvar-proposta">Salvar proposta</button>'
+        + '<a class="mini" id="ver" target="_blank" rel="noopener" href="/propostas/' + esc(p.id) + '"' + (p.id ? '' : ' hidden') + '>Ver a pagina</a>'
+        + '<button class="mini" type="button" id="virar-modelo" title="Usa escopo, condicoes, texto e encerramento desta proposta como padrao das proximas">Salvar como modelo</button>')
+    + '<span class="esp"></span>'
+    + '<button class="mini" type="button" id="fechar">Fechar</button>'
+    + '</div>';
+
+  montarEscopo(); montarGrupos(); montarCondicoes();
+  ligarCampos(raiz);
+  ligarInvestimento(raiz);
+
+  raiz.querySelector('[data-add="escopo"]').onclick = () => { (p.escopo ||= []).push({ titulo: '', descricao: '', marca: '' }); montarEscopo(); };
+  raiz.querySelector('[data-add="grupo"]').onclick = () => { (inc.grupos ||= []).push({ titulo: '', itens: [] }); montarGrupos(); };
+  raiz.querySelector('[data-add="condicao"]').onclick = () => { (p.condicoes ||= []).push({ titulo: '', texto: '' }); montarCondicoes(); };
+  $('#trocar-retrato').onclick = async () => { const url = await escolherImagem(); if (url) { sob.foto = url; montarEditor(); } };
+  $('#fechar').onclick = () => { if (!confirmarDescarte()) return; proposta = null; editandoModelo = false; raiz.innerHTML = ''; };
+  if (editandoModelo) $('#salvar-modelo').onclick = salvarModelo;
+  else {
+    $('#salvar-proposta').onclick = salvarProposta;
+    $('#virar-modelo').onclick = salvarComoModelo;
+  }
+}
+
+function ligarCampos(raiz) {
+  for (const c of raiz.querySelectorAll('[data-p]')) {
+    const caminho = c.dataset.p;
+    const escrever = () => {
+      let v = c.value;
+      if (c.dataset.lista !== undefined) v = paraLinhas(v);
+      else if (c.dataset.pares !== undefined) v = paraLinhas(v).map((l) => { const i = l.indexOf(':'); return i < 0 ? [l, ''] : [l.slice(0, i).trim(), l.slice(i + 1).trim()]; });
+      else if (caminho === 'publicada') v = c.value === '1';
+      else if (c.type === 'number') v = c.value === '' ? 0 : Number(c.value);
+      const partes = caminho.split('.');
+      let o = proposta;
+      for (const k of partes.slice(0, -1)) o = (o[k] ||= {});
+      o[partes.at(-1)] = v;
+      if (caminho === 'id') { const a = $('#ver'); if (a) { a.href = '/propostas/' + v; a.hidden = !v; } }
+      if (caminho.startsWith('investimento.')) previaValor();
+    };
+    c.oninput = escrever; c.onchange = escrever;
+  }
+  const cli = raiz.querySelector('[data-p="cliente"]'), end = raiz.querySelector('[data-p="id"]');
+  if (cli && end) cli.addEventListener('blur', () => {
+    if (!end.value.trim() && cli.value.trim()) { end.value = apelidar(cli.value); end.dispatchEvent(new Event('input')); }
+  });
+}
+
+function ligarInvestimento(raiz) {
+  const inv = proposta.investimento;
+  for (const b of raiz.querySelectorAll('#moedas button')) b.onclick = () => {
+    inv.moeda = b.dataset.moeda;
+    for (const o of raiz.querySelectorAll('#moedas button')) o.setAttribute('aria-pressed', String(o === b));
+    previaValor();
+  };
+  for (const b of raiz.querySelectorAll('#parcelas button')) b.onclick = () => {
+    inv.parcelas = Number(b.dataset.parcelas);
+    for (const o of raiz.querySelectorAll('#parcelas button')) o.setAttribute('aria-pressed', String(o === b));
+    // a forma de pagamento acompanha, se ainda estiver no padrão
+    const pag = proposta.pagamento ||= {};
+    const f = raiz.querySelector('[data-p="pagamento.forma"]');
+    if (f && (!pag.forma || /parcela|vista/i.test(pag.forma))) {
+      pag.forma = inv.parcelas === 1 ? 'A vista' : inv.parcelas + ' parcelas' + (inv.parcelas === 2 ? ' (50% / 50%)' : '');
+      f.value = pag.forma;
+    }
+    previaValor();
+  };
+  previaValor();
+}
+
+function previaValor() {
+  const inv = proposta.investimento || {};
+  const n = Math.max(1, Number(inv.parcelas) || 1);
+  const v = Number(inv.valorParcela) || 0;
+  const moeda = inv.moeda || 'R$';
+  const fmt = new Intl.NumberFormat(moeda === 'R$' ? 'pt-BR' : 'en-US', { maximumFractionDigits: 2 });
+  const din = (x) => moeda + (moeda.length > 1 ? ' ' : '') + fmt.format(x);
+  const g = $('#previa-valor'), a = $('#previa-apoio');
+  if (!g) return;
+  if (!v) { g.textContent = '—'; a.textContent = 'Preencha o valor da parcela.'; return; }
+  g.textContent = n === 1 ? din(v) : n + '× ' + din(v);
+  a.textContent = n === 1 ? 'à vista' : 'total ' + din(n * v);
+}
+
+function itemRepetido(rotulo, i, lista, remontar, campos) {
+  const d = document.createElement('div');
+  d.className = 'item';
+  d.innerHTML = '<div class="item__topo"><span class="item__n">' + String(i + 1).padStart(2, '0') + '</span><b style="flex:1">' + rotulo + '</b>'
+    + '<button class="mini" type="button" data-mover="-1">&uarr;</button><button class="mini" type="button" data-mover="1">&darr;</button>'
+    + '<button class="mini mini--perigo" type="button" data-remover>Remover</button></div>' + campos;
+  d.querySelector('[data-remover]').onclick = () => { lista.splice(i, 1); remontar(); };
+  for (const b of d.querySelectorAll('[data-mover]')) b.onclick = () => {
+    const j = i + Number(b.dataset.mover); if (j < 0 || j >= lista.length) return;
+    [lista[i], lista[j]] = [lista[j], lista[i]]; remontar();
+  };
+  return d;
+}
+function ligarSoltos(d, obj, mapa) {
+  const cs = d.querySelectorAll('input, textarea');
+  mapa.forEach((k, n) => { cs[n].removeAttribute('data-p'); cs[n].oninput = () => { obj[k] = k === 'itens' ? paraLinhas(cs[n].value) : cs[n].value; }; });
+}
+function montarEscopo() {
+  const raiz = $('#lista-escopo'); if (!raiz) return;
+  const lista = proposta.escopo ||= [];
+  raiz.innerHTML = lista.length ? '' : '<p class="vazio">Nenhum entregavel ainda.</p>';
+  lista.forEach((it, i) => {
+    const d = itemRepetido('Entregavel', i, lista, montarEscopo,
+      campo('Titulo', it.titulo, '') + '<div class="linha linha--2">' + campo('Descricao', it.descricao, '') + campo('Etiqueta', it.marca, '', 'Ex.: Identidade, Web, Impresso') + '</div>');
+    ligarSoltos(d, it, ['titulo', 'descricao', 'marca']);
+    raiz.appendChild(d);
+  });
+}
+function montarGrupos() {
+  const raiz = $('#lista-grupos'); if (!raiz) return;
+  const lista = proposta.inclui.grupos ||= [];
+  raiz.innerHTML = '';
+  lista.forEach((g, i) => {
+    const d = itemRepetido('Subgrupo', i, lista, montarGrupos,
+      campo('Titulo', g.titulo, '') + '<label><span>Itens</span><textarea>' + esc(linhasPara(g.itens)) + '</textarea><small>Um por linha.</small></label>');
+    ligarSoltos(d, g, ['titulo', 'itens']);
+    raiz.appendChild(d);
+  });
+}
+function montarCondicoes() {
+  const raiz = $('#lista-condicoes'); if (!raiz) return;
+  const lista = proposta.condicoes ||= [];
+  raiz.innerHTML = lista.length ? '' : '<p class="vazio">Nenhuma condicao ainda.</p>';
+  lista.forEach((c, i) => {
+    const d = itemRepetido('Condicao', i, lista, montarCondicoes,
+      campo('Titulo', c.titulo, '') + campo('Texto', c.texto, '', 'Uma linha em branco separa paragrafos.', 'area'));
+    ligarSoltos(d, c, ['titulo', 'texto']);
+    raiz.appendChild(d);
+  });
+}
+
+/* ---------- salvar ---------- */
+async function salvarProposta() {
+  if (!proposta.id) { avisar('Falta o endereco da proposta.', 'erro'); return; }
+  if (!/^[a-z0-9][a-z0-9-]{1,60}$/.test(proposta.id)) { avisar('Endereco invalido: so minusculas, numeros e hifen.', 'erro'); return; }
+  const b = $('#salvar-proposta'); b.disabled = true; b.textContent = 'Salvando…';
+  try {
+    const r = await api('/api/propostas', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(proposta) });
+    proposta = r.proposta; salva = JSON.stringify(proposta);
+    avisar('Salva. ' + (proposta.publicada !== false ? 'No ar em ' + location.origin + r.url : 'Rascunho: so voce abre.'));
+    await carregar(); montarEditor();
+  } catch (e) { avisar('Nao salvou — ' + e.message, 'erro'); }
+  finally { b.disabled = false; b.textContent = 'Salvar proposta'; }
+}
+
+async function salvarModelo() {
+  const b = $('#salvar-modelo'); b.disabled = true; b.textContent = 'Salvando…';
+  try {
+    const novo = {}; for (const k of CAMPOS_MODELO) if (proposta[k] !== undefined) novo[k] = proposta[k];
+    await api('/api/modelo-proposta', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(novo) });
+    modelo = novo; salva = JSON.stringify(proposta);
+    avisar('Modelo salvo. Vale para as proximas propostas.');
+  } catch (e) { avisar('Nao salvou o modelo — ' + e.message, 'erro'); }
+  finally { b.disabled = false; b.textContent = 'Salvar modelo'; }
+}
+
+async function salvarComoModelo() {
+  if (!confirm('Usar o escopo, o que inclui, condicoes, texto e encerramento DESTA proposta como padrao das proximas?')) return;
+  try {
+    const novo = {}; for (const k of CAMPOS_MODELO) if (proposta[k] !== undefined) novo[k] = clonar(proposta[k]);
+    await api('/api/modelo-proposta', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(novo) });
+    modelo = novo; avisar('Modelo atualizado a partir desta proposta.');
+  } catch (e) { avisar('Nao salvou o modelo — ' + e.message, 'erro'); }
+}
+
+/* ---------- imagens ---------- */
+let resolver = null;
+function escolherImagem() {
+  pintarGaleria();
+  $('#escolher').showModal();
+  return new Promise((r) => { resolver = r; });
+}
+function fecharEscolher(url) { $('#escolher').close(); if (resolver) { resolver(url || null); resolver = null; } }
+$('#escolher-fechar').onclick = () => fecharEscolher(null);
+$('#escolher').addEventListener('cancel', () => fecharEscolher(null));
+async function pintarGaleria() {
+  const g = $('#galeria'); g.innerHTML = '';
+  let imgs = [];
+  try { imgs = (await api('/api/imagens')).imagens || []; } catch (e) { avisar('Nao listei as imagens — ' + e.message, 'erro'); }
+  $('#galeria-vazia').hidden = imgs.length > 0;
+  for (const im of imgs) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'foto-adm';
+    b.innerHTML = '<img src="' + im.url + '" alt="" loading="lazy"><div class="foto-adm__pe"><span class="foto-adm__nome">' + esc(im.chave.split('/').pop()) + '</span></div>';
+    b.onclick = () => fecharEscolher(im.url);
+    g.appendChild(b);
+  }
+}
+async function enviar(arquivos) {
+  let ultima = null;
+  for (const a of arquivos) {
+    const fd = new FormData(); fd.append('arquivo', a); fd.append('pasta', 'propostas');
+    avisar('Enviando ' + a.name + '…');
+    try { const d = await api('/api/imagens', { method: 'POST', body: fd }); ultima = d.url; }
+    catch (e) { avisar('Falhou ' + a.name + ' — ' + e.message, 'erro'); }
+  }
+  if (ultima) fecharEscolher(ultima); else pintarGaleria();
+}
+const solta = $('#solta'), arquivo = $('#arquivo');
+solta.onclick = () => arquivo.click();
+arquivo.onchange = () => { enviar([...arquivo.files]); arquivo.value = ''; };
+solta.ondragover = (e) => { e.preventDefault(); solta.classList.add('ativa'); };
+solta.ondragleave = () => solta.classList.remove('ativa');
+solta.ondrop = (e) => { e.preventDefault(); solta.classList.remove('ativa'); enviar([...e.dataTransfer.files].filter((f) => f.type.startsWith('image/'))); };
+
+/* ---------- ligações ---------- */
+$('#nova').onclick = nova;
+$('#editar-modelo').onclick = editarModelo;
+$('#sair').onclick = async () => {
+  if (suja() && !confirm('Ha alteracoes nao salvas. Sair mesmo assim?')) return;
+  await fetch('/api/sair', { method: 'POST' }); location.replace('/admin/entrar');
+};
+addEventListener('beforeunload', (e) => { if (suja()) { e.preventDefault(); e.returnValue = ''; } });
+
+carregar();
+</script>
+</body>
+</html>

@@ -70,8 +70,25 @@ function secInclui(bloco) {
   </section>`;
 }
 
+/* O investimento pode vir estruturado (moeda, parcelas, valor da
+   parcela — é o que o painel novo grava) ou como texto solto
+   ("2× $750", das propostas antigas). Os dois renderizam igual. */
+export function textoInvestimento(inv) {
+  if (!inv) return { grande: '', apoio: '' };
+  const parcelas = Math.max(1, Math.round(Number(inv.parcelas) || 1));
+  const valor = Number(inv.valorParcela);
+  if (!(valor > 0)) return { grande: inv.valor || '', apoio: '' };
+
+  const moeda = inv.moeda || 'R$';
+  const fmt = new Intl.NumberFormat(moeda === 'R$' ? 'pt-BR' : 'en-US', { maximumFractionDigits: 2 });
+  const dinheiro = (n) => `${moeda}${moeda.length > 1 ? ' ' : ''}${fmt.format(n)}`;
+  if (parcelas === 1) return { grande: dinheiro(valor), apoio: 'à vista' };
+  return { grande: `${parcelas}× ${dinheiro(valor)}`, apoio: `total ${dinheiro(parcelas * valor)}` };
+}
+
 function secInvestimento(inv, pag) {
   if (!inv && !pag) return '';
+  const { grande, apoio } = textoInvestimento(inv);
   return `
   <section class="section prop-investimento" id="investimento">
     <div class="wrap prop-investimento__grade">
@@ -80,7 +97,8 @@ function secInvestimento(inv, pag) {
       <div class="prop-valor reveal">
         <span class="rule rule--strong" aria-hidden="true"></span>
         <p class="eyebrow">${escapar(inv?.rotulo || 'Investimento')}</p>
-        <p class="prop-valor__n">${escapar(inv?.valor || '')}</p>
+        <p class="prop-valor__n">${escapar(grande)}</p>
+        ${talvez(apoio, () => `<p class="small prop-valor__apoio">${escapar(apoio)}</p>`)}
         ${talvez(inv?.nota, () => `<p class="body prop-valor__nota">${escapar(inv.nota)}</p>`)}
       </div>`)}
 

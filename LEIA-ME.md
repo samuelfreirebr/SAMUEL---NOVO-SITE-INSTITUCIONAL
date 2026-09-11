@@ -169,12 +169,32 @@ resultado com número. É o número que vende.
 
 **Métricas** — seção `01`, bloco `.metricas`.
 
-## Painel de edição
+## Painel
 
-Em `links.samuelfreire.com.br/admin`. Edita textos, sobe fotos e gerencia
-clientes e projetos — do computador ou do celular.
+Em `links.samuelfreire.com.br/admin`. Pede usuário e senha numa tela de
+login (não é o popup do navegador), e depois abre um **hub** com dois
+blocos: *Criar proposta* e *Editar site ativo*. Novas funcionalidades
+entram como novos blocos.
 
-### Como funciona
+```
+/admin/entrar       login
+/admin/             hub
+/admin/site/        editor do site
+/admin/propostas/   propostas
+```
+
+### A senha
+
+Uma variável na stack, `SENHA_PAINEL`, e o usuário `samuel` (ou o que
+você puser em `USUARIO_PAINEL`). O login cria um cookie assinado que
+dura uma semana; trocar a senha na stack derruba todas as sessões
+abertas. Oito senhas erradas seguidas do mesmo endereço bloqueiam por
+dez minutos.
+
+`/admin` e `/api` estão trancados por inteiro — leitura inclusive. Sem
+sessão, a tela volta para o login e a API responde 401.
+
+### Como o editor funciona
 
 O painel **não escreve nos arquivos do repositório**. Ele salva no volume
 `dados`: textos num JSON, imagens em pastas. O servidor injeta esse
@@ -194,44 +214,37 @@ Painel → /dados/conteudo.json + /dados/img
             visitante
 ```
 
-### A senha
+### Editando o site
 
-Uma variável na stack, `SENHA_PAINEL`, e o usuário `samuel` (ou o que você
-puser em `USUARIO_PAINEL`). O navegador pede as duas coisas ao abrir
-`/admin` e não pergunta de novo até você fechá-lo.
+O site inteiro aparece num quadro e você edita clicando. Texto
+contornado em laranja é editável — clique, escreva, Enter quebra linha,
+Esc sai. Clique numa foto para trocá-la pela galeria.
 
-`/admin` e `/api` estão trancados por inteiro — **leitura inclusive**.
-Antes só a gravação era checada, e a lista de imagens ficava visível para
-quem descobrisse o endereço.
+Ao clicar num texto aparece uma barra com **duas ferramentas, só**:
 
-Trocar a senha é trocar a variável e dar *Update the stack*.
+- **Quebra** — insere uma quebra de linha no cursor
+- **A− / A+** — diminui ou aumenta o tamanho do texto (*Padrão* volta ao original)
 
-### Usando
+As duas valem para o dispositivo escolhido no seletor **PC / Celular**
+do topo, e são **independentes**: uma quebra feita no modo Celular só
+existe no celular; um tamanho mudado no PC não muda o celular. No modo
+Celular o quadro estreita para 390px, que é onde essas regras passam a
+valer (até 640px de largura).
 
-**Editar site** é a aba principal: o site inteiro aparece num quadro e você
-edita clicando. Texto contornado em laranja é editável — clique, escreva,
-Enter quebra linha, Esc sai. Clique numa foto para trocá-la pela galeria.
+Por dentro: a quebra vira `<br class="so-pc">` ou `<br class="so-celular">`
+no texto, e o tamanho vira `conteudo.estilos[chave][pc|celular]`, que o
+servidor transforma num `<style>` ao servir a página.
 
-O botão *BR / Global* troca a versão que está no quadro. *Recarregar* volta o
-quadro ao que está salvo mantendo o que você editou; *Descartar* joga fora
-tudo desde o último salvamento.
+O botão *BR / Global* troca a versão que está no quadro. *Recarregar*
+volta o quadro ao que está salvo mantendo o que você editou; *Descartar*
+joga fora tudo desde o último salvamento. O ponto branco no **Salvar**
+avisa que há alteração pendente.
 
-O ponto branco no botão **Salvar** avisa que há alteração pendente. Nada vai
-ao ar antes de salvar, e o navegador avisa se você tentar sair com edição
-solta.
+As abas **Clientes** e **Projetos** são para adicionar, remover e
+reordenar. Cliente sem foto mostra as iniciais; sem `@`, o arroba some.
 
-As outras abas são para o que não dá para fazer clicando:
-
-- **Clientes e projetos** — adicionar, remover e reordenar. Cliente sem foto
-  mostra as iniciais; sem `@`, o arroba some.
-- **Propostas** — veja a seção abaixo.
-
-Para trocar uma foto, clique nela. Dentro do "Escolher imagem" dá para
-arrastar uma nova para a área tracejada, sem sair do que estava fazendo.
-
-O editor só existe no painel: o script é injetado no quadro a partir dele. O
-site publicado não carrega uma linha de editor, e quem visita nunca recebe
-nada disso.
+O editor só existe no painel: o script é injetado no quadro a partir
+dele. O site publicado não carrega uma linha de editor.
 
 Cada salvamento guarda a versão anterior em `conteudo.anterior.json` — se
 algo sair errado, dá para recuperar por lá.
@@ -245,9 +258,11 @@ quem tem o endereço.
 
 ### Fazendo uma
 
-Painel → aba **Propostas**.
+Painel → **Criar proposta**.
 
-- **+ Nova proposta** começa em branco.
+- **+ Nova proposta** já nasce preenchida com o seu **modelo**: escopo,
+  o que cada entregável inclui, condições, seu texto, assinatura, frase
+  final e botão. Só falta o cliente, o título e o valor.
 - **Duplicar** copia uma que já existe. É o caminho normal: o miolo de uma
   proposta muda pouco de cliente para cliente. A cópia nasce como
   **rascunho**, para não ir ao ar antes de você trocar o valor.
@@ -255,6 +270,21 @@ Painel → aba **Propostas**.
   partir do nome do cliente.
 - **Situação** decide quem abre: *no ar* é qualquer um com o link;
   *rascunho* só você, logado.
+
+**Investimento** é visual: escolha a moeda (R$ / $ / €), as parcelas
+(à vista, 2×… 12×) e digite o valor de cada parcela. A prévia mostra o
+que vai para a página — `3× R$ 1.500 · total R$ 4.500` — e a forma de
+pagamento acompanha.
+
+### O modelo
+
+O botão **Modelo**, no topo, abre o que toda proposta nova traz
+preenchido. Mude ali o que se repete; as propostas já criadas não mudam,
+só as próximas. O caminho inverso também existe: dentro de uma proposta,
+**Salvar como modelo** faz dela o novo padrão.
+
+O modelo vive em `/dados/modelo-proposta.json`. Sem arquivo lá, vale a
+semente `servidor/sementes/modelo-proposta.json`.
 
 Propostas têm **botão de salvar próprio**, dentro do editor. O *Salvar* lá
 de cima é só do site. Misturar os dois faria uma correção de texto do site

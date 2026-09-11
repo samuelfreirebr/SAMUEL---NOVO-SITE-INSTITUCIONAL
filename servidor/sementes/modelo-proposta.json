@@ -1,0 +1,67 @@
+{
+  "subtitulo": "",
+  "escopo": [
+    { "titulo": "Branding", "descricao": "Identidade visual completa: logo, paleta, tipografia e manual de uso.", "marca": "Identidade" },
+    { "titulo": "Website", "descricao": "Site institucional responsivo, otimizado para velocidade e SEO.", "marca": "Web" },
+    { "titulo": "Materiais impressos", "descricao": "Business card, adesivo comercial e folders de serviços.", "marca": "Impresso" }
+  ],
+  "inclui": {
+    "titulo": "Cada entregável inclui",
+    "itens": [
+      "Estudo de público-alvo e posicionamento",
+      "Captação de informação e montagem",
+      "Apontamento e configuração do domínio",
+      "Configuração de hospedagem + backups",
+      "Instalação e configuração de WordPress",
+      "Fundamentação da estrutura principal",
+      "Criação do design / layout",
+      "Implementação do layout",
+      "Coerência visual com a IDV",
+      "Otimização e SEO do projeto",
+      "Configurações gerais de segurança",
+      "Testes de velocidade"
+    ],
+    "grupos": [
+      {
+        "titulo": "Otimizações de velocidade",
+        "itens": [
+          "Configuração de CDN",
+          "Atraso de JavaScript e CSS",
+          "Configuração de cache",
+          "Pré-carregamento de fontes e otimização"
+        ]
+      }
+    ]
+  },
+  "investimento": {
+    "rotulo": "Investimento",
+    "moeda": "R$",
+    "parcelas": 2,
+    "valorParcela": 0,
+    "nota": "A proposta garante suporte total até 6 meses após a implementação, para atualizações, correções, alterações de texto e instalação de ferramentas e automações, se necessárias."
+  },
+  "pagamento": {
+    "chamada": "Confiança constrói grandes negócios.",
+    "forma": "2 parcelas (50% / 50%)",
+    "etapas": "Início do projeto + finalização",
+    "conta": [
+      ["Banco", "Wise"],
+      ["Account number", "955873538158163"],
+      ["Routing number (wire e ACH)", "084009519"],
+      ["Nome", "SAMUEL FREIRE DA SILVA"]
+    ]
+  },
+  "condicoes": [
+    { "titulo": "Garantia total", "texto": "Até o fim da implementação, estão cobertos na garantia os ajustes de erros necessários." },
+    { "titulo": "Prazo médio: 45 dias", "texto": "O prazo total conta a partir do ponto em que o web designer tem em mãos todas as informações e materiais para produção, sendo contados em dias úteis.\nOs projetos podem finalizar antes do prazo." },
+    { "titulo": "Ferramentas e hospedagem", "texto": "O preço de ferramentas e plugins necessários para a criação do projeto, como Elementor Pro e WP Rocket, já está incluso no orçamento.\nO preço de hospedagem está incluído no orçamento, caso necessário." },
+    { "titulo": "Contratos e notas fiscais", "texto": "Os contratos e as notas fiscais serão emitidos após a confirmação do projeto. Todo o processo de criação e implementação será conduzido com total segurança, transparência e competência profissional." }
+  ],
+  "sobre": {
+    "foto": "/img/samuel-retrato.jpg",
+    "texto": "Muito prazer, sou Samuel. Trabalho como designer há 5 anos e, nos últimos 3, venho dividindo minha operação entre lançamentos presenciais (eventos) e web design. Em 2023 realizei meu primeiro evento presencial, cuidando de tudo, do design ao pitch. Agora, em 2025, já estamos na 6ª edição.\nHoje minha atuação no web design carrega toda a minha experiência com infoprodutos e eventos, unindo branding e performance para grandes nomes do digital. Tive o privilégio de contribuir com muitos projetos, e é uma honra ter você aqui. Espero poder te ajudar de alguma forma."
+  },
+  "assinatura": { "papel": "Responsável pelo projeto", "nome": "Samuel", "sobrenome": "Freire" },
+  "encerramento": "Vamos construir isso juntos?",
+  "contato": { "rotulo": "Falar com o Samuel", "link": "https://wa.me/5583982078301" }
+}

@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Editar site — Painel Samuel Freire</title>
+
+<link rel="icon" href="/img/favicon.png" type="image/png">
+<link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/styles/tokens.css?v=20260909h">
+<link rel="stylesheet" href="/styles/base.css?v=20260911a">
+
+<link rel="stylesheet" href="/admin/painel.css?v=1">
+</head>
+
+<body>
+
+<header class="topo">
+  <h1><a href="/admin/">Painel</a> <i>Samuel Freire</i><span class="sec">Editar site</span></h1>
+
+  <div class="grupo" id="versoes">
+    <button type="button" aria-selected="true"  data-versao="br">BR</button>
+    <button type="button" aria-selected="false" data-versao="global">Global</button>
+  </div>
+
+  <div class="grupo" id="abas">
+    <button type="button" aria-selected="true"  data-alvo="site">Editar site</button>
+    <button type="button" aria-selected="false" data-alvo="clientes">Clientes</button>
+    <button type="button" aria-selected="false" data-alvo="projetos">Projetos</button>
+  </div>
+
+  <button class="mini" type="button" id="recarregar">Recarregar</button>
+  <button class="mini mini--perigo" type="button" id="desfazer" disabled>Descartar</button>
+  <button class="btn btn--brand" type="button" id="salvar">Salvar</button>
+  <button class="mini" type="button" id="sair">Sair</button>
+</header>
+
+<p class="aviso" id="local" hidden>
+  <b>Modo local.</b> Voc&ecirc; est&aacute; no servidor da sua m&aacute;quina. Tudo funciona
+  &mdash; salvar, enviar foto, criar proposta &mdash; mas grava na pasta de dados
+  local, n&atilde;o no servidor de produ&ccedil;&atilde;o.
+</p>
+<p class="aviso" id="aviso" role="status"></p>
+
+<div class="corpo">
+
+  <section class="painel" id="painel-site">
+    <div class="dica">
+      <span><b>Clique num texto</b> para editar, <b>numa foto</b> para trocar. Nada vai ao ar até você salvar.</span>
+      <div class="grupo" id="dispositivo" title="Quebras de linha e tamanhos de texto são independentes por dispositivo">
+        <button type="button" aria-selected="true" data-modo="pc">PC</button>
+        <button type="button" aria-selected="false" data-modo="celular">Celular</button>
+      </div>
+    </div>
+    <div class="quadro-caixa"><iframe id="quadro" title="Site"></iframe></div>
+  </section>
+
+  <section class="painel" id="painel-clientes" hidden>
+    <div class="form">
+      <fieldset>
+        <legend>Clientes do carrossel</legend>
+        <div id="lista-clientes"></div>
+        <button class="mini" type="button" data-novo="cliente">+ Adicionar cliente</button>
+      </fieldset>
+    </div>
+  </section>
+
+  <section class="painel" id="painel-projetos" hidden>
+    <div class="form">
+      <fieldset>
+        <legend>Projetos em destaque</legend>
+        <div id="lista-projetos"></div>
+        <button class="mini" type="button" data-novo="projeto">+ Adicionar projeto</button>
+      </fieldset>
+    </div>
+  </section>
+
+</div>
+
+<dialog id="escolher">
+  <div class="modal__topo">
+    <b id="escolher-titulo">Escolher imagem</b>
+    <button class="mini" type="button" id="escolher-fechar">Fechar</button>
+  </div>
+  <div class="modal__corpo">
+    <div class="solta" id="solta">
+      <b>Arraste a nova foto aqui</b>
+      <span>ou clique para escolher &mdash; JPG, PNG, WebP ou AVIF, at&eacute; 6 MB</span>
+    </div>
+    <input type="file" id="arquivo" accept="image/*" multiple hidden>
+    <div class="galeria-adm" id="escolher-galeria"></div>
+    <p class="vazio" id="escolher-vazia">Nenhuma imagem enviada ainda.</p>
+  </div>
+</dialog>
+
+<script type="module">
+import { ligarEditor } from './editor.js';
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+/* No servidor local as Functions nao existem: a API devolve o HTML do 404.
+   Sem isto, o painel mostrava "Unexpected token '<'". */
+const LOCAL = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+async function api(url, opcoes) {
+  const r = await fetch(url, opcoes);
+  const texto = await r.text();
+  let dado;
+  try { dado = JSON.parse(texto); }
+  catch (e) {
+    throw new Error(LOCAL
+      ? 'o servidor local nao respondeu JSON. Rode "node servidor/servidor.js" com SENHA_PAINEL definida.'
+      : 'o servidor respondeu algo que nao e JSON.');
+  }
+  if (r.status === 401) { location.replace('/admin/entrar?voltar=' + encodeURIComponent(location.pathname)); throw new Error('sessao encerrada'); }
+  if (!r.ok) throw new Error(dado.erro || ('erro ' + r.status));
+  return dado;
+}
+
+let conteudo = {};
+let salvo = '{}';
+let versao = 'br';
+let dispositivo = 'pc';   // 'pc' | 'celular' — para quem valem quebra e tamanho
+
+/* Tamanho de texto por dispositivo. Vai em conteudo.estilos e o
+   servidor transforma num <style> ao servir a página. */
+function definirEstilo(chave, disp, valor) {
+  const est = (conteudo.estilos ||= {});
+  const e = (est[chave] ||= {});
+  if (valor == null || valor === '') delete e[disp]; else e[disp] = valor;
+  if (!Object.keys(e).length) delete est[chave];
+  if (!Object.keys(est).length) delete conteudo.estilos;
+  marcarEstado();
+}
+
+const sujo = () => JSON.stringify(conteudo) !== salvo;
+
+function marcarEstado() {
+  $('#salvar').dataset.sujo = sujo() ? '1' : '0';
+  $('#desfazer').disabled = !sujo();
+}
+
+function pegar(caminho) {
+  return caminho.split('.').reduce((o, k) => (o && typeof o === 'object' ? o[k] : undefined), conteudo);
+}
+function definir(caminho, valor) {
+  const partes = caminho.split('.');
+  const ultima = partes.pop();
+  let alvo = conteudo;
+  for (const p of partes) {
+    if (typeof alvo[p] !== 'object' || alvo[p] === null) alvo[p] = {};
+    alvo = alvo[p];
+  }
+  if (valor === '' || valor == null) delete alvo[ultima]; else alvo[ultima] = valor;
+  marcarEstado();
+}
+
+function avisar(texto, tipo = 'ok') {
+  const el = $('#aviso');
+  el.textContent = texto;
+  el.dataset.tipo = tipo;
+  el.classList.add('mostra');
+  if (tipo === 'ok') setTimeout(() => el.classList.remove('mostra'), 3500);
+}
+
+function carregarQuadro() {
+  const q = $('#quadro');
+  q.src = (versao === 'br' ? '/' : '/global/') + '?editor=' + Date.now();
+  q.onload = () => {
+    const doc = q.contentDocument;
+    // O que foi editado e ainda nao salvo precisa reaparecer apos recarregar.
+    for (const el of doc.querySelectorAll('[data-edit]')) {
+      const v = pegar(el.getAttribute('data-edit'));
+      if (typeof v === 'string' && v !== '') el.innerHTML = v;
+    }
+    for (const img of doc.querySelectorAll('[data-edit-img]')) {
+      const v = pegar(img.getAttribute('data-edit-img'));
+      if (typeof v === 'string' && v !== '') img.src = v;
+    }
+    importarDoQuadro(doc);
+    const info = ligarEditor(q, definir, escolherImagem, {
+      dispositivo: () => dispositivo,
+      estilos: () => conteudo.estilos || {},
+      aoMudarEstilo: definirEstilo,
+    });
+    if (info) avisar('Pronto para editar: ' + info.textos + ' textos e ' + info.imagens + ' fotos nesta versao.');
+  };
+}
+
+/* O painel começa vazio, mas o site já tem clientes e projetos escritos no
+   HTML. Sem isto, a aba Clientes mostrava "nenhum cliente" enquanto o
+   carrossel rodava com treze — e a única saída era recadastrar tudo.
+   Aqui a lista atual é lida do próprio quadro e vira ponto de partida.
+   Os clones da esteira têm aria-hidden: ficam de fora. */
+function importarDoQuadro(doc) {
+  if (!conteudo.clientes || !conteudo.clientes.length) {
+    const lis = [...doc.querySelectorAll('.clientes__trilha > li:not([aria-hidden])')];
+    if (lis.length) {
+      conteudo.clientes = lis.map((li) => {
+        const img = li.querySelector('img');
+        const foto = li.querySelector('.cliente__foto');
+        return {
+          nome: (li.querySelector('b') || {}).textContent || '',
+          handle: (li.querySelector('em') || {}).textContent || '',
+          foto: img ? new URL(img.getAttribute('src'), location.origin).pathname : '',
+          inicial: foto ? foto.getAttribute('data-inicial') || '' : '',
+        };
+      });
+      montarClientes();
+    }
+  }
+
+  if (!conteudo.projetos || !conteudo.projetos.length) {
+    const lis = [...doc.querySelectorAll('.projetos > li')];
+    if (lis.length) {
+      conteudo.projetos = lis.map((li) => {
+        const img = li.querySelector('img');
+        const t = (sel) => (li.querySelector(sel) || {}).textContent || '';
+        const a = li.querySelector('a');
+        return {
+          tag: t('.tag').trim(),
+          data: t('.projeto__data').trim(),
+          titulo: t('.projeto__titulo').trim(),
+          contexto: t('.projeto__ctx').trim(),
+          disciplinas: t('.projeto__disc').trim(),
+          imagem: img ? new URL(img.getAttribute('src'), location.origin).pathname : '',
+          link: a ? a.getAttribute('href') || '' : '',
+        };
+      });
+      montarProjetos();
+    }
+  }
+
+  // Importar não é editar: o botão Salvar não deve acender por isso.
+  salvo = JSON.stringify(conteudo);
+  marcarEstado();
+}
+
+let resolverEscolha = null;
+let pastaAtual = 'geral';
+
+async function escolherImagem(chaveOuPasta) {
+  // A pasta sai do contexto: foto de cliente vai para clientes/, e por aí.
+  pastaAtual = /proposta/i.test(chaveOuPasta || '') ? 'propostas'
+             : /cliente/i.test(chaveOuPasta || '') ? 'clientes'
+             : /projeto/i.test(chaveOuPasta || '') ? 'projetos'
+             : /bastidor/i.test(chaveOuPasta || '') ? 'bastidores'
+             : 'geral';
+  $('#escolher-titulo').textContent = 'Escolher imagem — ' + pastaAtual;
+  await pintarEscolher();
+  $('#escolher').showModal();
+  return new Promise((r) => { resolverEscolha = r; });
+}
+
+async function pintarEscolher() {
+  const g = $('#escolher-galeria');
+  g.innerHTML = '';
+  let imgs = [];
+  try { imgs = (await api('/api/imagens')).imagens || []; }
+  catch (e) { avisar('Nao listei as imagens — ' + e.message, 'erro'); }
+  $('#escolher-vazia').hidden = imgs.length > 0;
+  for (const im of imgs) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'foto-adm';
+    b.innerHTML = '<img src="' + im.url + '" alt="" loading="lazy">'
+      + '<div class="foto-adm__pe"><span class="foto-adm__nome">' + im.chave.split('/').pop() + '</span></div>';
+    b.onclick = () => fecharEscolher(im.url);
+    const x = document.createElement('button');
+    x.type = 'button'; x.className = 'mini mini--perigo'; x.textContent = '×';
+    x.title = 'Apagar do acervo';
+    x.onclick = async (ev) => {
+      ev.stopPropagation();
+      if (!confirm('Apagar esta imagem do acervo? Onde estiver em uso, o espaço fica vazio.')) return;
+      try {
+        await api('/api/imagens?chave=' + encodeURIComponent(im.chave), { method: 'DELETE' });
+        pintarEscolher();
+      } catch (err) { avisar('Não apaguei — ' + err.message, 'erro'); }
+    };
+    b.querySelector('.foto-adm__pe').appendChild(x);
+    g.appendChild(b);
+  }
+}
+
+function fecharEscolher(url) {
+  $('#escolher').close();
+  if (resolverEscolha) { resolverEscolha(url || null); resolverEscolha = null; }
+}
+$('#escolher-fechar').onclick = () => fecharEscolher(null);
+$('#escolher').addEventListener('cancel', () => fecharEscolher(null));
+
+function esc(x) { return (x || '').replace(/"/g, '&quot;'); }
+
+function montarClientes() {
+  const raiz = $('#lista-clientes');
+  raiz.innerHTML = '';
+  const itens = conteudo.clientes || [];
+  if (!itens.length) raiz.innerHTML = '<p class="vazio">Nenhum cliente aqui ainda — o carrossel segue com a lista do HTML.</p>';
+  itens.forEach((c, i) => raiz.appendChild(itemCliente(c, i)));
+}
+
+function itemCliente(c, i) {
+  const d = document.createElement('div');
+  d.className = 'item';
+  d.innerHTML = ''
+    + '<div class="item__topo">'
+    + '<img class="previa" src="' + esc(c.foto) + '" alt="" onerror="this.removeAttribute(\'src\')">'
+    + '<span class="item__n">' + String(i + 1).padStart(2, '0') + '</span>'
+    + '<button class="mini" type="button" data-foto>Trocar foto</button>'
+    + '<button class="mini" type="button" data-mover="-1">&uarr;</button>'
+    + '<button class="mini" type="button" data-mover="1">&darr;</button>'
+    + '<button class="mini mini--perigo" type="button" data-remover>Remover</button>'
+    + '</div>'
+    + '<div class="linha linha--2">'
+    + '<label><span>Nome</span><input type="text" data-campo="nome" value="' + esc(c.nome) + '"></label>'
+    + '<label><span>@ do Instagram</span><input type="text" data-campo="handle" value="' + esc(c.handle) + '">'
+    + '<small>Vazio: o arroba some do card.</small></label>'
+    + '</div>';
+  ligarItem(d, conteudo.clientes, i, montarClientes, 'foto');
+  return d;
+}
+
+function montarProjetos() {
+  const raiz = $('#lista-projetos');
+  raiz.innerHTML = '';
+  const itens = conteudo.projetos || [];
+  if (!itens.length) raiz.innerHTML = '<p class="vazio">Nenhum projeto aqui ainda — a secao segue com a lista do HTML.</p>';
+  itens.forEach((p, i) => raiz.appendChild(itemProjeto(p, i)));
+}
+
+function itemProjeto(p, i) {
+  const d = document.createElement('div');
+  d.className = 'item';
+  d.innerHTML = ''
+    + '<div class="item__topo">'
+    + '<img class="previa previa--larga" src="' + esc(p.imagem) + '" alt="" onerror="this.removeAttribute(\'src\')">'
+    + '<span class="item__n">' + String(i + 1).padStart(2, '0') + '</span>'
+    + '<button class="mini" type="button" data-foto>Trocar imagem</button>'
+    + '<button class="mini" type="button" data-mover="-1">&uarr;</button>'
+    + '<button class="mini" type="button" data-mover="1">&darr;</button>'
+    + '<button class="mini mini--perigo" type="button" data-remover>Remover</button>'
+    + '</div>'
+    + '<div class="linha linha--2">'
+    + '<label><span>Etiqueta</span><input type="text" data-campo="tag" value="' + esc(p.tag) + '"><small>Ex.: Landing Page</small></label>'
+    + '<label><span>Ao lado</span><input type="text" data-campo="data" value="' + esc(p.data) + '"><small>Ex.: Lancamento 7D</small></label>'
+    + '</div>'
+    + '<label><span>Titulo</span><textarea data-campo="titulo">' + (p.titulo || '') + '</textarea></label>'
+    + '<label><span>Contexto do cliente</span><textarea data-campo="contexto">' + (p.contexto || '') + '</textarea>'
+    + '<small>Uma linha dando o tamanho do cliente.</small></label>'
+    + '<div class="linha linha--2">'
+    + '<label><span>Disciplinas</span><input type="text" data-campo="disciplinas" value="' + esc(p.disciplinas) + '"></label>'
+    + '<label><span>Link</span><input type="text" data-campo="link" value="' + esc(p.link) + '"></label>'
+    + '</div>';
+  ligarItem(d, conteudo.projetos, i, montarProjetos, 'imagem');
+  return d;
+}
+
+function ligarItem(d, lista, i, remontar, campoFoto) {
+  d.querySelector('[data-remover]').onclick = () => { lista.splice(i, 1); marcarEstado(); remontar(); };
+  for (const b of d.querySelectorAll('[data-mover]')) {
+    b.onclick = () => {
+      const j = i + Number(b.dataset.mover);
+      if (j < 0 || j >= lista.length) return;
+      const t = lista[i]; lista[i] = lista[j]; lista[j] = t;
+      marcarEstado(); remontar();
+    };
+  }
+  d.querySelector('[data-foto]').onclick = async () => {
+    const url = await escolherImagem(campoFoto === 'foto' ? 'cliente' : 'projeto');
+    if (url) { lista[i][campoFoto] = url; marcarEstado(); remontar(); }
+  };
+  for (const c of d.querySelectorAll('[data-campo]')) {
+    c.oninput = () => { lista[i][c.dataset.campo] = c.value; marcarEstado(); };
+  }
+}
+
+async function enviar(arquivos) {
+  let ultima = null;
+  for (const a of arquivos) {
+    const fd = new FormData();
+    fd.append('arquivo', a);
+    fd.append('pasta', pastaAtual);
+    avisar('Enviando ' + a.name + '...');
+    try {
+      const d = await api('/api/imagens', { method: 'POST', body: fd });
+      ultima = d.url;
+      avisar('Enviada: ' + d.url);
+    } catch (e) { avisar('Falhou ' + a.name + ' — ' + e.message, 'erro'); }
+  }
+  if (ultima) fecharEscolher(ultima); else pintarEscolher();
+}
+
+async function salvar() {
+  const b = $('#salvar');
+  b.disabled = true; b.textContent = 'Salvando...';
+  try {
+    await api('/api/conteudo', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(conteudo),
+    });
+    salvo = JSON.stringify(conteudo);
+    marcarEstado();
+    avisar('Salvo. O site ja esta com as alteracoes.');
+  } catch (e) {
+    avisar('Nao salvou — ' + e.message, 'erro');
+  } finally {
+    b.disabled = false; b.textContent = 'Salvar';
+  }
+}
+
+async function iniciar() {
+  $('#local').hidden = !LOCAL;
+  try {
+    conteudo = await api('/api/conteudo');
+    if (!conteudo || typeof conteudo !== 'object') conteudo = {};
+  } catch (e) {
+    conteudo = {};
+    if (!LOCAL) avisar('Nao carreguei o conteudo salvo — ' + e.message, 'erro');
+  }
+  salvo = JSON.stringify(conteudo);
+  marcarEstado();
+  carregarQuadro(); montarClientes(); montarProjetos();
+}
+
+
+$('#salvar').onclick = salvar;
+$('#recarregar').onclick = carregarQuadro;
+$('#desfazer').onclick = () => {
+  if (!confirm('Descartar tudo que voce mudou desde o ultimo salvamento?')) return;
+  conteudo = JSON.parse(salvo);
+  marcarEstado(); carregarQuadro(); montarClientes(); montarProjetos();
+};
+
+for (const b of $$('#dispositivo button')) {
+  b.onclick = () => {
+    for (const o of $$('#dispositivo button')) o.setAttribute('aria-selected', String(o === b));
+    dispositivo = b.dataset.modo;
+    $('.quadro-caixa').dataset.modo = dispositivo;
+    try { $('#quadro').contentWindow.dispatchEvent(new CustomEvent('painel:dispositivo', { detail: dispositivo })); } catch (e) {}
+  };
+}
+
+$('#sair').onclick = async () => {
+  if (sujo() && !confirm('Voce tem alteracoes nao salvas. Sair mesmo assim?')) return;
+  await fetch('/api/sair', { method: 'POST' });
+  location.replace('/admin/entrar');
+};
+
+for (const b of $$('#versoes button')) {
+  b.onclick = () => {
+    for (const o of $$('#versoes button')) o.setAttribute('aria-selected', String(o === b));
+    versao = b.dataset.versao;
+    carregarQuadro();
+  };
+}
+
+for (const b of $$('#abas button')) {
+  b.onclick = () => {
+    for (const o of $$('#abas button')) o.setAttribute('aria-selected', String(o === b));
+    for (const p of $$('.painel')) p.hidden = p.id !== 'painel-' + b.dataset.alvo;
+  };
+}
+
+$('[data-novo="cliente"]').onclick = () => {
+  if (!conteudo.clientes) conteudo.clientes = [];
+  conteudo.clientes.push({ nome: '', handle: '', foto: '' });
+  marcarEstado(); montarClientes();
+};
+$('[data-novo="projeto"]').onclick = () => {
+  if (!conteudo.projetos) conteudo.projetos = [];
+  conteudo.projetos.push({ tag: '', data: '', titulo: '', contexto: '', disciplinas: '', imagem: '', link: '' });
+  marcarEstado(); montarProjetos();
+};
+
+const solta = $('#solta'), arquivo = $('#arquivo');
+solta.onclick = () => arquivo.click();
+arquivo.onchange = () => { enviar([...arquivo.files]); arquivo.value = ''; };
+solta.ondragover = (e) => { e.preventDefault(); solta.classList.add('ativa'); };
+solta.ondragleave = () => solta.classList.remove('ativa');
+solta.ondrop = (e) => {
+  e.preventDefault(); solta.classList.remove('ativa');
+  enviar([...e.dataTransfer.files].filter((f) => f.type.startsWith('image/')));
+};
+
+addEventListener('beforeunload', (e) => {
+  if (sujo()) { e.preventDefault(); e.returnValue = ''; }
+});
+
+iniciar();
+</script>
+</body>
+</html>

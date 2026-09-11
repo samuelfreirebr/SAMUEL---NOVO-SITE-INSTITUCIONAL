@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Entrar — Painel Samuel Freire</title>
+<link rel="icon" href="/img/favicon.png" type="image/png">
+<link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/styles/tokens.css?v=20260909h">
+<link rel="stylesheet" href="/styles/base.css?v=20260911a">
+<style>
+  /* A tela de login é a única coisa aberta sob /admin: por isso não
+     carrega painel.css (que está atrás da tranca) — o pouco que
+     precisa mora aqui. */
+  html, body { height: 100%; }
+  body { background: var(--bg); display: grid; place-items: center; padding: var(--sp-md); }
+  .entrar { width: 100%; max-width: 380px; }
+  .marca { font-size: var(--t-lead); font-weight: var(--w-black); letter-spacing: -.035em; line-height: 1; }
+  .marca em { font-style: italic; font-weight: var(--w-book); }
+  .marca::before {
+    content: ""; display: inline-block; width: var(--tick); height: var(--tick);
+    background: var(--brand); margin-right: .55em; vertical-align: .15em;
+  }
+  .sub { color: var(--muted); font-size: var(--t-small); margin-top: var(--sp-2xs); }
+  form { margin-top: var(--sp-2xl); }
+  label { display: block; margin-bottom: var(--sp-md); }
+  label span { display: block; font-size: var(--t-eyebrow); font-weight: var(--w-semi); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: var(--sp-2xs); }
+  input {
+    width: 100%; padding: .85em 1em; background: var(--bg); color: var(--ink);
+    border: var(--hair) solid var(--line-2); border-radius: var(--radius-img);
+    font-size: var(--t-body); font-family: inherit;
+  }
+  input:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+  .btn { width: 100%; justify-content: center; margin-top: var(--sp-sm); }
+  .erro {
+    display: none; margin-top: var(--sp-md); padding: var(--sp-sm) var(--sp-md);
+    background: var(--brand); color: #fff; font-size: var(--t-small); border-radius: var(--radius-img);
+  }
+  .erro.mostra { display: block; }
+  .pe { margin-top: var(--sp-2xl); padding-top: var(--sp-md); border-top: var(--hair) solid var(--line); color: var(--muted); font-size: var(--t-eyebrow); }
+</style>
+</head>
+<body>
+
+<main class="entrar">
+  <p class="marca">Samuel<em>Freire</em></p>
+  <p class="sub">Painel interno</p>
+
+  <form id="form" autocomplete="on">
+    <label>
+      <span>Usuário</span>
+      <input type="text" name="usuario" id="usuario" autocomplete="username" required autofocus>
+    </label>
+    <label>
+      <span>Senha</span>
+      <input type="password" name="senha" id="senha" autocomplete="current-password" required>
+    </label>
+    <button class="btn btn--brand" type="submit" id="botao">Entrar</button>
+    <p class="erro" id="erro" role="alert"></p>
+  </form>
+
+  <p class="pe">Acesso restrito. Só quem tem a senha da stack entra.</p>
+</main>
+
+<script>
+(function () {
+  var form = document.getElementById('form');
+  var erro = document.getElementById('erro');
+  var botao = document.getElementById('botao');
+  var voltar = new URLSearchParams(location.search).get('voltar') || '/admin/';
+  // nunca sai deste site: um ?voltar=https://outro.com seria phishing
+  if (!/^\/admin(\/|$)/.test(voltar)) voltar = '/admin/';
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    erro.classList.remove('mostra');
+    botao.disabled = true; botao.textContent = 'Entrando…';
+    try {
+      var r = await fetch('/api/entrar', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ usuario: form.usuario.value.trim(), senha: form.senha.value }),
+      });
+      var d = {};
+      try { d = await r.json(); } catch (x) {}
+      if (!r.ok) throw new Error(d.erro || ('Erro ' + r.status));
+      location.replace(voltar);
+    } catch (x) {
+      erro.textContent = x.message;
+      erro.classList.add('mostra');
+      botao.disabled = false; botao.textContent = 'Entrar';
+      form.senha.focus(); form.senha.select();
+    }
+  });
+})();
+</script>
+</body>
+</html>

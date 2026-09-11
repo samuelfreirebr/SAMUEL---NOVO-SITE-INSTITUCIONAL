@@ -47,9 +47,12 @@ export async function semear() {
     if (await fs.stat(destino).catch(() => null)) continue;
     try {
       const bruto = await fs.readFile(path.join(origem, nome), 'utf8');
-      JSON.parse(bruto);                       // não planta arquivo torto
+      const dado = JSON.parse(bruto);          // não planta arquivo torto
+      // Só é proposta o que tem id igual ao nome do arquivo. O
+      // modelo-proposta.json mora na mesma pasta e não é uma.
+      if (!dado || dado.id !== nome.replace(/\.json$/, '')) continue;
       await fs.writeFile(destino, bruto, 'utf8');
-      plantadas.push(nome.replace(/\.json$/, ''));
+      plantadas.push(dado.id);
     } catch (e) { /* semente inválida: ignora em silêncio */ }
   }
   return plantadas;
@@ -99,6 +102,7 @@ export async function listarPropostas() {
   for (const n of nomes) {
     try {
       const p = JSON.parse(await fs.readFile(path.join(PASTA_PROPOSTAS, n), 'utf8'));
+      if (!p || !idValido(String(p.id || ''))) continue;   // arquivo solto na pasta não é proposta
       itens.push({
         id: p.id, cliente: p.cliente, titulo: p.titulo,
         criadaEm: p.criadaEm, atualizadaEm: p.atualizadaEm,
@@ -130,6 +134,27 @@ export async function apagarProposta(id) {
   if (!idValido(id)) return false;
   try { await fs.unlink(path.join(PASTA_PROPOSTAS, id + '.json')); return true; }
   catch (e) { return false; }
+}
+
+/* ---------- modelo de proposta ----------
+   O que toda proposta nova já traz preenchido: escopo, o que inclui,
+   condições, quem assina, encerramento. Vive no volume; sem arquivo
+   lá, vale a semente do repositório.                               */
+
+const ARQ_MODELO = path.join(RAIZ_DADOS, 'modelo-proposta.json');
+const SEMENTE_MODELO = path.join(path.dirname(fileURLToPath(import.meta.url)), 'sementes', 'modelo-proposta.json');
+
+export async function lerModelo() {
+  for (const arq of [ARQ_MODELO, SEMENTE_MODELO]) {
+    try { return JSON.parse(await fs.readFile(arq, 'utf8')); } catch (e) { /* próximo */ }
+  }
+  return {};
+}
+
+export async function gravarModelo(dado) {
+  await preparar();
+  await gravarJson(ARQ_MODELO, dado);
+  return { ok: true, salvoEm: new Date().toISOString() };
 }
 
 /* ---------- imagens ---------- */

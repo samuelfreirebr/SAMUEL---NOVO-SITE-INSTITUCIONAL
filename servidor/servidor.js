@@ -9,8 +9,11 @@
      /                    site BR      (HTML do repositório + conteúdo salvo)
      /global              site global
      /propostas/<id>      proposta gerada pelo painel
-     /admin               painel            · exige senha
-     /api/...             API do painel     · exige senha
+     /admin/entrar        tela de login (aberta)
+     /admin/              hub do painel     · exige sessão
+     /admin/site/         editor do site    · exige sessão
+     /admin/propostas/    propostas         · exige sessão
+     /api/...             API do painel     · exige sessão (entrar/sair abertas)
      /img/...             imagens: repositório primeiro, volume depois
      /estado              diagnóstico, sem revelar valor nenhum
    ============================================================ */
@@ -21,7 +24,11 @@ import { promises as fs, createReadStream } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import { injetar } from './injetar.js';
-import { liberado, pedirSenha, temSenhaConfigurada } from './seguranca.js';
+import {
+  liberado, temSenhaConfigurada, conferirCredenciais,
+  criarSessao, cookieDeSessao, cookieDeSaida,
+  bloqueado, registrarFalha, limparFalhas,
+} from './seguranca.js';
 import { lerCorpo, lerMultipart } from './multipart.js';
 import { renderizarProposta } from './proposta-html.js';
 import * as dados from './dados.js';
@@ -129,8 +136,53 @@ async function servirArquivo(res, arquivo, ehHtml) {
 
 /* ---------- API ---------- */
 
+async function lerJson(req, res, limite = LIMITE_JSON) {
+  let corpo;
+  try { corpo = await lerCorpo(req, limite); }
+  catch (e) { json(res, { erro: 'Conteúdo grande demais.' }, 413); return undefined; }
+  try { return JSON.parse(corpo.toString('utf8') || '{}'); }
+  catch (e) { json(res, { erro: 'JSON inválido.' }, 400); return undefined; }
+}
+
+/* Login e saída ficam fora da tranca: são a porta dela. */
+async function apiAberta(req, res, rota) {
+  if (rota === 'entrar' && req.method === 'POST') {
+    const seg = bloqueado(req);
+    if (seg) return json(res, { erro: `Muitas tentativas. Espere ${Math.ceil(seg / 60)} min.` }, 429);
+    if (!temSenhaConfigurada()) {
+      return json(res, { erro: 'Painel sem senha configurada. Defina SENHA_PAINEL na stack.' }, 503);
+    }
+    const dado = await lerJson(req, res, 4096);
+    if (!dado) return;
+    if (!conferirCredenciais(dado.usuario, dado.senha)) {
+      registrarFalha(req);
+      return json(res, { erro: 'Usuário ou senha incorretos.' }, 401);
+    }
+    limparFalhas(req);
+    res.setHeader('set-cookie', cookieDeSessao(req, criarSessao()));
+    return json(res, { ok: true });
+  }
+  if (rota === 'sair' && req.method === 'POST') {
+    res.setHeader('set-cookie', cookieDeSaida());
+    return json(res, { ok: true });
+  }
+  return false;   // não é rota aberta
+}
+
 async function api(req, res, url) {
   const rota = url.pathname.replace(/^\/api\/?/, '');
+
+  /* --- modelo de proposta: o que toda proposta nova já traz --- */
+  if (rota === 'modelo-proposta') {
+    if (req.method === 'GET') return json(res, await dados.lerModelo());
+    if (req.method === 'PUT') {
+      const dado = await lerJson(req, res);
+      if (!dado) return;
+      if (typeof dado !== 'object' || Array.isArray(dado)) return json(res, { erro: 'O modelo precisa ser um objeto.' }, 400);
+      return json(res, await dados.gravarModelo(dado));
+    }
+    return json(res, { erro: 'Método não aceito.' }, 405);
+  }
 
   /* --- textos e imagens do site --- */
   if (rota === 'conteudo') {
@@ -257,23 +309,38 @@ const servidor = http.createServer(async (req, res) => {
 
     if (caminho === '/estado') return estado(res);
 
-    /* Painel e API: trancados juntos, leitura inclusive. */
-    if (caminho === '/admin' || caminho.startsWith('/admin/') || caminho.startsWith('/api/')) {
-      if (!liberado(req)) return pedirSenha(res);
+    /* --- API --- */
+    if (caminho.startsWith('/api/')) {
+      const rota = caminho.replace(/^\/api\/?/, '');
+      const aberta = await apiAberta(req, res, rota);
+      if (aberta !== false) return;
+      if (!liberado(req)) return json(res, { erro: 'Faça login para continuar.', entrar: '/admin/entrar' }, 401);
+      return api(req, res, url);
+    }
 
-      if (caminho.startsWith('/api/')) return api(req, res, url);
-
-      /* /admin precisa da barra final. Sem ela o navegador resolve
-         o import de './editor.js' como /editor.js e o painel abre
-         morto — foi exatamente o que aconteceu. É o mesmo
-         redirecionamento de diretório que qualquer servidor faz. */
-      if (caminho === '/admin') {
-        res.writeHead(308, { location: '/admin/' + url.search, 'cache-control': 'no-store' });
+    /* --- Painel --- */
+    if (caminho === '/admin' || caminho.startsWith('/admin/')) {
+      /* Pastas precisam da barra final: sem ela o navegador resolve
+         './editor.js' como /editor.js e a página abre morta. */
+      if (/^\/admin(\/site|\/propostas)?$/.test(caminho)) {
+        res.writeHead(308, { location: caminho + '/' + url.search, 'cache-control': 'no-store' });
         return res.end();
       }
 
-      const arq = await acharArquivo(caminho);
+      const ehLogin = caminho === '/admin/entrar' || caminho === '/admin/entrar/';
+      const arq = await acharArquivo(ehLogin ? '/admin/entrar.html' : caminho);
       if (!arq) return texto(res, 'Não encontrado.', 404);
+
+      // A tela de login é a única coisa aberta sob /admin. O resto,
+      // sem sessão, volta para ela — e a API responde 401 em JSON.
+      if (!ehLogin && !liberado(req)) {
+        if (path.extname(arq) === '.html') {
+          res.writeHead(302, { location: '/admin/entrar?voltar=' + encodeURIComponent(caminho), 'cache-control': 'no-store' });
+          return res.end();
+        }
+        return texto(res, 'Faça login.', 401);
+      }
+
       const st = await fs.stat(arq);
       res.writeHead(200, {
         'content-type': MIME[path.extname(arq).toLowerCase()] || 'application/octet-stream',

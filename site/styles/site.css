@@ -323,7 +323,13 @@
    Uma trilha, duplicada pelo JS. O rAF empurra o translateX.
    Sem JS: fica estática e legível.                                  */
 
-.esteira-band { padding-block: var(--sp-lg); overflow: hidden; }
+.esteira-band {
+  padding-block: var(--sp-lg);
+  overflow: hidden;
+  /* Traço leve na base: separa a faixa da seção escura seguinte, que
+     tem o mesmo fundo. Mais apagado que a hairline invertida padrão. */
+  border-bottom: var(--hair) solid rgba(255,255,255,.08);
+}
 
 .esteira { overflow: hidden; }
 .esteira__trilha {
