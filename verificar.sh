@@ -3,10 +3,12 @@
 # assets que elas pedem existem. Rode depois de mexer nos arquivos.
 #
 #   ./verificar.sh            (só os arquivos)
-#   ./verificar.sh 4173       (também bate os assets contra o servidor local)
+#   ./verificar.sh 3000       (também bate os assets contra o servidor local)
+#
+# Os arquivos do site estão em site/; o script entra lá sozinho.
 
 set -u
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/site"
 porta="${1:-}"
 falhas=0
 

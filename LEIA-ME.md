@@ -5,37 +5,55 @@ São arquivos estáticos: sobem em qualquer hospedagem.
 
 ## Arquivos
 
-```
-index.html             versão BR
-global/index.html      versão internacional
-admin/                 painel de edição
-styles/tokens.css      variáveis (cores, fontes, espaços, tempos)
-styles/base.css        reset, tipografia, botões, utilitários
-styles/site.css        cada seção da página
-styles/proposta.css    layout das propostas
-js/main.js             todo o comportamento
-fonts/                 Manrope auto-hospedada (.woff2)
-img/                   retrato + bastidores + clientes
+Quatro pastas, cada uma com um papel:
 
-servidor/              o servidor Node (sem dependência nenhuma)
-  servidor.js          rotas, arquivos, tranca
-  injetar.js           põe o texto editado no HTML antes de servir
-  dados.js             textos, imagens e propostas no volume
-  proposta-html.js     monta a página de uma proposta
-  seguranca.js         senha do painel
-  multipart.js         leitura do upload de imagem
-  listas.js            clientes, bastidores, projetos
-  sementes/            propostas que já vêm no repositório
-
-functions/             caminho antigo, só do Cloudflare Pages. Não é usado
-                       pelo deploy em Docker e fica fora da imagem.
 ```
+site/                  o site como vai ao ar
+  index.html             versão BR
+  global/index.html      versão internacional
+  admin/                 painel de edição
+  styles/tokens.css      variáveis (cores, fontes, espaços, tempos)
+  styles/base.css        reset, tipografia, botões, utilitários
+  styles/site.css        cada seção da página
+  styles/br.css          o pouco que só a BR tem
+  styles/global.css      o pouco que só a global tem
+  styles/proposta.css    layout das propostas
+  js/main.js             todo o comportamento
+  fonts/                 Manrope auto-hospedada (.woff2)
+  img/                   retrato, bastidores, clientes, favicon
+
+servidor/              o servidor Node que roda no Portainer (zero dependências)
+  servidor.js            rotas, arquivos, tranca
+  injetar.js             põe o texto editado no HTML antes de servir
+  dados.js               textos, imagens e propostas no volume
+  proposta-html.js       monta a página de uma proposta
+  seguranca.js           senha do painel
+  multipart.js           leitura do upload de imagem
+  listas.js              clientes, bastidores, projetos
+  sementes/              propostas que já vêm no repositório
+
+material/              arquivos de trabalho — não vão ao ar
+  apresentacao-comercial.dc.html   a apresentação de onde saiu a copy
+  perfis-instagram.html            fonte das fotos dos clientes (fora do git)
+  originais/                       imagens em tamanho original (fora do git)
+
+cloudflare-antigo/     o painel na versão para Cloudflare Pages
+  functions/             KV, R2 e HTMLRewriter — não é usado pelo Docker
+  _headers               cache do Pages
+
+Dockerfile             monta a imagem: só site/ e servidor/ entram
+docker-compose.yml     a stack do Portainer
+verificar.sh           confere marcação e assets das duas versões
+```
+
+**Ordem de carga do CSS obrigatória: tokens → base → site.**
 
 O site continua sendo HTML, CSS e JS puros. O servidor existe só para
 guardar o que o painel edita — sem ele os dois `index.html` abrem
 igual, direto do disco.
 
-**Ordem de carga obrigatória: tokens → base → site.**
+`cloudflare-antigo/` pode ser apagada quando você tiver certeza de que
+não volta para lá. Está no histórico do git de qualquer forma.
 
 ## Rodando localmente
 
@@ -52,10 +70,11 @@ grava em `/dados`, não no servidor de produção. Para gravar noutro lugar:
 PASTA_DADOS=./dados-local SENHA_PAINEL=escolha-uma node servidor/servidor.js
 ```
 
-Se quiser só olhar o layout, sem painel, qualquer servidor estático serve:
+Se quiser só olhar o layout, sem painel, qualquer servidor estático
+serve — apontado para `site/`:
 
 ```bash
-python3 -m http.server 3000 --bind 0.0.0.0
+python3 -m http.server 3000 --bind 0.0.0.0 --directory site
 ```
 
 O `--bind 0.0.0.0` faz o servidor escutar em toda a rede, então dá para
@@ -365,7 +384,7 @@ marcado. O volume sobrevive.
 
 ### Cloudflare Pages — o caminho antigo
 
-A pasta `functions/` é a versão do painel escrita para Cloudflare Pages,
+A pasta `cloudflare-antigo/functions/` é a versão do painel escrita para Cloudflare Pages,
 com KV e R2. Continua no repositório e continua válida, mas **não é o que
 o Docker usa** — ela fica de fora da imagem.
 
@@ -444,10 +463,10 @@ com CSS, sem duplicar HTML:
 ```
 
 Para divergir de verdade (texto, seções, ordem), edite o `index.html` da
-versão. Os dois arquivos são independentes.
+versão, em `site/`. Os dois arquivos são independentes.
 
 > **Enquanto forem idênticos:** toda alteração precisa ser feita nos dois
-> arquivos. Copiar por cima resolve — `cp index.html global/index.html` e
+> arquivos. Copiar por cima resolve — `cp site/index.html site/global/index.html` e
 > depois trocar `data-versao`, a canônica e a folha da versão. **Pare de
 > copiar assim que a versão global tiver conteúdo próprio**, senão você
 > sobrescreve o trabalho dela.

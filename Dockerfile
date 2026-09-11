@@ -2,26 +2,18 @@
 #  Site + painel + propostas, num container só.
 #
 #  Node puro, sem dependência nenhuma: não há npm install, não
-#  há build. O que entra na imagem é exatamente o que é site —
-#  .git, functions/ e os arquivos de trabalho ficam de fora.
+#  há build. O que entra na imagem é só site/ e servidor/ —
+#  .git, material/ e cloudflare-antigo/ ficam de fora.
 # ============================================================
 
 FROM node:22-alpine
 
 WORKDIR /app
 
-# O servidor.
+# Só o que roda. Um "COPY . ." publicaria o .git inteiro, e foi
+# assim que o repositório vazou no deploy anterior.
 COPY servidor/ ./servidor/
-
-# O site. Listado item a item de propósito: um "COPY . ." publicaria
-# o .git inteiro, e foi assim que o repositório vazou no deploy anterior.
-COPY index.html ./site/index.html
-COPY global/    ./site/global/
-COPY admin/     ./site/admin/
-COPY styles/    ./site/styles/
-COPY js/        ./site/js/
-COPY fonts/     ./site/fonts/
-COPY img/       ./site/img/
+COPY site/     ./site/
 
 # Os dados ficam no volume. A pasta é criada aqui e entregue ao
 # usuário sem privilégio, senão o container não consegue gravar.

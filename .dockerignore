@@ -1,12 +1,13 @@
+# O Dockerfile já copia só site/ e servidor/. Isto é a segunda tranca.
 .git
 .gitignore
+.claude
 .wrangler
-_originais
-functions
+cloudflare-antigo
+material
 node_modules
+dados-local
 *.md
 verificar.sh
-Apresentacao Comercial.dc.html
-perfis_instagram.html
 .DS_Store
 **/.DS_Store

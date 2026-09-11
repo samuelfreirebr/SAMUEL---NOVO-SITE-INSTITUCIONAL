@@ -9,12 +9,12 @@
 .idea/
 *.swp
 
-# Arquivos-fonte pesados que não vão para a hospedagem.
-# O que é servido está em img/ — aqui ficam só os originais.
-_originais/
+# Material de trabalho pesado, que não vai para a hospedagem.
+# O que é servido está em site/img/ — aqui ficam só os originais.
+material/originais/
 
-# Fonte dos perfis: as fotos já foram extraídas para img/clientes/
-perfis_instagram.html
+# Fonte dos perfis: as fotos já foram extraídas para site/img/clientes/
+material/perfis-instagram.html
 
 # Pasta de dados quando se roda o servidor na própria máquina
 dados-local/

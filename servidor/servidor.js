@@ -17,7 +17,7 @@
 
 import http from 'node:http';
 import path from 'node:path';
-import { promises as fs, createReadStream, existsSync } from 'node:fs';
+import { promises as fs, createReadStream } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import { injetar } from './injetar.js';
@@ -27,10 +27,8 @@ import { renderizarProposta } from './proposta-html.js';
 import * as dados from './dados.js';
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
-// No container os arquivos são copiados para /app/site — fora dele,
-// rodando direto do repositório, a raiz é a pasta acima desta.
-const SITE = process.env.PASTA_SITE
-  || (existsSync(path.join(AQUI, '..', 'site')) ? path.join(AQUI, '..', 'site') : path.join(AQUI, '..'));
+// A pasta site/ ao lado desta — no container, copiada para /app/site.
+const SITE = process.env.PASTA_SITE || path.join(AQUI, '..', 'site');
 const PORTA = Number(process.env.PORTA || 3000);
 
 const LIMITE_IMAGEM = 6 * 1024 * 1024;        // 6 MB
