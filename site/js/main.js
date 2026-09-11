@@ -115,11 +115,67 @@
       velocidade: velocidade,   // px por segundo
       largura: 0,
       desloc: 0,
-      clonado: false
+      clonado: false,
+      // arraste: enquanto o dedo segura, a posição é dele; ao soltar,
+      // a velocidade do gesto vira impulso que vai morrendo no laço
+      arrastando: false,
+      impulso: 0
     };
 
     medirEsteira(e);
+    ligarArraste(caixa, e);
     return e;
+  }
+
+  /* Arrastar com o dedo ou o mouse. touch-action: pan-y (no CSS) faz o
+     navegador entregar o gesto horizontal aqui e manter o vertical para
+     a rolagem da página — os dois convivem no mesmo elemento.         */
+  var ATRITO = 2.6;          // quanto maior, mais rápido a inércia morre
+  var IMPULSO_MAX = 3200;    // px/s: um arremesso forte, não um tiro
+
+  function ligarArraste(caixa, e) {
+    var x0 = 0, desloc0 = 0, xAnt = 0, tAnt = 0, velGesto = 0;
+
+    caixa.addEventListener('pointerdown', function (ev) {
+      if (ev.button && ev.button !== 0) return;
+      e.arrastando = true;
+      e.impulso = 0;
+      x0 = xAnt = ev.clientX;
+      desloc0 = e.desloc;
+      tAnt = ev.timeStamp;
+      velGesto = 0;
+      caixa.classList.add('arrastando');
+      try { caixa.setPointerCapture(ev.pointerId); } catch (err) { /* iOS antigo */ }
+    });
+
+    caixa.addEventListener('pointermove', function (ev) {
+      if (!e.arrastando) return;
+      // dedo para a direita = conteúdo para a direita = desloc menor
+      e.desloc = desloc0 - (ev.clientX - x0);
+      var dt = ev.timeStamp - tAnt;
+      if (dt > 0) {
+        // velocidade do gesto, suavizada para o último tranco não mandar sozinho
+        var v = (ev.clientX - xAnt) / dt * 1000;
+        velGesto = velGesto * 0.6 + v * 0.4;
+        xAnt = ev.clientX;
+        tAnt = ev.timeStamp;
+      }
+    });
+
+    function soltar(ev) {
+      if (!e.arrastando) return;
+      e.arrastando = false;
+      caixa.classList.remove('arrastando');
+      // gesto parado por mais de 80ms antes de soltar: sem arremesso
+      if (ev.timeStamp - tAnt > 80) velGesto = 0;
+      e.impulso = Math.max(-IMPULSO_MAX, Math.min(IMPULSO_MAX, -velGesto));
+    }
+    caixa.addEventListener('pointerup', soltar);
+    caixa.addEventListener('pointercancel', soltar);
+    caixa.addEventListener('lostpointercapture', soltar);
+
+    // imagem arrastada pelo navegador vira fantasma e rouba o gesto
+    caixa.addEventListener('dragstart', function (ev) { ev.preventDefault(); });
   }
 
   function medirEsteira(e) {
@@ -256,7 +312,15 @@
       var e = esteiras[i];
       if (!e.largura) continue;
 
-      e.desloc += e.velocidade * dt;
+      if (!e.arrastando) {
+        e.desloc += (e.velocidade + e.impulso) * dt;
+        // a inércia decai exponencialmente; a velocidade de cruzeiro
+        // continua por baixo, então a esteira nunca "para e volta"
+        if (e.impulso) {
+          e.impulso *= Math.exp(-ATRITO * dt);
+          if (Math.abs(e.impulso) < 2) e.impulso = 0;
+        }
+      }
 
       // laço: volta ao início ao completar um conjunto
       if (e.desloc >= e.largura) e.desloc -= e.largura;

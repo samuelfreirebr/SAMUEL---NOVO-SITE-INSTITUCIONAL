@@ -221,7 +221,11 @@
    espaço no fim da dobra, que é o que convida a rolar — sem os buracos
    no meio. Vale até 900px, que é onde a faixa de tablet ainda esticava. */
 @media (max-width: 900px) {
-  .hero { min-height: auto; padding-block: var(--sp-lg) var(--sp-2xl); }
+  /* No celular o hero é a primeira tela inteira: preenche até a dobra
+     e os botões descem para o pé dela. Antes o min-height era auto, o
+     hero encolhia e a faixa escura seguinte já aparecia sem rolar. svh
+     é a altura com a barra de endereço visível — a de quando se abre. */
+  .hero { min-height: calc(100svh - var(--nav-h)); padding-block: var(--sp-lg) var(--sp-lg); }
   .hero__in { gap: var(--sp-lg); }
 }
 
@@ -868,6 +872,17 @@
    pela borda. É máscara, não gradiente de cor: o que some é o conteúdo,
    não há tinta nova entrando na paleta.
    ============================================================ */
+
+/* Esteiras aceitam arrastar (main.js). pan-y entrega o gesto horizontal
+   ao script e deixa o vertical rolar a página normalmente. */
+[data-esteira] {
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+[data-esteira].arrastando { cursor: grabbing; }
+[data-esteira] img { -webkit-user-drag: none; user-drag: none; pointer-events: none; }
 
 .clientes,
 .esteira,

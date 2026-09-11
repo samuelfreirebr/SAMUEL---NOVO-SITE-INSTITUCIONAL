@@ -15,10 +15,19 @@
    é outra — o peso e o aperto continuam os mesmos.                 */
 
 .hero__title {
-  font-size: min(clamp(2rem, 4.6vw, 4.5rem), 13vh);
+  /* Maior que antes (era 4.6vw). O teto em vh segura em telas baixas:
+     a manchete não pode empurrar os botões para fora da dobra. */
+  font-size: min(clamp(2.25rem, 5.6vw, 5.5rem), 15vh);
   letter-spacing: var(--ls-h1);
   line-height: .98;
-  max-width: 20ch;
+  /* 24ch cabe "lançamentos de 7D com foco em" numa linha só. Com 20ch
+     a frase virava quatro linhas e "foco / em" se separava. Os pares
+     que não podem quebrar estão travados com &nbsp; no HTML. */
+  max-width: 24ch;
+  /* Equilibra as linhas em vez de encher a primeira e deixar uma
+     palavra órfã no fim. É o que mantém "escala e previsibilidade"
+     inteira na última linha. */
+  text-wrap: balance;
 }
 
 
@@ -63,7 +72,9 @@
 
 @media (max-width: 640px) {
   .hero__title {
-    font-size: 1.75rem;
+    /* 32px num iPhone comum: quatro linhas, a frase final inteira na
+       última. A 34px já vira cinco. O teto segura em telas largas. */
+    font-size: clamp(2rem, 8.4vw, 2.1rem);
     margin-top: var(--sp-md);
     max-width: none;
   }
