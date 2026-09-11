@@ -127,10 +127,17 @@
     while (e.trilha.children.length > e.originais.length) {
       e.trilha.removeChild(e.trilha.lastChild);
     }
-    e.trilha.style.transform = 'translate3d(0,0,0)';
 
+    // scrollWidth ignora transform: não precisa zerar para medir, e
+    // zerar era o que fazia a esteira pular ao remedir.
     e.largura = e.trilha.scrollWidth;
     if (!e.largura) return;
+
+    // A posição continua de onde estava, só ajustada à largura nova.
+    // Antes ela voltava a zero a cada remedição — e no celular rolar
+    // dispara resize (a barra de endereço some e volta), então toda
+    // rolada reiniciava as esteiras.
+    e.desloc = e.desloc % e.largura;
 
     // Duplica até cobrir a trilha original + uma viewport de folga
     var precisa = e.largura + window.innerWidth;
@@ -266,13 +273,21 @@
   /* ---------- 6. Resize: remedir, nunca dentro do laço -------------- */
 
   var timerResize;
-  function aoRedimensionar() {
+  var larguraMedida = 0;
+
+  // `forcar` ignora a checagem de largura: usado quando a página foi
+  // medida escondida (aba em segundo plano) e tudo pode estar errado.
+  function aoRedimensionar(forcar) {
     clearTimeout(timerResize);
     timerResize = setTimeout(function () {
-      for (var i = 0; i < esteiras.length; i++) {
-        esteiras[i].desloc = 0;
-        medirEsteira(esteiras[i]);
-      }
+      // Nada aqui depende da altura da janela. Se só ela mudou — a
+      // barra de endereço do celular ao rolar, por exemplo — não há o
+      // que remedir, e remedir à toa é o que fazia as esteiras pularem.
+      var largura = window.innerWidth;
+      if (forcar !== true && largura === larguraMedida) return;
+      larguraMedida = largura;
+
+      for (var i = 0; i < esteiras.length; i++) medirEsteira(esteiras[i]);
       medirPendentes();
       medirHero();
     }, 180);
@@ -318,13 +333,13 @@
     ligarEsteiras();
     medirHero();
 
-    window.addEventListener('resize', aoRedimensionar, { passive: true });
+    window.addEventListener('resize', function () { aoRedimensionar(false); }, { passive: true });
 
     // Uma aba aberta em segundo plano mede tudo com a janela em 0x0: as
     // posições em cache saem erradas e o observer nem chega a disparar.
     // Quando ela aparece, remedimos antes que a varredura use lixo.
     document.addEventListener('visibilitychange', function () {
-      if (document.visibilityState === 'visible') aoRedimensionar();
+      if (document.visibilityState === 'visible') aoRedimensionar(true);
     });
 
     requestAnimationFrame(laco);
@@ -336,6 +351,7 @@
   } else {
     iniciar();
   }
-  window.addEventListener('load', aoRedimensionar);
+  // As imagens mudam a largura das esteiras: remede quando todas chegam.
+  window.addEventListener('load', function () { aoRedimensionar(true); });
 
 })();
