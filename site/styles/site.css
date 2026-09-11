@@ -203,13 +203,59 @@
   flex-wrap: wrap;
   gap: var(--sp-2xs);
 }
+/* ---- Botão do hero: texto à esquerda, seta num círculo à direita ----
+   O círculo é o próprio svg com padding — nenhum elemento a mais no
+   HTML. Vale em todos os tamanhos; o celular só o deixa maior.      */
+.hero__btns .btn {
+  justify-content: space-between;
+  min-height: 3.25rem;
+  padding: .4em .4em .4em 1.2em;
+  font-size: var(--t-small);
+  white-space: nowrap;
+}
+.hero__btns .btn .arrow {
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: .625rem;
+  box-sizing: border-box;
+  border-radius: 50%;
+  margin-left: var(--sp-sm);
+  transition: transform var(--d-base) var(--ease-out),
+              background var(--d-fast) var(--ease-out),
+              color var(--d-fast) var(--ease-out);
+}
+.hero__btns .btn--brand .arrow { background: rgba(255,255,255,.2); }
+.hero__btns .btn--ghost .arrow { background: var(--bg-2); }
+/* A logo do Behance já ocupa a esquerda; encosta no texto. */
+.hero__btns .btn__logo { margin-right: -.2em; }
+
+/* Hover: o botão inverte (base.css) e o círculo enche de cor, com a
+   seta girando 45° para apontar para a direita — "vai". Sobrescreve o
+   deslize diagonal genérico do .btn .arrow. */
+.hero__btns .btn:hover .arrow { transform: rotate(45deg); }
+.hero__btns .btn--brand:hover .arrow { background: #FFFFFF; color: var(--ink); }
+.hero__btns .btn--ghost:hover .arrow { background: var(--brand); color: #FFFFFF; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__btns .btn .arrow { transition: none; }
+  .hero__btns .btn:hover .arrow { transform: none; }
+}
+
 @media (max-width: 560px) {
   /* Numa tela estreita o orçamento ocupa a linha inteira — é a ação
      principal — e os outros dois dividem a linha de baixo. Duas fileiras
      em vez de três: é o que faz a barra caber na primeira dobra. */
-  .hero__btns { width: 100%; }
-  .hero__btns .btn--brand { flex: 1 0 100%; justify-content: center; }
-  .hero__btns .btn--ghost { flex: 1 1 0; justify-content: center; }
+  .hero__btns { width: 100%; gap: var(--sp-xs); }
+  .hero__btns .btn--brand { flex: 1 0 100%; }
+  /* Os dois de baixo crescem a partir do próprio conteúdo, nunca abaixo
+     dele: com base 0 o botão ficava mais estreito que o texto + círculo
+     e a seta vazava pela borda. */
+  .hero__btns .btn--ghost { flex: 1 1 auto; }
+  /* No celular o botão é mais alto e o círculo maior: é o alvo do dedo.
+     Menos ar entre texto e círculo, para os dois caberem lado a lado. */
+  .hero__btns .btn { min-height: 3.6rem; padding: .5em .5em .5em 1.1em; }
+  .hero__btns .btn .arrow { width: 2.5rem; height: 2.5rem; padding: .7rem; margin-left: var(--sp-2xs); }
 }
 
 /* O hero tem muita coisa: identidade, status, display, frase e a barra de
@@ -234,7 +280,6 @@
   .hero__foot { gap: var(--sp-md); }
   .hero .lead { font-size: 1.0625rem; }
   .hero__acoes { padding-top: var(--sp-md); gap: var(--sp-sm); }
-  .hero__btns .btn { padding: .95em 1.1em; }
 
   /* No celular os três botões são a ação; a fileira de redes é o que
      empurrava a barra para fora da dobra. Elas seguem inteiras na
@@ -297,8 +342,10 @@
   color: #FFFFFF;
 }
 .esteira__trilha span {
-  font-size: var(--t-small);
-  letter-spacing: .08em;
+  /* Uns 40% do número (era ~28%): o rótulo estava sumindo ao lado dele. */
+  font-size: clamp(.9375rem, 1.3vw, 1.25rem);
+  font-weight: var(--w-medium);
+  letter-spacing: .06em;
   text-transform: uppercase;
   color: var(--muted-invert);
 }
