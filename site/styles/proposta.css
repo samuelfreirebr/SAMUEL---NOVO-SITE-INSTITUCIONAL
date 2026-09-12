@@ -55,7 +55,8 @@
   border-top: var(--hair) solid var(--line);
   max-width: 52rem;
 }
-.prop-capa__meta dd { margin: 0; margin-top: var(--sp-2xs); }
+.prop-capa__meta dd { margin: 0; margin-top: var(--sp-2xs); display: flex; align-items: center; gap: .5em; }
+.prop-capa__meta dd .ico { width: 1.1rem; height: 1.1rem; color: var(--brand); flex: none; }
 
 /* ---------- Escopo ---------------------------------------------------- */
 
@@ -68,7 +69,7 @@
   display: grid;
   /* minmax(0,…) porque um título longo faz a coluna fr estourar:
      fr respeita o min-content e a régua de numeração desalinha. */
-  grid-template-columns: clamp(3rem, 6vw, 6rem) minmax(0, 1fr) auto;
+  grid-template-columns: clamp(3rem, 6vw, 6rem) auto minmax(0, 1fr) auto;
   align-items: start;
   gap: var(--sp-md);
   padding-block: clamp(var(--sp-lg), 3.5vw, var(--sp-xl));
@@ -80,6 +81,15 @@
   color: var(--brand);
   letter-spacing: .04em;
   padding-top: .35em;
+}
+/* ícone em caixa com hairline: o detalhe que separa cada entregável */
+.prop-item__ico {
+  display: grid; place-items: center;
+  width: 2.75rem; height: 2.75rem;
+  border: var(--hair) solid var(--line-2);
+  border-radius: var(--radius-img);
+  color: var(--brand);
+  flex: none;
 }
 .prop-item__desc {
   margin-top: var(--sp-sm);
@@ -95,8 +105,9 @@
   padding-top: .55em;
 }
 @media (max-width: 720px) {
-  .prop-item { grid-template-columns: clamp(2.25rem, 9vw, 3rem) minmax(0, 1fr); }
-  .prop-item__marca { grid-column: 2; padding-top: 0; margin-top: var(--sp-xs); }
+  .prop-item { grid-template-columns: clamp(2.25rem, 9vw, 3rem) auto minmax(0, 1fr); }
+  .prop-item__marca { grid-column: 3; padding-top: 0; margin-top: var(--sp-xs); }
+  .prop-item__ico { width: 2.25rem; height: 2.25rem; }
 }
 
 /* ---------- O que cada entregável inclui ------------------------------
@@ -147,12 +158,11 @@
   letter-spacing: var(--ls-body);
   color: #FFFFFF;
 }
-/* Quadradinho de 9px: o detalhe gráfico do sistema, nada maior. */
 .prop-inclui__tick {
   flex: none;
-  width: var(--tick); height: var(--tick);
-  background: var(--brand);
-  transform: translateY(-.1em);
+  width: 1.1rem; height: 1.1rem;
+  color: var(--brand);
+  transform: translateY(.18em);
 }
 /* Lista longa: duas colunas de linhas, alinhadas pelas hairlines. */
 @media (min-width: 700px) {
@@ -296,13 +306,14 @@
   font-variant-numeric: tabular-nums;
   transition: color var(--d-base) var(--ease-out);
 }
-.prop-card__tick {
-  display: block;
-  width: var(--bullet); height: var(--bullet);
-  border-radius: 50%;
-  background: var(--brand);
+.prop-card__ico {
+  display: grid; place-items: center;
+  width: 2.75rem; height: 2.75rem;
   margin-bottom: var(--sp-xl);
-  transition: transform var(--d-base) var(--ease-out);
+  border: var(--hair) solid var(--line-2);
+  border-radius: var(--radius-img);
+  color: var(--brand);
+  transition: background var(--d-base) var(--ease-out), border-color var(--d-base) var(--ease-out), color var(--d-base) var(--ease-out);
 }
 .prop-card__titulo { margin-bottom: var(--sp-sm); transition: color var(--d-base) var(--ease-out); }
 .prop-card__corpo { margin-top: auto; }
@@ -317,9 +328,9 @@
 .prop-card:hover .prop-card__titulo { color: #FFFFFF; }
 .prop-card:hover .body { color: var(--muted-invert); }
 .prop-card:hover .prop-card__num { color: var(--brand); }
-.prop-card:hover .prop-card__tick { transform: scale(1.8); }
+.prop-card:hover .prop-card__ico { background: var(--brand); border-color: var(--brand); color: #FFFFFF; }
 @media (prefers-reduced-motion: reduce) {
-  .prop-card, .prop-card__tick, .prop-card__num, .prop-card__titulo, .prop-card .body { transition: none; }
+  .prop-card, .prop-card__ico, .prop-card__num, .prop-card__titulo, .prop-card .body { transition: none; }
   .prop-card:hover { transform: none; }
 }
 
@@ -397,7 +408,8 @@
   padding-block: var(--sp-sm);
   border-bottom: var(--hair) solid rgba(255,255,255,.35);
 }
-.prop-fim__dados dt { font-size: var(--t-eyebrow); font-weight: var(--w-semi); letter-spacing: var(--ls-eyebrow); text-transform: uppercase; color: rgba(255,255,255,.8); padding-top: .25em; }
+.prop-fim__dados dt { display: flex; align-items: center; gap: .5em; font-size: var(--t-eyebrow); font-weight: var(--w-semi); letter-spacing: var(--ls-eyebrow); text-transform: uppercase; color: rgba(255,255,255,.8); padding-top: .25em; }
+.prop-fim__dados dt .ico { width: 1rem; height: 1rem; flex: none; }
 .prop-fim__dados dd { margin: 0; font-size: var(--t-body); font-weight: var(--w-semi); color: #FFFFFF; overflow-wrap: anywhere; }
 .prop-fim__dados dd a { color: inherit; text-decoration: none; border-bottom: var(--hair) solid rgba(255,255,255,.45); transition: border-color var(--d-fast); }
 .prop-fim__dados dd a:hover { border-color: #FFFFFF; }
@@ -475,9 +487,11 @@
 .prop-assina__nome { font-size: var(--t-h3); font-weight: var(--w-black); letter-spacing: var(--ls-h3); line-height: var(--lh-h3); color: var(--ink); }
 .prop-assina__nome em { font-style: normal; color: var(--brand); margin-left: .3em; }
 @media (max-width: 900px) {
-  .prop-sobre__grade { grid-template-columns: minmax(0, 1fr); }
+  .prop-sobre__grade { grid-template-columns: minmax(0, 1fr); gap: var(--sp-xl); }
   .prop-sobre__retrato { min-height: 0; aspect-ratio: 4 / 5; max-width: 26rem; }
-  .prop-sobre__txt { gap: var(--sp-xl); }
+  /* no celular não há retrato ao lado para justificar o vão: o texto
+     vem logo depois do cargo */
+  .prop-sobre__txt { justify-content: flex-start; gap: var(--sp-lg); padding-block: 0; }
 }
 
 /* métricas + galeria */
@@ -562,7 +576,17 @@
 .prop-frente:nth-child(3) { grid-column: 1; grid-row: 2; }
 .prop-frente:nth-child(4) { grid-column: 3; grid-row: 2; }
 .prop-frente--escura { background: var(--ink); border-color: var(--ink); }
-.prop-frente__topo { display: flex; justify-content: space-between; align-items: baseline; gap: var(--sp-md); margin-bottom: var(--sp-md); }
+.prop-frente__topo { display: flex; align-items: center; gap: var(--sp-sm); margin-bottom: var(--sp-md); }
+.prop-frente__topo .eyebrow { flex: 1; }
+.prop-frente__ico {
+  display: grid; place-items: center;
+  width: 2.5rem; height: 2.5rem;
+  border: var(--hair) solid var(--line-2);
+  border-radius: var(--radius-img);
+  color: var(--brand);
+  flex: none;
+}
+.prop-frente--escura .prop-frente__ico { border-color: var(--line-invert); }
 .prop-frente__num { font-size: var(--t-h3); font-weight: var(--w-bold); letter-spacing: -.02em; color: var(--muted); }
 .prop-frente--escura .prop-frente__num { color: var(--muted-invert); }
 .prop-frente__itens { list-style: none; display: grid; gap: var(--sp-xs); }
@@ -657,6 +681,17 @@
   border-bottom: var(--hair) solid var(--line);
   transition: opacity var(--d-slow) var(--ease-out), background var(--d-slow) var(--ease-out), color var(--d-slow) var(--ease-out);
 }
+.prop-etapa__ico {
+  display: grid; place-items: center;
+  width: 2.75rem; height: 2.75rem;
+  margin-bottom: var(--sp-md);
+  border: var(--hair) solid var(--line-2);
+  border-radius: var(--radius-img);
+  color: var(--brand);
+  transition: background var(--d-slow) var(--ease-out), border-color var(--d-slow) var(--ease-out), color var(--d-slow) var(--ease-out);
+}
+.prop-etapa.ativa .prop-etapa__ico, .prop-processo:not(.progresso-ativo) .prop-etapa__ico { background: var(--brand); border-color: var(--brand); color: #FFFFFF; }
+.prop-etapa--fim .prop-etapa__ico { border-color: var(--line-invert); }
 .prop-etapa__topo { display: flex; align-items: baseline; gap: var(--sp-sm); margin-bottom: var(--sp-md); }
 .prop-etapa__num { font-size: var(--t-eyebrow); font-weight: var(--w-bold); letter-spacing: .16em; color: var(--brand); font-variant-numeric: tabular-nums; }
 .prop-etapa__nome { font-size: var(--t-eyebrow); font-weight: var(--w-semi); letter-spacing: var(--ls-eyebrow); text-transform: uppercase; color: var(--ink); }
@@ -691,5 +726,6 @@
   .prop-processo.progresso-ativo { min-height: 0; }
   .prop-processo__preso { position: static; min-height: 0; }
   .progresso-ativo .prop-etapa:not(.ativa) { opacity: 1; }
+  .prop-etapa__ico { background: var(--brand) !important; color: #FFFFFF !important; }
   .prop-eco__anel { display: none; }
 }

@@ -465,8 +465,9 @@ function montarEscopo() {
   raiz.innerHTML = lista.length ? '' : '<p class="vazio">Nenhum entregavel ainda.</p>';
   lista.forEach((it, i) => {
     const d = itemRepetido('Entregavel', i, lista, montarEscopo,
-      campo('Titulo', it.titulo, '') + '<div class="linha linha--2">' + campo('Descricao', it.descricao, '') + campo('Etiqueta', it.marca, '', 'Ex.: Identidade, Web, Impresso') + '</div>');
-    ligarSoltos(d, it, ['titulo', 'descricao', 'marca']);
+      campo('Titulo', it.titulo, '') + '<div class="linha linha--2">' + campo('Descricao', it.descricao, '') + campo('Etiqueta', it.marca, '', 'Ex.: Identidade, Web, Impresso') + '</div>'
+      + campo('Icone', it.icone, '', 'Opcional. Vazio = adivinha pelo titulo. Nomes: lupa, alvo, roteiro, codigo, check, caixa, escudo, relogio, ferramenta, documento, pena, globo, megafone, cpu, mail, chat, calendario, moeda, raio, camadas, impressora, aperto'));
+    ligarSoltos(d, it, ['titulo', 'descricao', 'marca', 'icone']);
     raiz.appendChild(d);
   });
 }
@@ -487,8 +488,9 @@ function montarCondicoes() {
   raiz.innerHTML = lista.length ? '' : '<p class="vazio">Nenhuma condicao ainda.</p>';
   lista.forEach((c, i) => {
     const d = itemRepetido('Condicao', i, lista, montarCondicoes,
-      campo('Titulo', c.titulo, '') + campo('Texto', c.texto, '', 'Uma linha em branco separa paragrafos.', 'area'));
-    ligarSoltos(d, c, ['titulo', 'texto']);
+      campo('Titulo', c.titulo, '') + campo('Texto', c.texto, '', 'Uma linha em branco separa paragrafos.', 'area')
+      + campo('Icone', c.icone, '', 'Opcional. Vazio = adivinha pelo titulo. Nomes: lupa, alvo, roteiro, codigo, check, caixa, escudo, relogio, ferramenta, documento, pena, globo, megafone, cpu, mail, chat, calendario, moeda, raio, camadas, impressora, aperto'));
+    ligarSoltos(d, c, ['titulo', 'texto', 'icone']);
     raiz.appendChild(d);
   });
 }
@@ -501,8 +503,9 @@ function montarEtapas() {
     const d = itemRepetido('Etapa', i, lista, montarEtapas,
       campo('Nome', e.titulo, '', 'Ex.: Descoberta')
       + campo('Texto', e.texto, '', '', 'area')
-      + campo('Nota', e.nota, '', 'Opcional. Linha menor, abaixo do texto.'));
-    ligarSoltos(d, e, ['titulo', 'texto', 'nota']);
+      + campo('Nota', e.nota, '', 'Opcional. Linha menor, abaixo do texto.')
+      + campo('Icone', e.icone, '', 'Opcional. Vazio = adivinha pelo titulo. Nomes: lupa, alvo, roteiro, codigo, check, caixa, escudo, relogio, ferramenta, documento, pena, globo, megafone, cpu, mail, chat, calendario, moeda, raio, camadas, impressora, aperto'));
+    ligarSoltos(d, e, ['titulo', 'texto', 'nota', 'icone']);
     raiz.appendChild(d);
   });
 }
@@ -555,8 +558,9 @@ function montarFrentes() {
     const d = itemRepetido('Frente', i, lista, montarFrentes,
       campo('Titulo', f.titulo, '', 'Ex.: Digital')
       + '<label><span>Itens</span><textarea rows="5">' + esc(linhasPara(f.itens)) + '</textarea><small>Um por linha.</small></label>'
+      + campo('Icone', f.icone, '', 'Opcional. Vazio = adivinha pelo titulo. Nomes: lupa, alvo, roteiro, codigo, check, caixa, escudo, relogio, ferramenta, documento, pena, globo, megafone, cpu, mail, chat, calendario, moeda, raio, camadas, impressora, aperto')
       + '<label><span><input type="checkbox" data-escuro' + (f.escuro ? ' checked' : '') + '> Bloco escuro</span></label>');
-    ligarSoltos(d, f, ['titulo', 'itens']);
+    ligarSoltos(d, f, ['titulo', 'itens', 'icone']);
     d.querySelector('[data-escuro]').onchange = (ev) => { f.escuro = ev.target.checked; };
     raiz.appendChild(d);
   });

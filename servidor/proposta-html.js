@@ -11,7 +11,7 @@
 
 import { escapar } from './listas.js';
 
-const V = 'p4';   // versão do proposta.css, para o cache
+const V = 'p5';   // versão do proposta.css, para o cache
 
 const linhas = (t) => String(t || '').split('\n').filter((l) => l.trim());
 
@@ -35,6 +35,7 @@ function secEscopo(itens) {
         ${itens.map((it, i) => `
         <li class="prop-item reveal" style="--delay:${(i * 0.06).toFixed(2)}s">
           <span class="prop-item__num" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
+          <span class="prop-item__ico" aria-hidden="true">${icone(iconePara(it, 'camadas'))}</span>
           <div class="prop-item__corpo">
             <h3 class="h3 prop-item__titulo">${escapar(it.titulo || '')}</h3>
             ${talvez(it.descricao, () => `<p class="body prop-item__desc">${escapar(it.descricao)}</p>`)}
@@ -53,7 +54,7 @@ function secInclui(bloco) {
   if (!soltos.length && !grupos.length) return '';
 
   const total = soltos.length + grupos.reduce((n, g) => n + (g.itens || []).length, 0);
-  const linha = (t) => `<li class="prop-inclui__item"><span class="prop-inclui__tick" aria-hidden="true"></span><span>${escapar(t)}</span></li>`;
+  const linha = (t) => `<li class="prop-inclui__item">${icone('check', 'ico prop-inclui__tick')}<span>${escapar(t)}</span></li>`;
   // Lista longa vira duas colunas de linhas; curta fica numa, com ar.
   const dupla = soltos.length >= 8 ? ' prop-inclui__itens--dupla' : '';
 
@@ -172,7 +173,7 @@ function secCondicoes(itens) {
         ${itens.map((c, i) => `
         <article class="prop-card reveal" style="--delay:${(i * 0.06).toFixed(2)}s">
           <span class="prop-card__num" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
-          <span class="prop-card__tick" aria-hidden="true"></span>
+          <span class="prop-card__ico" aria-hidden="true">${icone(iconePara(c, ['escudo', 'relogio', 'check', 'documento'][i] || 'check'))}</span>
           <h3 class="h3 prop-card__titulo">${escapar(c.titulo || '')}</h3>
           <div class="prop-card__corpo">
             ${linhas(c.texto).map((l) => `<p class="body">${escapar(l)}</p>`).join('')}
@@ -249,7 +250,7 @@ function secEcossistema(eco) {
       <div class="prop-eco__grade" data-n="${frentes.length}">
         ${frentes.map((f, i) => `
         <article class="prop-frente${f.escuro ? ' prop-frente--escura on-dark' : ''} reveal" style="--delay:${(i * 0.06).toFixed(2)}s">
-          <p class="prop-frente__topo"><span class="eyebrow">${escapar(f.titulo || '')}</span><span class="prop-frente__num">${String(i + 1).padStart(2, '0')}</span></p>
+          <p class="prop-frente__topo"><span class="prop-frente__ico" aria-hidden="true">${icone(iconePara(f, ['pena', 'globo', 'megafone', 'cpu'][i] || 'camadas'))}</span><span class="eyebrow">${escapar(f.titulo || '')}</span><span class="prop-frente__num">${String(i + 1).padStart(2, '0')}</span></p>
           <ul class="prop-frente__itens">${(f.itens || []).map((it) => `<li>${escapar(it)}</li>`).join('')}</ul>
         </article>`).join('')}
         <div class="prop-eco__centro reveal" style="--delay:.12s" aria-hidden="true">
@@ -285,6 +286,7 @@ function secProcesso(proc) {
         <ol class="prop-etapas">
           ${etapas.map((e, i) => `
           <li class="prop-etapa${i === etapas.length - 1 ? ' prop-etapa--fim' : ''}" data-etapa="${i}">
+            <span class="prop-etapa__ico" aria-hidden="true">${icone(iconePara(e, ['lupa', 'alvo', 'roteiro', 'codigo', 'check', 'caixa'][i] || 'check'))}</span>
             <p class="prop-etapa__topo"><span class="prop-etapa__num">${String(i + 1).padStart(2, '0')}</span><span class="prop-etapa__nome">${escapar(e.titulo || '')}</span></p>
             <p class="body prop-etapa__texto">${escapar(e.texto || '')}</p>
             ${talvez(e.nota, () => `<p class="small prop-etapa__nota">${escapar(e.nota)}</p>`)}
@@ -294,6 +296,63 @@ function secProcesso(proc) {
       </div>
     </div>
   </section>`;
+}
+
+/* ---------- ícones ----------
+   Traço de 1.6 em caixa de 24, cantos redondos — o mesmo desenho da
+   seta. Nada de preenchimento: só linha, como o resto do sistema.
+   Cada seção escolhe pelo campo "icone" do item; sem ele, adivinha
+   pela palavra-chave do título; sem palavra, usa o padrão da posição. */
+const ICONES = {
+  lupa: '<circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/>',
+  alvo: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
+  roteiro: '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4" cy="6" r="1.2" fill="currentColor"/><circle cx="4" cy="12" r="1.2" fill="currentColor"/><circle cx="4" cy="18" r="1.2" fill="currentColor"/>',
+  codigo: '<path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/>',
+  check: '<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',
+  caixa: '<path d="M3 8l9-5 9 5v8l-9 5-9-5zM3 8l9 5 9-5M12 13v8"/>',
+  escudo: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+  relogio: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  ferramenta: '<path d="M14.5 4.5a4.5 4.5 0 0 0-5.7 5.7L3 16v5h5l5.8-5.8a4.5 4.5 0 0 0 5.7-5.7l-3 3-2.5-.5-.5-2.5z"/>',
+  documento: '<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8zM14 3v5h5M9 13h6M9 17h6"/>',
+  pena: '<path d="M12 19l7-7 3 3-7 7-3-3zM18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5zM2 2l7.6 7.6"/><circle cx="11" cy="11" r="2"/>',
+  globo: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+  megafone: '<path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"/>',
+  cpu: '<rect x="6" y="6" width="12" height="12" rx="1"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>',
+  mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+  chat: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12z"/>',
+  calendario: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/>',
+  moeda: '<circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.5c0-1.4-1.3-2.5-3-2.5s-3 1-3 2.3c0 1.5 1.5 2 3 2.4s3 .9 3 2.4c0 1.3-1.3 2.3-3 2.3s-3-1.1-3-2.5"/>',
+  raio: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+  camadas: '<path d="M12 3l9 5-9 5-9-5zM3 13l9 5 9-5M3 17l9 5 9-5"/>',
+  impressora: '<path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/>',
+  aperto: '<path d="M11 17l-1 1a2 2 0 0 1-3-3l1-1M8 11l3 3M14 8l-3 3a2 2 0 0 0 3 3l3-3M20 12l-4-4-3 1-3-2-6 6M4 12l4 4"/>',
+  behance: '<path d="BEHANCE_PATH" fill="currentColor" stroke="none"/>',
+};
+ICONES.behance = ICONES.behance.replace('BEHANCE_PATH', 'M7.443 5.35c.639 0 1.23.05 1.77.198.54.099 1.001.297 1.387.545.385.297.685.644.884 1.09.197.446.296.99.296 1.634 0 .743-.167 1.362-.506 1.858-.334.495-.836.9-1.487 1.214.9.256 1.572.71 2.011 1.354.442.644.66 1.42.66 2.326 0 .74-.14 1.38-.42 1.92-.28.545-.664.99-1.15 1.335-.48.35-1.04.6-1.67.762-.62.16-1.26.24-1.92.24H0V5.35zm-.354 5.56c.525 0 .96-.125 1.301-.376.34-.25.506-.66.506-1.222 0-.31-.056-.57-.17-.77a1.2 1.2 0 0 0-.45-.463 1.9 1.9 0 0 0-.649-.226 4 4 0 0 0-.764-.06H3.18v3.117zm.173 5.845c.33 0 .64-.03.93-.096.29-.06.55-.17.77-.32.22-.15.4-.35.53-.61.13-.26.19-.59.19-.98 0-.77-.22-1.32-.65-1.65-.43-.33-1-.49-1.71-.49H3.18v4.146zM16.94 16.9c.43.42 1.05.63 1.86.63.58 0 1.08-.15 1.5-.44.42-.29.68-.6.78-.92h2.61c-.42 1.3-1.06 2.22-1.92 2.78-.86.56-1.9.84-3.12.84-.85 0-1.62-.14-2.3-.41a4.8 4.8 0 0 1-1.74-1.16 5.2 5.2 0 0 1-1.1-1.8 6.6 6.6 0 0 1-.39-2.3c0-.82.13-1.58.4-2.28a5.3 5.3 0 0 1 1.13-1.81 5.2 5.2 0 0 1 1.75-1.2 5.6 5.6 0 0 1 2.25-.44c.92 0 1.72.18 2.41.54.69.36 1.25.84 1.69 1.44.44.6.75 1.29.94 2.06.19.77.26 1.58.21 2.42h-7.81c0 .84.28 1.63.71 2.05Zm3.28-5.56c-.34-.38-.93-.58-1.66-.58-.48 0-.88.08-1.19.25-.32.16-.57.36-.76.6-.19.24-.32.5-.4.77-.7.27-.11.51-.13.72h4.75c-.14-.75-.28-1.38-.61-1.76M15.1 6.44h6.06v1.47H15.1z');
+
+function icone(nome, classe = 'ico') {
+  const d = ICONES[nome];
+  if (!d) return '';
+  return `<svg class="${classe}" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+}
+
+// palavra-chave no título → ícone
+const PISTAS = [
+  [/garantia|seguran/i, 'escudo'], [/prazo|dias|tempo|cronograma/i, 'relogio'],
+  [/contrato|nota|fiscal|document/i, 'documento'], [/ferramenta|plugin|hospedagem|servidor/i, 'ferramenta'],
+  [/clareza|confian|transparên|etapa/i, 'check'], [/pagamento|parcela|valor|invest/i, 'moeda'],
+  [/marca|brand|identidade|logo/i, 'pena'], [/digital|site|web|landing|página/i, 'globo'],
+  [/marketing|social|campanha|anúncio/i, 'megafone'], [/sistema|ferramentas|automa|ia\b|tool/i, 'cpu'],
+  [/impress|cartão|flyer|adesivo|folder/i, 'impressora'], [/descoberta|diagn|pesquisa|entend/i, 'lupa'],
+  [/estratégia|posicionamento|objetivo/i, 'alvo'], [/roteiro|roadmap|plano|planej/i, 'roteiro'],
+  [/implementa|desenvolv|constru|produção/i, 'codigo'], [/teste|revis|ajuste|qualidade/i, 'check'],
+  [/entrega|lançamento|publica/i, 'caixa'], [/suporte|acompanha/i, 'aperto'],
+];
+function iconePara(item, padrao) {
+  if (item?.icone && ICONES[item.icone]) return item.icone;
+  const t = String(item?.titulo || item?.marca || '');
+  for (const [re, nome] of PISTAS) if (re.test(t)) return nome;
+  return padrao;
 }
 
 const SETA = '<svg class="arrow" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M4 12L12 4M12 4H5.5M12 4v6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -311,10 +370,10 @@ function secFim(p) {
   const zap = c.whatsapp || (c.link && /wa\.me|whatsapp/.test(c.link) ? c.link : '');
   const principal = c.link || (zap && linkZap(zap)) || (c.email && 'mailto:' + c.email) || '#';
   const contatos = [
-    zap && ['WhatsApp', c.whatsapp || 'abrir conversa', linkZap(zap)],
-    c.email && ['E-mail', c.email, 'mailto:' + c.email],
-    c.portfolio && ['Portfólio', c.portfolio.replace(/^https?:\/\//, ''), linkSite(c.portfolio)],
-    c.site && ['Site', c.site.replace(/^https?:\/\//, ''), linkSite(c.site)],
+    zap && ['WhatsApp', c.whatsapp || 'abrir conversa', linkZap(zap), 'chat'],
+    c.email && ['E-mail', c.email, 'mailto:' + c.email, 'mail'],
+    c.portfolio && ['Portfólio', c.portfolio.replace(/^https?:\/\//, ''), linkSite(c.portfolio), /behance/i.test(c.portfolio) ? 'behance' : 'globo'],
+    c.site && ['Site', c.site.replace(/^https?:\/\//, ''), linkSite(c.site), 'globo'],
   ].filter(Boolean);
 
   return `
@@ -331,8 +390,8 @@ function secFim(p) {
       </div>
       ${talvez(contatos.length, () => `
       <dl class="prop-fim__dados reveal" style="--delay:.08s">
-        ${contatos.map(([r, v, h]) => `<div><dt>${escapar(r)}</dt><dd><a href="${escapar(h)}" target="_blank" rel="noopener">${escapar(v)}</a></dd></div>`).join('')}
-        ${talvez(p.cliente, () => `<div><dt>Esta proposta</dt><dd>${escapar(p.cliente)}${p.validade ? ' · válida por ' + escapar(p.validade) : ''}</dd></div>`)}
+        ${contatos.map(([r, v, h, ic]) => `<div><dt>${icone(ic)}${escapar(r)}</dt><dd><a href="${escapar(h)}" target="_blank" rel="noopener">${escapar(v)}</a></dd></div>`).join('')}
+        ${talvez(p.cliente, () => `<div><dt>${icone('documento')}Esta proposta</dt><dd>${escapar(p.cliente)}${p.validade ? ' · válida por ' + escapar(p.validade) : ''}</dd></div>`)}
       </dl>`)}
     </div>
   </section>`;
@@ -385,9 +444,9 @@ export function renderizarProposta(p) {
       <h1 class="display prop-capa__titulo reveal" style="--delay:.08s">${titulo}</h1>
       ${talvez(p.subtitulo, () => `<p class="lead prop-capa__sub reveal" style="--delay:.16s">${escapar(p.subtitulo)}</p>`)}
       <dl class="prop-capa__meta reveal" style="--delay:.24s">
-        ${talvez(p.preparadaPara, () => `<div><dt class="eyebrow">Preparada para</dt><dd class="body">${escapar(p.preparadaPara)}</dd></div>`)}
-        ${talvez(p.data, () => `<div><dt class="eyebrow">Data</dt><dd class="body">${escapar(p.data)}</dd></div>`)}
-        ${talvez(p.validade, () => `<div><dt class="eyebrow">Validade</dt><dd class="body">${escapar(p.validade)}</dd></div>`)}
+        ${talvez(p.preparadaPara, () => `<div><dt class="eyebrow">Preparada para</dt><dd class="body">${icone('aperto')}${escapar(p.preparadaPara)}</dd></div>`)}
+        ${talvez(p.data, () => `<div><dt class="eyebrow">Data</dt><dd class="body">${icone('calendario')}${escapar(p.data)}</dd></div>`)}
+        ${talvez(p.validade, () => `<div><dt class="eyebrow">Validade</dt><dd class="body">${icone('relogio')}${escapar(p.validade)}</dd></div>`)}
       </dl>
     </div>
   </section>
