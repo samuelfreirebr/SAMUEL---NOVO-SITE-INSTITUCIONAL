@@ -18,3 +18,9 @@ material/perfis-instagram.html
 
 # Pasta de dados quando se roda o servidor na própria máquina
 dados-local/
+
+# Pasta gerada para subir em hospedagem estática (teste). Não é fonte.
+dist/
+dist.zip
+dist-pagina-teste/
+dist-pagina-teste.zip
