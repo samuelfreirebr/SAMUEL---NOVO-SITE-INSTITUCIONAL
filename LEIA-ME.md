@@ -34,7 +34,7 @@ servidor/              o servidor Node que roda no Portainer (zero dependências
 
 material/              arquivos de trabalho — não vão ao ar
   publicacao.md                    como os aplicativos do Samuel são publicados
-  arquitetura-site.md              como um site nesta estrutura é feito e publicado — para colar numa IA
+  arquitetura-site.md              site estático, sem painel: como é feito e como vira dist — para colar numa IA
   apresentacao-comercial.dc.html   a apresentação de onde saiu a copy
   perfis-instagram.html            fonte das fotos dos clientes (fora do git)
   originais/                       imagens em tamanho original (fora do git)
