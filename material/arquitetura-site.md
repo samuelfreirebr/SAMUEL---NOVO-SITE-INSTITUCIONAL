@@ -61,8 +61,7 @@ Estas regras não são estilo — cada uma evita um problema que aconteceu.
 
 ### CSS
 
-- **Ordem de carga obrigatória: `tokens.css → base.css → site.css`**, e
-  depois a folha da versão (`br.css` ou `global.css`), se houver.
+- **Ordem de carga obrigatória: `tokens.css → base.css → site.css`.**
 - Tudo sai de `var()`. Cor crua, medida crua ou fonte crua num
   componente é erro.
 - Tamanhos fluidos com `clamp()`. Grid e Flexbox; nada de float.
@@ -115,9 +114,9 @@ Estas regras não são estilo — cada uma evita um problema que aconteceu.
 
 ### HTML
 
-- **Caminhos absolutos** (`/styles/…`, `/img/…`), nunca relativos: uma
-  segunda versão em `/global/` quebraria. (Para publicar em subpasta, a
-  `dist` recebe um prefixo — ver §5.)
+- **Caminhos absolutos** (`/styles/…`, `/img/…`), nunca relativos.
+  Relativo quebra assim que a URL ganha ou perde uma barra no fim.
+  (Para publicar em subpasta, a `dist` recebe um prefixo — ver §5.)
 - Fonte auto-hospedada (`fonts/*.woff2`), com `preload` do subset
   latino e `unicode-range` para o estendido. Nunca Google Fonts.
 - Assets levam `?v=`. **Bumpar a versão DEPOIS de editar o arquivo**,
@@ -126,8 +125,7 @@ Estas regras não são estilo — cada uma evita um problema que aconteceu.
 - Os `index.html` **nunca** em cache (`no-cache`); assets com cache
   eterno (`immutable`) — eles mudam de URL a cada alteração. As duas
   regras vão no `.htaccess`.
-- `<link rel="canonical">` em todo `index.html`. Sem `noindex` em
-  nenhuma versão.
+- `<link rel="canonical">` no `index.html`. Sem `noindex`.
 - Imagens com `width` e `height` no `<img>` (sem pulo de layout) e
   `loading="lazy"` fora da primeira tela.
 - Ícones em sprite SVG inline no fim do `<body>`, referenciados com
@@ -146,15 +144,6 @@ gira a seta para a direita. Tom editorial, suíço, mínimo. **Contraste
 conferido**: `#9AA3AF` dá 2,55:1 sobre branco e reprova no AA — texto
 secundário usa `#5B6470` (6:1).
 
-### Duas versões, um site
-
-`/` (BR) e `/global/` são dois `index.html` independentes, com
-`data-versao` no `<html>`, canônica apontando para a raiz, e **sem
-`noindex`**. Enquanto forem iguais, toda alteração é feita nos dois.
-Desvio automático por país, se quiser, é regra na Cloudflare (rewrite,
-não redirect — a URL não muda); sem ela, `/` é BR e `/global/` fica
-acessível pelo endereço.
-
 ---
 
 ## 4. O que o projeto precisa ter
@@ -162,17 +151,15 @@ acessível pelo endereço.
 ```
 meu-site/
 ├── site/
-│   ├── index.html                ← versão principal
-│   ├── global/index.html         ← segunda versão (se houver)
+│   ├── index.html                ← a página
 │   ├── styles/
 │   │   ├── tokens.css            ← TODAS as variáveis
 │   │   ├── base.css              ← reset, tipografia, botões, .section, .rule
-│   │   ├── site.css              ← cada seção
-│   │   └── br.css · global.css   ← o pouco que só uma versão tem
+│   │   └── site.css              ← cada seção
 │   ├── js/main.js                ← todo o comportamento
 │   ├── fonts/*.woff2             ← auto-hospedada, dois subsets
 │   └── img/                      ← já otimizado (WebP onde possível)
-├── verificar.sh                  ← confere marcação das versões e assets
+├── verificar.sh                  ← confere canônica, noindex e caminhos dos assets
 ├── material/                     ← trabalho: apresentação, originais, ESTE documento
 ├── .gitignore                    ← .DS_Store, dist/, dist*.zip, originais pesados
 └── LEIA-ME.md
@@ -188,10 +175,9 @@ python3 -m http.server 3000 --bind 0.0.0.0 --directory site
 jeito honesto de julgar o layout mobile. Se houver vídeo, o
 `http.server` não serve (sem HTTP Range): usar `npx serve site`.
 
-`./verificar.sh` confere `data-versao`, canônica, ausência de
-`noindex`, caminhos absolutos, e que uma versão não aponta para a
-outra. `./verificar.sh 3000` bate ainda cada asset contra o servidor
-local.
+`./verificar.sh` confere canônica, ausência de `noindex` e caminhos
+absolutos. `./verificar.sh 3000` bate ainda cada asset contra o
+servidor local.
 
 ---
 
@@ -343,7 +329,7 @@ documento "Como um site meu é construído e publicado" e:
    tudo. Lenis opcional via CDN. Esteiras arrastáveis com inércia.
 
 4. Caminhos absolutos, fonte auto-hospedada com preload, ?v= nos
-   assets bumpado DEPOIS de editar, canônica em todo index.html, sem
+   assets bumpado DEPOIS de editar, canônica no index.html, sem
    noindex, width/height em toda <img>.
 
 5. Um script que gera dist/: copia só o que o HTML referencia,
