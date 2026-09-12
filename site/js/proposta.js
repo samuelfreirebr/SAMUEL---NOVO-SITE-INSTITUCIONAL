@@ -1,9 +1,9 @@
 /* ============================================================
-   Página de proposta — o pouco que ela tem além do main.js.
+   Página de proposta: o pouco que ela tem além do main.js.
 
    Copiar dados de pagamento: um botão por valor e um para tudo.
    Sem clipboard (http, navegador velho), seleciona o texto para
-   o Ctrl+C manual — nunca falha em silêncio.
+   o Ctrl+C manual. Nunca falha em silêncio.
    ============================================================ */
 (function () {
   'use strict';
@@ -44,7 +44,7 @@
 
     var texto;
     if (b.hasAttribute('data-copiar-tudo')) {
-      // "Rótulo: valor" por linha — cola limpo num e-mail ou no banco
+      // "Rótulo: valor" por linha: cola limpo num e-mail ou no banco
       texto = Array.prototype.map.call(
         b.closest('.prop-campo').querySelectorAll('.prop-conta > div'),
         function (d) {
@@ -63,7 +63,7 @@
 
   /* "Tenho dúvidas" abre a seção de perguntas, que nasce escondida.
      Na fase de captura, de propósito: o main.js já prendeu um clique
-     nas âncoras que manda o Lenis rolar até o alvo — se o alvo ainda
+     nas âncoras que manda o Lenis rolar até o alvo, e se o alvo ainda
      estiver display:none nessa hora, ele rola para o lugar errado.
      Aqui a seção aparece antes; depois cada um faz a sua parte (o
      Lenis rola no desktop; no celular vale a âncora nativa). */

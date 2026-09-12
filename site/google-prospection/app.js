@@ -99,7 +99,7 @@ $('#form-perfil').onsubmit = async (e) => {
     avisar('Perfil salvo. As próximas mensagens já saem assinadas.');
     // mensagens de template já geradas ganham a assinatura nova
     Object.keys(MSG).forEach((i) => { if (!MSG[i].ia) { gerarMensagem(Number(i), MSG[i].versao); } });
-  } catch (x) { avisar('Não salvei — ' + x.message, 'erro'); }
+  } catch (x) { avisar('Não salvei: ' + x.message, 'erro'); }
 };
 
 /* ============================================================
@@ -114,7 +114,7 @@ function montarSelects() {
   inPais.innerHTML = CONFIG.paises.map(([c, n]) => `<option value="${esc(c)}">${esc(n)}</option>`).join('');
   inPais.value = 'br';
   $('#fonte-dados').innerHTML = CONFIG.mapas === 'google'
-    ? 'Dados do <b>Google Maps</b> — nota, avaliações e opiniões.'
+    ? 'Dados do <b>Google Maps</b>: nota, avaliações e opiniões.'
     : 'Sem chave do Google: dados do <b>OpenStreetMap</b>, sem nota nem avaliações. Defina <code>GOOGLE_PLACES_KEY</code> na stack pra ligar o Google.';
 }
 
@@ -215,7 +215,7 @@ form.onsubmit = async (e) => {
   } catch (x) {
     varreOn(false);
     log(`<i>falhou:</i> ${esc(x.message)}`);
-    avisar('A varredura falhou — ' + x.message, 'erro');
+    avisar('A varredura falhou: ' + x.message, 'erro');
   } finally { $('#varrer').disabled = false; }
 };
 
@@ -424,7 +424,7 @@ function montarCorpo(i, art) {
   corpo.innerHTML = `
     <div class="diag" data-diag>
       <p class="eyebrow">Diagnóstico do site</p>
-      <div data-diag-corpo><p class="diag__vazio">${x.site ? '<span class="girando"></span> lendo ' + esc(x.site) : x.soRede ? 'Não tem site — só ' + esc(x.insta) : 'Não tem site nem rede. Aqui é criar do zero.'}</p></div>
+      <div data-diag-corpo><p class="diag__vazio">${x.site ? '<span class="girando"></span> lendo ' + esc(x.site) : x.soRede ? 'Não tem site, só ' + esc(x.insta) : 'Não tem site nem rede. Aqui é criar do zero.'}</p></div>
       <div class="oque" data-oque></div>
     </div>
     <div class="msg">
@@ -476,12 +476,12 @@ function pintarDiag(i) {
   const sinais = (d.porte === 'grande' ? d.sinaisGrande : d.sinaisPequeno) || [];
   el.innerHTML = `
     <div class="diag__topo">
-      <span class="diag__nota" data-faixa="${faixa}">${d.nota == null ? '—' : d.nota}</span>
+      <span class="diag__nota" data-faixa="${faixa}">${d.nota == null ? '-' : d.nota}</span>
       <span class="diag__meta">${d.nota == null ? '' : 'de 100'}${d.ms ? ' · abriu em ' + (d.ms / 1000).toFixed(1) + ' s' : ''}${d.kb ? ' · ' + d.kb + ' KB' : ''}${d.titulo ? ' · “' + esc(d.titulo.slice(0, 50)) + '”' : ''}</span>
     </div>
     ${d.problemas?.length ? '<ul>' + d.problemas.map((p) => '<li>' + esc(p.texto) + '</li>').join('') + '</ul>' : '<p class="diag__vazio">Nenhum problema grosseiro no primeiro olhar.</p>'}
     ${d.bons?.length ? '<ul>' + d.bons.map((b) => '<li class="bom">' + esc(b) + '</li>').join('') + '</ul>' : ''}
-    ${porte ? '<p class="diag__porte">Porte: <b>' + porte + '</b>' + (sinais.length ? ' <span class="diag__sinais">— ' + esc(sinais.join(' · ')) + '</span>' : '') + '</p>' : ''}
+    ${porte ? '<p class="diag__porte">Porte: <b>' + porte + '</b>' + (sinais.length ? ' <span class="diag__sinais">· ' + esc(sinais.join(' · ')) + '</span>' : '') + '</p>' : ''}
     <div class="diag__acoes">
       ${d.profunda ? '<span class="tag tag--verde">análise profunda feita</span>' : '<button class="mini" type="button" data-profunda>Análise profunda com o Google ↗</button>'}
     </div>
@@ -507,7 +507,7 @@ async function analiseProfunda(i) {
   if (!btn) return;
   btn.disabled = true; prog.hidden = false; txt.hidden = false;
   const t0 = Date.now();
-  const etapa = (t) => t < 5 ? 'Carregando a página como se fosse um celular' : t < 14 ? 'Medindo quanto demora pra aparecer' : t < 26 ? 'Conferindo o que o Google usa pra ranquear' : 'Quase lá — o Google é lento nessa parte';
+  const etapa = (t) => t < 5 ? 'Carregando a página como se fosse um celular' : t < 14 ? 'Medindo quanto demora pra aparecer' : t < 26 ? 'Conferindo o que o Google usa pra ranquear' : 'Quase lá, o Google é lento nessa parte';
   // Barra falsa mas honesta: anda pelo tempo real e trava em 95 %.
   const timer = setInterval(() => {
     const t = (Date.now() - t0) / 1000;
@@ -533,7 +533,7 @@ async function analiseProfunda(i) {
     else if (perf < 80) novos.push({ chave: 'perf', peso: 14, texto: `Nota ${perf} de 100 em velocidade no celular` });
     if (lcp > 4000) novos.push({ chave: 'lcp', peso: 22, texto: `A tela principal só aparece em ${(lcp / 1000).toFixed(1)} s` });
     else if (lcp > 2500) novos.push({ chave: 'lcp', peso: 12, texto: `A tela principal demora ${(lcp / 1000).toFixed(1)} s pra aparecer` });
-    if (cls > 0.25) novos.push({ chave: 'cls', peso: 16, texto: 'O conteúdo pula enquanto carrega — o dedo erra o botão' });
+    if (cls > 0.25) novos.push({ chave: 'cls', peso: 16, texto: 'O conteúdo pula enquanto carrega. O dedo erra o botão' });
     if (tbt > 600) novos.push({ chave: 'tbt', peso: 14, texto: 'A página trava ao toque enquanto carrega' });
     if (seo < 80) novos.push({ chave: 'seo', peso: 16, texto: `Nota ${seo} de 100 no que o Google usa pra ranquear` });
 
@@ -553,7 +553,7 @@ async function analiseProfunda(i) {
     if (MSG[i] && !MSG[i].ia) gerarMensagem(i, MSG[i].versao);
     avisar('Análise profunda concluída.');
   } catch (e) {
-    avisar('O Google não conseguiu analisar — ' + e.message, 'erro');
+    avisar('O Google não conseguiu analisar: ' + e.message, 'erro');
     btn.disabled = false; prog.hidden = true; txt.hidden = true;
   } finally { clearInterval(timer); }
 }
@@ -599,7 +599,7 @@ function repEn(x) {
   if (av >= 40) return `${av} reviews`;
   return '';
 }
-const humano = (p) => p.texto.charAt(0).toLowerCase() + p.texto.slice(1).replace(/\s*[—–]\s*.*$/, '').replace(/\s*\([^)]*\)/g, '');
+const humano = (p) => p.texto.charAt(0).toLowerCase() + p.texto.slice(1).replace(/\s*(?:[—–]|\.\s).*$/, '').replace(/\s*\([^)]*\)/g, '');
 function defeitos(i, n) {
   const d = DIAG[i];
   // Os de maior peso primeiro: "sem botão de contato" fala com o dono; "meta description" não.
@@ -614,33 +614,33 @@ const euCid = () => PERFIL.cidade ? ` aqui de ${PERFIL.cidade}` : '';
 
 const T = {
   SEM_NADA: [
-    (x, i) => `${sc()} Sou ${primeiroNome()}, faço ${PERFIL.faz}${euCid()}. Procurei ${curto(x.nome)} no Google${noBairro(x)} e só achei a ficha do Maps${rep(x) ? ' — ' + rep(x) : ''} — nenhum site, nenhuma rede. Quem chega por indicação tenta confirmar antes de ligar e não tem pra onde ir; boa parte fecha a aba e liga pro que tem página. Montei uma página de uma dobra com o essencial de vocês pra você ver como ficaria. Te mando o link ainda hoje. ${solto()}${assina()}`,
-    (x, i) => `${sc()} Aqui é ${primeiroNome()}, ${PERFIL.faz}${euCid()}. Vi que ${curto(x.nome)}${noBairro(x)} vive de indicação${rep(x) ? ' — e as ' + rep(x) + ' mostram que funciona' : ''}. Só que indicação tem teto: ela chega até onde a memória dos clientes alcança. Quem procura no Google não encontra vocês, encontra o concorrente. Já deixei pronta uma página simples, com as avaliações em destaque e botão de WhatsApp. Te mando pra você olhar. ${solto()}${assina()}`,
-    (x, i) => `${sc()} Sou ${primeiroNome()}, faço ${PERFIL.faz}. Pesquisei ${curto(x.nome)}${noBairro(x)} e reparei que não há site nem rede — só o endereço. Quando o cliente não vê nada, ele não tem como comparar qualidade; sobra o preço, e aí quem cobra menos leva. Fiz uma primeira tela mostrando o que diferencia vocês${rep(x) ? ' (as ' + rep(x) + ' já contam metade da história)' : ''}. Te envio hoje. ${solto()}${assina()}`,
+    (x, i) => `${sc()} Sou ${primeiroNome()}, faço ${PERFIL.faz}${euCid()}. Procurei ${curto(x.nome)} no Google${noBairro(x)} e só achei a ficha do Maps${rep(x) ? ' (' + rep(x) + ')' : ''}, nenhum site, nenhuma rede. Quem chega por indicação tenta confirmar antes de ligar e não tem pra onde ir; boa parte fecha a aba e liga pro que tem página. Montei uma página de uma dobra com o essencial de vocês pra você ver como ficaria. Te mando o link ainda hoje. ${solto()}${assina()}`,
+    (x, i) => `${sc()} Aqui é ${primeiroNome()}, ${PERFIL.faz}${euCid()}. Vi que ${curto(x.nome)}${noBairro(x)} vive de indicação${rep(x) ? ', e as ' + rep(x) + ' mostram que funciona' : ''}. Só que indicação tem teto: ela chega até onde a memória dos clientes alcança. Quem procura no Google não encontra vocês, encontra o concorrente. Já deixei pronta uma página simples, com as avaliações em destaque e botão de WhatsApp. Te mando pra você olhar. ${solto()}${assina()}`,
+    (x, i) => `${sc()} Sou ${primeiroNome()}, faço ${PERFIL.faz}. Pesquisei ${curto(x.nome)}${noBairro(x)} e reparei que não há site nem rede, só o endereço. Quando o cliente não vê nada, ele não tem como comparar qualidade; sobra o preço, e aí quem cobra menos leva. Fiz uma primeira tela mostrando o que diferencia vocês${rep(x) ? ' (as ' + rep(x) + ' já contam metade da história)' : ''}. Te envio hoje. ${solto()}${assina()}`,
     (x, i) => `${sc()} ${primeiroNome()} aqui, ${PERFIL.faz}${euCid()}. Achei ${curto(x.nome)} no Maps${noBairro(x)}, sem site. Quem pesquisa no celular decide em menos de um minuto: abre dois ou três, escolhe o que passa mais confiança e chama. Sem página, vocês nem entram na comparação. Preparei uma versão de uma dobra pra vocês entrarem nela. Te mando o link ainda hoje. ${solto()}${assina()}`,
   ],
   SO_REDE: [
-    (x, i) => `${sc()} Sou ${primeiroNome()}, faço ${PERFIL.faz}${euCid()}. Vi que ${curto(x.nome)}${noBairro(x)} atende pelo Instagram — e o perfil está bem cuidado${rep(x) ? ', ' + rep(x) + ' no Google' : ''}. O problema é que o direct fecha quando o expediente fecha: quem chama à noite espera até o dia seguinte e, nesse meio-tempo, fala com outro. Montei uma página de uma dobra que responde as três perguntas de sempre e manda pro WhatsApp. Te envio hoje. ${solto()}${assina()}`,
+    (x, i) => `${sc()} Sou ${primeiroNome()}, faço ${PERFIL.faz}${euCid()}. Vi que ${curto(x.nome)}${noBairro(x)} atende pelo Instagram, e o perfil está bem cuidado${rep(x) ? ', ' + rep(x) + ' no Google' : ''}. O problema é que o direct fecha quando o expediente fecha: quem chama à noite espera até o dia seguinte e, nesse meio-tempo, fala com outro. Montei uma página de uma dobra que responde as três perguntas de sempre e manda pro WhatsApp. Te envio hoje. ${solto()}${assina()}`,
     (x, i) => `${sc()} Aqui é ${primeiroNome()}, ${PERFIL.faz}. Achei ${curto(x.nome)} no Google${noBairro(x)} e o único endereço é o Instagram. Post some do feed em dois dias; página fica. Quem chega pelo Google hoje cai num perfil e precisa adivinhar o que vocês fazem, quanto custa e como chamar. Deixei pronta uma página que resolve isso numa tela. Te mando o link. ${solto()}${assina()}`,
-    (x, i) => `${sc()} Sou ${primeiroNome()}, ${PERFIL.faz}${euCid()}. Vi ${curto(x.nome)}${noBairro(x)} pelo Instagram${rep(x) ? ' — ' + rep(x) + ' no Google, então o movimento é real' : ''}. Aposto que o direct repete a mesma conversa dez vezes por dia: horário, endereço, valor, "como funciona". Uma página responde isso antes de o cliente chamar, e o direct fica só pra quem já quer marcar. Já fiz uma primeira versão. Te mando hoje. ${solto()}${assina()}`,
-    (x, i) => `${sc()} ${primeiroNome()} aqui, faço ${PERFIL.faz}. Passei pelo perfil de ${curto(x.nome)}${noBairro(x)}: pra entender o que vocês fazem e pra quem, precisei rolar uns quinze posts. Cliente novo não rola quinze posts — fecha e vai pro próximo. Montei uma página de captura pra bio: o que faz, pra quem, prova e botão. Te envio o link ainda hoje. ${solto()}${assina()}`,
+    (x, i) => `${sc()} Sou ${primeiroNome()}, ${PERFIL.faz}${euCid()}. Vi ${curto(x.nome)}${noBairro(x)} pelo Instagram${rep(x) ? ', ' + rep(x) + ' no Google, então o movimento é real' : ''}. Aposto que o direct repete a mesma conversa dez vezes por dia: horário, endereço, valor, "como funciona". Uma página responde isso antes de o cliente chamar, e o direct fica só pra quem já quer marcar. Já fiz uma primeira versão. Te mando hoje. ${solto()}${assina()}`,
+    (x, i) => `${sc()} ${primeiroNome()} aqui, faço ${PERFIL.faz}. Passei pelo perfil de ${curto(x.nome)}${noBairro(x)}: pra entender o que vocês fazem e pra quem, precisei rolar uns quinze posts. Cliente novo não rola quinze posts: fecha e vai pro próximo. Montei uma página de captura pra bio: o que faz, pra quem, prova e botão. Te envio o link ainda hoje. ${solto()}${assina()}`,
   ],
   COM_SITE: [
-    (x, i) => `${sc()} Sou ${primeiroNome()}, faço ${PERFIL.faz}${euCid()}. Abri o site de ${curto(x.nome)}${noBairro(x)} pelo celular e ele trabalha contra vocês: ${defeitos(i, 2) || 'demora pra abrir e não tem um botão de contato claro'}. Cada cliente que chega por indicação passa por ele antes de chamar — e alguns desistem ali. Refiz a primeira tela resolvendo isso. Te mando o link hoje pra você comparar lado a lado. ${solto()}${assina()}`,
+    (x, i) => `${sc()} Sou ${primeiroNome()}, faço ${PERFIL.faz}${euCid()}. Abri o site de ${curto(x.nome)}${noBairro(x)} pelo celular e ele trabalha contra vocês: ${defeitos(i, 2) || 'demora pra abrir e não tem um botão de contato claro'}. Cada cliente que chega por indicação passa por ele antes de chamar, e alguns desistem ali. Refiz a primeira tela resolvendo isso. Te mando o link hoje pra você comparar lado a lado. ${solto()}${assina()}`,
     (x, i) => `${sc()} Aqui é ${primeiroNome()}, ${PERFIL.faz}. ${rep(x) ? 'Vocês têm ' + rep(x) + ' no Google' : 'Vocês têm avaliações no Google'}, e o site de ${curto(x.nome)} não mostra nenhuma. É a prova mais forte que vocês têm, escondida do lugar onde o cliente decide. Montei uma primeira tela com as avaliações em destaque e o WhatsApp a um toque. Te envio ainda hoje. ${solto()}${assina()}`,
-    (x, i) => `${sc()} Sou ${primeiroNome()}, faço ${PERFIL.faz}${euCid()}. Passei pelo site de ${curto(x.nome)}${noBairro(x)} e tem um detalhe que provavelmente ninguém comentou: ${defeitos(i, 1) || 'ele não se adapta ao celular'}. Quem vê não avisa — só não chama. Já preparei uma versão corrigida da primeira tela pra você ver a diferença. Te mando o link hoje. ${solto()}${assina()}`,
-    (x, i) => `${sc()} ${primeiroNome()} aqui, ${PERFIL.faz}${euCid()}. O site de ${curto(x.nome)}${noBairro(x)} parou no tempo${defeitos(i, 1) ? ' — ' + defeitos(i, 1) : ''}, e o negócio não parou${rep(x) ? ' (' + rep(x) + ' dizem isso)' : ''}. Quando o site é de uma época e o serviço é de outra, o cliente desconfia do serviço, não do site. Refiz a primeira tela no padrão de hoje. Te mando pra comparar. ${solto()}${assina()}`,
+    (x, i) => `${sc()} Sou ${primeiroNome()}, faço ${PERFIL.faz}${euCid()}. Passei pelo site de ${curto(x.nome)}${noBairro(x)} e tem um detalhe que provavelmente ninguém comentou: ${defeitos(i, 1) || 'ele não se adapta ao celular'}. Quem vê não avisa, só não chama. Já preparei uma versão corrigida da primeira tela pra você ver a diferença. Te mando o link hoje. ${solto()}${assina()}`,
+    (x, i) => `${sc()} ${primeiroNome()} aqui, ${PERFIL.faz}${euCid()}. O site de ${curto(x.nome)}${noBairro(x)} parou no tempo${defeitos(i, 1) ? ' (' + defeitos(i, 1) + ')' : ''}, e o negócio não parou${rep(x) ? ' (' + rep(x) + ' dizem isso)' : ''}. Quando o site é de uma época e o serviço é de outra, o cliente desconfia do serviço, não do site. Refiz a primeira tela no padrão de hoje. Te mando pra comparar. ${solto()}${assina()}`,
   ],
   SEM_NADA_EN: [
-    (x, i) => `Subject: ${curto(x.nome)} on Google Maps\n\nHi,\n\nI'm ${primeiroNome()}, I build ${fazEn()} for local businesses. I looked up ${curto(x.nome)} and found only the Maps listing${repEn(x) ? ' — ' + repEn(x) : ''}, no website. People who get referred to you try to check you out first and have nowhere to go; many just call whoever has a page. I've already put together a one-screen page with your essentials. I'll send the link today. ${soltoEn()}\n\n${primeiroNome()}`,
-    (x, i) => `Subject: quick one about ${curto(x.nome)}\n\nHi,\n\nI'm ${primeiroNome()}, a web designer. ${repEn(x) ? 'You have ' + repEn(x) + ' on Google' : 'You show up on Google'} but no site — so when someone searches, they land on a competitor's page instead of yours. I've drafted a simple page with your reviews up front and a contact button. Sending it over today so you can see it. ${soltoEn()}\n\n${primeiroNome()}`,
+    (x, i) => `Subject: ${curto(x.nome)} on Google Maps\n\nHi,\n\nI'm ${primeiroNome()}, I build ${fazEn()} for local businesses. I looked up ${curto(x.nome)} and found only the Maps listing${repEn(x) ? ' (' + repEn(x) + ')' : ''}, no website. People who get referred to you try to check you out first and have nowhere to go; many just call whoever has a page. I've already put together a one-screen page with your essentials. I'll send the link today. ${soltoEn()}\n\n${primeiroNome()}`,
+    (x, i) => `Subject: quick one about ${curto(x.nome)}\n\nHi,\n\nI'm ${primeiroNome()}, a web designer. ${repEn(x) ? 'You have ' + repEn(x) + ' on Google' : 'You show up on Google'} but no site, so when someone searches, they land on a competitor's page instead of yours. I've drafted a simple page with your reviews up front and a contact button. Sending it over today so you can see it. ${soltoEn()}\n\n${primeiroNome()}`,
   ],
   SO_REDE_EN: [
-    (x, i) => `Subject: your DMs close at 6\n\nHi,\n\nI'm ${primeiroNome()}, I build ${fazEn()}. ${curto(x.nome)} runs on Instagram${repEn(x) ? ' — and ' + repEn(x) + ' on Google say it works' : ''}. The catch: DMs close when the day closes. Whoever messages at night waits until tomorrow and, in the meantime, talks to someone else. I made a one-screen page that answers the usual three questions and sends people straight to you. I'll send it today. ${soltoEn()}\n\n${primeiroNome()}`,
-    (x, i) => `Subject: fifteen posts\n\nHi,\n\nI'm ${primeiroNome()}, a web designer. I went through ${curto(x.nome)}'s profile and needed to scroll about fifteen posts to understand what you do and for whom. New customers don't scroll fifteen posts — they close and move on. I built a link-in-bio page: what you do, who it's for, proof, one button. Link coming today. ${soltoEn()}\n\n${primeiroNome()}`,
+    (x, i) => `Subject: your DMs close at 6\n\nHi,\n\nI'm ${primeiroNome()}, I build ${fazEn()}. ${curto(x.nome)} runs on Instagram${repEn(x) ? ', and ' + repEn(x) + ' on Google say it works' : ''}. The catch: DMs close when the day closes. Whoever messages at night waits until tomorrow and, in the meantime, talks to someone else. I made a one-screen page that answers the usual three questions and sends people straight to you. I'll send it today. ${soltoEn()}\n\n${primeiroNome()}`,
+    (x, i) => `Subject: fifteen posts\n\nHi,\n\nI'm ${primeiroNome()}, a web designer. I went through ${curto(x.nome)}'s profile and needed to scroll about fifteen posts to understand what you do and for whom. New customers don't scroll fifteen posts: they close and move on. I built a link-in-bio page: what you do, who it's for, proof, one button. Link coming today. ${soltoEn()}\n\n${primeiroNome()}`,
   ],
   COM_SITE_EN: [
-    (x, i) => `Subject: your site, on a phone\n\nHi,\n\nI'm ${primeiroNome()}, I build ${fazEn()}. I opened ${curto(x.nome)}'s website on my phone and it's working against you: ${defeitos(i, 2) || "it's slow and there's no clear way to get in touch"}. Every referral checks it before calling — some give up right there. I redid the first screen to fix that. I'll send the link today so you can compare side by side. ${soltoEn()}\n\n${primeiroNome()}`,
+    (x, i) => `Subject: your site, on a phone\n\nHi,\n\nI'm ${primeiroNome()}, I build ${fazEn()}. I opened ${curto(x.nome)}'s website on my phone and it's working against you: ${defeitos(i, 2) || "it's slow and there's no clear way to get in touch"}. Every referral checks it before calling, and some give up right there. I redid the first screen to fix that. I'll send the link today so you can compare side by side. ${soltoEn()}\n\n${primeiroNome()}`,
     (x, i) => `Subject: the proof is hidden\n\nHi,\n\nI'm ${primeiroNome()}, a web designer. ${repEn(x) ? 'You have ' + repEn(x) + ' on Google' : 'You have Google reviews'}, and ${curto(x.nome)}'s site shows none of them. That's your strongest proof, hidden from the place where people decide. I built a first screen with the reviews up front and a contact button one tap away. Sending it today. ${soltoEn()}\n\n${primeiroNome()}`,
   ],
 };
@@ -695,7 +695,7 @@ async function escreverComIa(i, btn) {
     ta.value = d.texto;
     $('[data-versao]', corpo).textContent = `escrita pela IA · variação ${variacao}`;
     const a = $('[data-zap]', corpo); if (a) a.href = linkZap(x, CTX.pais, d.texto);
-  } catch (e) { avisar('A IA não escreveu — ' + e.message, 'erro'); }
+  } catch (e) { avisar('A IA não escreveu: ' + e.message, 'erro'); }
   finally { btn.disabled = false; btn.textContent = 'Escrever com IA ✦'; }
 }
 
@@ -716,7 +716,7 @@ function linkZap(x, pais, texto) {
 /* ---------- lista inteira: copiar e CSV ---------- */
 const visiveis = () => RESULTADOS.map((x, i) => [x, i]).filter(([, i]) => passaFiltro(i));
 $('#copiar-lista').onclick = () => {
-  const linhas = visiveis().map(([x, i]) => [x.nome, x.end, x.fone || '', x.site || x.insta || '', ROTULO(x), scoreDe(i), x.nota || '', x.avaliacoes || ''].join(' — '));
+  const linhas = visiveis().map(([x, i]) => [x.nome, x.end, x.fone || '', x.site || x.insta || '', ROTULO(x), scoreDe(i), x.nota || '', x.avaliacoes || ''].join(' · '));
   copiar(linhas.join('\n'), `${linhas.length} linhas copiadas.`);
 };
 $('#baixar-csv').onclick = () => {
@@ -749,7 +749,7 @@ async function salvarLead(lead, btn) {
     else { LEADS.unshift(d.lead); avisar('Salvo na sua lista.'); }
     if (btn) { btn.textContent = 'Na lista ✓'; btn.classList.add('ok'); btn.disabled = true; }
     contarLeads();
-  } catch (e) { avisar('Não salvei — ' + e.message, 'erro'); }
+  } catch (e) { avisar('Não salvei: ' + e.message, 'erro'); }
 }
 function contarLeads() {
   const n = LEADS.filter((l) => l.estado !== 'descartado').length;
@@ -768,9 +768,9 @@ function pintarBoard() {
   const mira = LEADS.length, abordado = conta('abordado'), respondeu = conta('respondeu'), fechado = conta('fechado');
   $('#fk-mira').textContent = mira;
   $('#fk-abordado').textContent = abordado;
-  $('#fk-resposta').textContent = abordado ? Math.round(respondeu / abordado * 100) + '%' : '—';
+  $('#fk-resposta').textContent = abordado ? Math.round(respondeu / abordado * 100) + '%' : '-';
   $('#fk-fechado').textContent = fechado;
-  $('#fk-fechamento').textContent = abordado ? Math.round(fechado / abordado * 100) + '%' : '—';
+  $('#fk-fechamento').textContent = abordado ? Math.round(fechado / abordado * 100) + '%' : '-';
 
   const maximo = Math.max(1, mira);
   $('#funil').innerHTML = ETAPAS.map((e) => {
@@ -822,7 +822,7 @@ function pintarLeads() {
         </div>
       </div>
       <select data-estado>${['mira', 'abordado', 'respondeu', 'proposta', 'fechado', 'descartado'].map((e) => `<option value="${e}" ${e === l.estado ? 'selected' : ''}>${NOME_ETAPA[e]}</option>`).join('')}</select>
-      <textarea data-anot placeholder="Anotação — salva sozinha">${esc(l.anotacao || '')}</textarea>
+      <textarea data-anot placeholder="Anotação (salva sozinha)">${esc(l.anotacao || '')}</textarea>
       <div class="lead-card__acoes">
         ${l.fone ? `<a class="mini" target="_blank" rel="noopener" href="${esc(linkZap(x, l.pais))}">WhatsApp ↗</a>` : ''}
         ${l.site ? `<a class="mini" target="_blank" rel="noopener" href="${esc(l.site)}">Site ↗</a>` : ''}
@@ -835,16 +835,16 @@ function pintarLeads() {
         const d = await enviar('/api/prospeccao/leads/' + l.id, 'PUT', { estado: e.target.value });
         Object.assign(l, d.lead); div.dataset.estado = l.estado;
         pintarBoard(); contarLeads();
-      } catch (x) { avisar('Não mudei — ' + x.message, 'erro'); }
+      } catch (x) { avisar('Não mudei: ' + x.message, 'erro'); }
     };
     $('[data-anot]', div).oninput = debounce(async (e) => {
       try { const d = await enviar('/api/prospeccao/leads/' + l.id, 'PUT', { anotacao: e.target.value }); Object.assign(l, d.lead); }
-      catch (x) { avisar('Não salvei a anotação — ' + x.message, 'erro'); }
+      catch (x) { avisar('Não salvei a anotação: ' + x.message, 'erro'); }
     }, 900);
     $('[data-remover]', div).onclick = async () => {
       if (!confirm('Tirar ' + l.nome + ' da lista?')) return;
       try { await api('/api/prospeccao/leads/' + l.id, { method: 'DELETE' }); LEADS = LEADS.filter((z) => z.id !== l.id); pintarBoard(); contarLeads(); }
-      catch (x) { avisar('Não removi — ' + x.message, 'erro'); }
+      catch (x) { avisar('Não removi: ' + x.message, 'erro'); }
     };
     raiz.appendChild(div);
   }
@@ -863,7 +863,7 @@ inAnNicho.oninput = linkBiblioteca; linkBiblioteca();
 
 const textoAnuncio = (nome, d) => {
   const defs = (d.problemas || []).filter((p) => p.chave !== 'fora' && p.chave !== 'erro').sort((a, b) => b.peso - a.peso).slice(0, 2).map(humano).join(', e ');
-  return `${sc()} Sou ${primeiroNome()}, faço ${PERFIL.faz}${euCid()}. Vi o anúncio de ${curto(nome)} rodando e abri a página de destino pelo celular: ${defs || 'ela demora e não tem um botão de contato claro'}. Cada clique pago que cai nela e vai embora é verba queimada — o anúncio funciona, a página não segura. Refiz a primeira tela pra converter o clique que vocês já compram. Te mando o link hoje. ${solto()}${assina()}`;
+  return `${sc()} Sou ${primeiroNome()}, faço ${PERFIL.faz}${euCid()}. Vi o anúncio de ${curto(nome)} rodando e abri a página de destino pelo celular: ${defs || 'ela demora e não tem um botão de contato claro'}. Cada clique pago que cai nela e vai embora é verba queimada: o anúncio funciona, a página não segura. Refiz a primeira tela pra converter o clique que vocês já compram. Te mando o link hoje. ${solto()}${assina()}`;
 };
 
 $('#anuncio-diag').onclick = async () => {
@@ -884,7 +884,7 @@ $('#anuncio-diag').onclick = async () => {
           <div class="diag__topo"><span class="diag__nota" data-faixa="${faixa}">${d.nota}</span><span class="diag__meta">de 100 · ${(d.ms / 1000).toFixed(1)} s · ${d.kb} KB${d.titulo ? ' · “' + esc(d.titulo.slice(0, 50)) + '”' : ''}</span></div>
           ${d.problemas?.length ? '<ul>' + d.problemas.map((p) => '<li>' + esc(p.texto) + '</li>').join('') + '</ul>' : '<p class="diag__vazio">Nenhum problema grosseiro.</p>'}
           ${d.bons?.length ? '<ul>' + d.bons.map((b) => '<li class="bom">' + esc(b) + '</li>').join('') + '</ul>' : ''}
-          ${porte ? '<p class="diag__porte">Porte: <b>' + porte + '</b>' + (sinais.length ? ' <span class="diag__sinais">— ' + esc(sinais.join(' · ')) + '</span>' : '') + '</p>' : ''}
+          ${porte ? '<p class="diag__porte">Porte: <b>' + porte + '</b>' + (sinais.length ? ' <span class="diag__sinais">· ' + esc(sinais.join(' · ')) + '</span>' : '') + '</p>' : ''}
         </div>
         <div class="msg">
           <div class="msg__topo"><p class="eyebrow">Mensagem</p><span class="msg__versao">gancho: verba de clique queimada</span></div>
@@ -899,7 +899,7 @@ $('#anuncio-diag').onclick = async () => {
     $('[data-copiar]', raiz).onclick = () => copiar($('[data-texto]', raiz).value, 'Mensagem copiada.');
     $('[data-salvar]', raiz).onclick = (e) => salvarLead({ chave: 'anuncio|' + d.url.toLowerCase().slice(0, 170), nome, site: d.url, score: Math.max(40, 100 - d.nota), origem: 'anuncio', situacao: 'anuncia e a página é fraca' }, e.currentTarget);
   } catch (e) {
-    raiz.innerHTML = `<p class="diag__vazio">Não consegui ler — ${esc(e.message)}</p>`;
+    raiz.innerHTML = `<p class="diag__vazio">Não consegui ler: ${esc(e.message)}</p>`;
   }
 };
 
@@ -923,7 +923,7 @@ $('#insta-buscar').onclick = async () => {
     $('#insta-kpis').hidden = false; $('#insta-filtros').hidden = false;
     $('#ik-total').textContent = d.total; $('#ik-vale').textContent = INSTA.filter((p) => p.faixa === 'no ponto').length; $('#ik-seg').textContent = d.comSeguidores;
     pintarInsta();
-  } catch (e) { avisar('A busca falhou — ' + e.message, 'erro'); }
+  } catch (e) { avisar('A busca falhou: ' + e.message, 'erro'); }
   finally { btn.disabled = false; }
 };
 function pintarInsta() {
@@ -992,7 +992,7 @@ $('#form-vagas').onsubmit = async (e) => {
         <a class="mini" target="_blank" rel="noopener" href="${esc(v.link)}">Ver vaga ↗</a>`;
       raiz.appendChild(div);
     }
-  } catch (x) { raiz.innerHTML = `<p class="diag__vazio">Não consegui — ${esc(x.message)}</p>`; }
+  } catch (x) { raiz.innerHTML = `<p class="diag__vazio">Não consegui: ${esc(x.message)}</p>`; }
   finally { btn.disabled = false; }
 };
 
@@ -1008,7 +1008,7 @@ $('#form-vagas').onsubmit = async (e) => {
       api('/api/prospeccao/leads').then((d) => d.leads || []),
     ]);
     CONFIG = cfg; PERFIL = perfil; LEADS = leads;
-  } catch (e) { if (!/sessão/.test(e.message)) avisar('Não carreguei a configuração — ' + e.message, 'erro'); }
+  } catch (e) { if (!/sessão/.test(e.message)) avisar('Não carreguei a configuração: ' + e.message, 'erro'); }
   montarSelects();
   setModo('cidade');
   contarLeads();

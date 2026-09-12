@@ -101,7 +101,7 @@ function analisar(html, urlFinal, ms, bytes) {
   const htmlMin = html.toLowerCase();
 
   /* protocolo */
-  if (/^http:/i.test(urlFinal)) p('https', 14, 'Abre sem cadeado (sem HTTPS) — o navegador avisa "não seguro"');
+  if (/^http:/i.test(urlFinal)) p('https', 14, 'Abre sem cadeado (sem HTTPS). O navegador avisa "não seguro"');
   else bons.push('Tem HTTPS');
 
   /* velocidade e peso — crus, sem navegador; o PageSpeed refina */
@@ -137,7 +137,7 @@ function analisar(html, urlFinal, ms, bytes) {
   else {
     if (temWhats) bons.push('Tem botão de WhatsApp');
     else if (temTel) bons.push('Tem telefone clicável');
-    if (!temWhats && !temTel) p('whats', 6, 'Sem WhatsApp nem telefone clicável — o cliente precisa digitar');
+    if (!temWhats && !temTel) p('whats', 6, 'Sem WhatsApp nem telefone clicável. O cliente precisa digitar');
   }
 
   /* parado no tempo */
@@ -146,16 +146,16 @@ function analisar(html, urlFinal, ms, bytes) {
   const ano = anos.length ? Math.max(...anos) : null;
   if (ano && ano <= anoAtual - 3) p('velho', 10, `Rodapé parado em ${ano}`);
   if (/<font[\s>]|<center[\s>]|<marquee[\s>]|<frameset[\s>]|<blink[\s>]/i.test(html)) p('antigo', 10, 'Código de site antigo (font, center, marquee)');
-  if (/\.swf\b|shockwave-flash/i.test(html)) p('flash', 12, 'Ainda usa Flash — não abre em nenhum celular');
+  if (/\.swf\b|shockwave-flash/i.test(html)) p('flash', 12, 'Ainda usa Flash. Não abre em nenhum celular');
   if (/jquery[-.]1\.\d/i.test(html)) p('jquery', 4, 'Bibliotecas de mais de dez anos atrás');
 
   /* construtor gratuito */
   const construtor = CONSTRUTORES.find(([re]) => re.test(urlFinal) || re.test(htmlMin));
-  if (construtor) p('construtor', 6, `Feito num ${construtor[1]} — layout de modelo pronto`);
+  if (construtor) p('construtor', 6, `Feito num ${construtor[1]}. Layout de modelo pronto`);
 
   /* “em construção” */
   if (/em construção|em construcao|under construction|coming soon|em breve/i.test(textoMin) && texto.length < 3000) p('construcao', 16, 'Página "em construção" ou quase vazia');
-  else if (texto.replace(/\s+/g, ' ').trim().length < 400) p('vazio', 12, 'Quase sem texto — não explica o que faz');
+  else if (texto.replace(/\s+/g, ' ').trim().length < 400) p('vazio', 12, 'Quase sem texto. Não explica o que faz');
 
   /* nota */
   const soma = problemas.reduce((s, x) => s + x.peso, 0);

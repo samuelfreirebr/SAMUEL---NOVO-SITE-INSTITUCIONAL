@@ -109,7 +109,7 @@ export function ligarEditor(quadro, aoMudar, aoPedirImagem, opcoes = {}) {
     <span class="rot">Editando <b data-disp>PC</b></span>
     <button type="button" data-acao="quebra" title="Quebra de linha só neste dispositivo">&#8629; Quebra</button>
     <button type="button" class="tam" data-acao="menor" title="Texto menor">A&minus;</button>
-    <span class="px" data-px>&ndash;</span>
+    <span class="px" data-px>-</span>
     <button type="button" class="tam" data-acao="maior" title="Texto maior">A+</button>
     <button type="button" data-acao="padrao" title="Volta ao tamanho original neste dispositivo">Padr&atilde;o</button>
     <button type="button" data-acao="pronto">Pronto</button>

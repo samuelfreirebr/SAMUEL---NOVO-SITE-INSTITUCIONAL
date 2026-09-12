@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Editar site — Painel Samuel Freire</title>
+<title>Editar site | Painel Samuel Freire</title>
 
 <link rel="icon" href="/img/favicon.png" type="image/png">
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -38,7 +38,7 @@
 
 <p class="aviso" id="local" hidden>
   <b>Modo local.</b> Voc&ecirc; est&aacute; no servidor da sua m&aacute;quina. Tudo funciona
-  &mdash; salvar, enviar foto, criar proposta &mdash; mas grava na pasta de dados
+  (salvar, enviar foto, criar proposta), mas grava na pasta de dados
   local, n&atilde;o no servidor de produ&ccedil;&atilde;o.
 </p>
 <p class="aviso" id="aviso" role="status"></p>
@@ -86,7 +86,7 @@
   <div class="modal__corpo">
     <div class="solta" id="solta">
       <b>Arraste a nova foto aqui</b>
-      <span>ou clique para escolher &mdash; JPG, PNG, WebP ou AVIF, at&eacute; 6 MB</span>
+      <span>ou clique para escolher. JPG, PNG, WebP ou AVIF, at&eacute; 6 MB.</span>
     </div>
     <input type="file" id="arquivo" accept="image/*" multiple hidden>
     <div class="galeria-adm" id="escolher-galeria"></div>
@@ -247,7 +247,7 @@ async function escolherImagem(chaveOuPasta) {
              : /projeto/i.test(chaveOuPasta || '') ? 'projetos'
              : /bastidor/i.test(chaveOuPasta || '') ? 'bastidores'
              : 'geral';
-  $('#escolher-titulo').textContent = 'Escolher imagem — ' + pastaAtual;
+  $('#escolher-titulo').textContent = 'Escolher imagem: ' + pastaAtual;
   await pintarEscolher();
   $('#escolher').showModal();
   return new Promise((r) => { resolverEscolha = r; });
@@ -258,7 +258,7 @@ async function pintarEscolher() {
   g.innerHTML = '';
   let imgs = [];
   try { imgs = (await api('/api/imagens')).imagens || []; }
-  catch (e) { avisar('Nao listei as imagens — ' + e.message, 'erro'); }
+  catch (e) { avisar('Não listei as imagens: ' + e.message, 'erro'); }
   $('#escolher-vazia').hidden = imgs.length > 0;
   for (const im of imgs) {
     const b = document.createElement('button');
@@ -276,7 +276,7 @@ async function pintarEscolher() {
       try {
         await api('/api/imagens?chave=' + encodeURIComponent(im.chave), { method: 'DELETE' });
         pintarEscolher();
-      } catch (err) { avisar('Não apaguei — ' + err.message, 'erro'); }
+      } catch (err) { avisar('Não apaguei: ' + err.message, 'erro'); }
     };
     b.querySelector('.foto-adm__pe').appendChild(x);
     g.appendChild(b);
@@ -296,7 +296,7 @@ function montarClientes() {
   const raiz = $('#lista-clientes');
   raiz.innerHTML = '';
   const itens = conteudo.clientes || [];
-  if (!itens.length) raiz.innerHTML = '<p class="vazio">Nenhum cliente aqui ainda — o carrossel segue com a lista do HTML.</p>';
+  if (!itens.length) raiz.innerHTML = '<p class="vazio">Nenhum cliente aqui ainda. O carrossel segue com a lista do HTML.</p>';
   itens.forEach((c, i) => raiz.appendChild(itemCliente(c, i)));
 }
 
@@ -325,7 +325,7 @@ function montarProjetos() {
   const raiz = $('#lista-projetos');
   raiz.innerHTML = '';
   const itens = conteudo.projetos || [];
-  if (!itens.length) raiz.innerHTML = '<p class="vazio">Nenhum projeto aqui ainda — a secao segue com a lista do HTML.</p>';
+  if (!itens.length) raiz.innerHTML = '<p class="vazio">Nenhum projeto aqui ainda. A seção segue com a lista do HTML.</p>';
   itens.forEach((p, i) => raiz.appendChild(itemProjeto(p, i)));
 }
 
@@ -386,7 +386,7 @@ async function enviar(arquivos) {
       const d = await api('/api/imagens', { method: 'POST', body: fd });
       ultima = d.url;
       avisar('Enviada: ' + d.url);
-    } catch (e) { avisar('Falhou ' + a.name + ' — ' + e.message, 'erro'); }
+    } catch (e) { avisar('Falhou ' + a.name + ': ' + e.message, 'erro'); }
   }
   if (ultima) fecharEscolher(ultima); else pintarEscolher();
 }
@@ -404,7 +404,7 @@ async function salvar() {
     marcarEstado();
     avisar('Salvo. O site ja esta com as alteracoes.');
   } catch (e) {
-    avisar('Nao salvou — ' + e.message, 'erro');
+    avisar('Não salvou: ' + e.message, 'erro');
   } finally {
     b.disabled = false; b.textContent = 'Salvar';
   }
@@ -417,7 +417,7 @@ async function iniciar() {
     if (!conteudo || typeof conteudo !== 'object') conteudo = {};
   } catch (e) {
     conteudo = {};
-    if (!LOCAL) avisar('Nao carreguei o conteudo salvo — ' + e.message, 'erro');
+    if (!LOCAL) avisar('Não carreguei o conteúdo salvo: ' + e.message, 'erro');
   }
   salvo = JSON.stringify(conteudo);
   marcarEstado();

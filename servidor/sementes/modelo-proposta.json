@@ -1,5 +1,7 @@
 {
-  "subtitulo": "",
+  "titulo": "Uma presença à altura do seu negócio.",
+  "subtitulo": "Escopo, processo, investimento e condições do projeto, reunidos numa página só.",
+  "validade": "15 dias",
   "escopo": [
     {
       "titulo": "Branding",
@@ -20,7 +22,7 @@
   "inclui": {
     "rotulo": "O que inclui",
     "titulo": "Cada entregável inclui",
-    "texto": "Tudo isto já faz parte de cada entrega — sem custo à parte e sem etapa fora do combinado.",
+    "texto": "Tudo isto já faz parte de cada entrega, sem custo à parte e sem etapa fora do combinado.",
     "itens": [
       "Estudo de público-alvo e posicionamento",
       "Captação de informação e montagem",
@@ -132,7 +134,7 @@
     "nome": "Samuel Freire",
     "cargo": "Designer digital & estrategista",
     "foto": "/img/samuel-retrato.jpg",
-    "texto": "Sou brand designer e estrategista, com experiência na criação de websites, identidades visuais, impressos e ferramentas digitais personalizadas para negócios.\nAo longo da minha trajetória, recebi a confiança de empresas e times de design, desenvolvendo projetos para negócios no mundo todo, com foco na América do Norte — em maior parte empresas de construção, reforma e melhoria residencial.\nMinha atuação combina design, tecnologia e negócios: da construção de uma marca e da sua presença digital ao desenvolvimento de ferramentas, automações e soluções com IA.",
+    "texto": "Sou brand designer e estrategista, com experiência na criação de websites, identidades visuais, impressos e ferramentas digitais personalizadas para negócios.\nAo longo da minha trajetória, recebi a confiança de empresas e times de design, desenvolvendo projetos para negócios no mundo todo, com foco na América do Norte, em maior parte empresas de construção, reforma e melhoria residencial.\nMinha atuação combina design, tecnologia e negócios: da construção de uma marca e da sua presença digital ao desenvolvimento de ferramentas, automações e soluções com IA.",
     "metricas": [
       {
         "n": "6+",
@@ -152,7 +154,7 @@
   },
   "ecossistema": {
     "rotulo": "Nosso ecossistema",
-    "texto": "Este é o nosso ecossistema de capacidades — e definimos exatamente o que faz sentido para o seu negócio.",
+    "texto": "Este é o nosso ecossistema de capacidades, e definimos exatamente o que faz sentido para o seu negócio.",
     "centro": {
       "sup": "04 frentes",
       "titulo": "Nosso ecossistema"
@@ -208,7 +210,7 @@
   "encerramento": "Vamos construir isso juntos?",
   "contato": {
     "rotuloSecao": "Próximo passo",
-    "texto": "Se fez sentido para você, confirme por aqui e eu já começo. Ainda com dúvida? Abra as perguntas frequentes ou me chame — respondo no mesmo dia.",
+    "texto": "Se fez sentido para você, confirme por aqui e eu já começo. Ainda com dúvida? Abra as perguntas frequentes ou me chame. Respondo no mesmo dia.",
     "rotulo": "Confirmar orçamento",
     "link": "https://wa.me/5583982078301",
     "whatsapp": "+55 83 98207-8301",
@@ -224,7 +226,7 @@
     "itens": [
       {
         "pergunta": "Como confirmo o orçamento?",
-        "resposta": "Clique em Confirmar orçamento: abre uma conversa comigo no WhatsApp já com esta proposta identificada. A confirmação é o pagamento da primeira parcela — a partir dela o projeto entra na agenda e eu te mando o cronograma."
+        "resposta": "Clique em Confirmar orçamento: abre uma conversa comigo no WhatsApp já com esta proposta identificada. A confirmação é o pagamento da primeira parcela: a partir dela o projeto entra na agenda e eu te mando o cronograma."
       },
       {
         "pergunta": "Como funciona o pagamento?",
@@ -236,7 +238,7 @@
       },
       {
         "pergunta": "E se eu quiser mudar alguma coisa no meio do caminho?",
-        "resposta": "Ajustes dentro do escopo fazem parte do processo: cada etapa tem a sua rodada de revisão.\n\nO que sair do escopo eu aviso antes de fazer e proponho à parte — sem surpresa na conta."
+        "resposta": "Ajustes dentro do escopo fazem parte do processo: cada etapa tem a sua rodada de revisão.\n\nO que sair do escopo eu aviso antes de fazer e proponho à parte, sem surpresa na conta."
       },
       {
         "pergunta": "O site fica meu? Tem mensalidade?",

@@ -1,8 +1,8 @@
 /* ============================================================
    O servidor do site.
 
-   Faz o que a Cloudflare fazia — servir os arquivos, injetar o
-   conteúdo editado, trancar o painel, guardar imagens — sem
+   Faz o que a Cloudflare fazia (servir os arquivos, injetar o
+   conteúdo editado, trancar o painel, guardar imagens) sem
    depender dela. Zero dependências: só o Node.
 
    Rotas:
@@ -32,12 +32,12 @@ import {
   bloqueado, registrarFalha, limparFalhas,
 } from './seguranca.js';
 import { lerCorpo, lerMultipart } from './multipart.js';
-import { renderizarProposta } from './proposta-html.js';
+import { renderizarProposta, catalogoIcones } from './proposta-html.js';
 import { apiProspeccao, configuracao as configProspeccao } from './prospeccao.js';
 import * as dados from './dados.js';
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
-// A pasta site/ ao lado desta — no container, copiada para /app/site.
+// A pasta site/ ao lado desta. No container, copiada para /app/site.
 const SITE = process.env.PASTA_SITE || path.join(AQUI, '..', 'site');
 const PORTA = Number(process.env.PORTA || 3000);
 
@@ -84,7 +84,7 @@ const PUBLICAS = new Set([
 
 const permitido = (caminho) => {
   const partes = caminho.split('/').filter(Boolean);
-  // Nada de .git, .env, .DS_Store — em nenhum nível.
+  // Nada de .git, .env, .DS_Store, em nenhum nível.
   if (partes.some((t) => t.startsWith('.'))) return false;
   return PUBLICAS.has(partes[0] || '');
 };
@@ -245,6 +245,19 @@ async function api(req, res, url) {
     return json(res, { erro: 'Método não aceito.' }, 405);
   }
 
+  /* --- editor de propostas: prévia ao vivo e ícones --- */
+  // A prévia recebe a proposta ainda não salva e devolve a página,
+  // montada pelo mesmo renderizador da página pública.
+  if (rota === 'proposta-previa' && req.method === 'POST') {
+    const p = await lerJson(req, res);
+    if (!p) return;
+    if (typeof p !== 'object' || Array.isArray(p)) return json(res, { erro: 'A proposta precisa ser um objeto.' }, 400);
+    const html = renderizarProposta(comModelo(p, await dados.lerModelo()), { previa: true });
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'content-length': Buffer.byteLength(html), 'cache-control': 'no-store' });
+    return res.end(html);
+  }
+  if (rota === 'proposta-icones' && req.method === 'GET') return json(res, catalogoIcones());
+
   /* --- propostas --- */
   if (rota === 'propostas') {
     if (req.method === 'GET') return json(res, { propostas: await dados.listarPropostas() });
@@ -281,12 +294,16 @@ async function api(req, res, url) {
 
 /* Seção que a proposta não tem vem do modelo. Assim uma seção nova
    (processo, ecossistema) aparece nas propostas já criadas sem
-   reeditar cada uma — e o que a proposta tem, ela manda. Objetos
+   reeditar cada uma. O que a proposta tem, ela manda. Objetos
    são completados campo a campo; listas e textos não se misturam. */
 function comModelo(proposta, modelo) {
   if (!modelo || typeof modelo !== 'object') return proposta;
   const saida = { ...proposta };
   for (const [chave, padrao] of Object.entries(modelo)) {
+    // O que está ligado ou desligado é de cada proposta. A nova copia
+    // do modelo ao nascer; depois, misturar impediria religar uma parte
+    // que o modelo desliga.
+    if (chave === 'visivel') continue;
     const atual = saida[chave];
     if (atual === undefined || atual === null || atual === '') { saida[chave] = padrao; continue; }
     const objeto = (v) => v && typeof v === 'object' && !Array.isArray(v);
@@ -368,7 +385,7 @@ const servidor = http.createServer(async (req, res) => {
       if (!arq) return texto(res, 'Não encontrado.', 404);
 
       // A tela de login é a única coisa aberta sob /admin. O resto,
-      // sem sessão, volta para ela — e a API responde 401 em JSON.
+      // sem sessão, volta para ela, e a API responde 401 em JSON.
       if (!ehLogin && !liberado(req)) {
         if (path.extname(arq) === '.html') {
           res.writeHead(302, { location: '/admin/entrar?voltar=' + encodeURIComponent(caminho), 'cache-control': 'no-store' });
@@ -450,7 +467,7 @@ const servidor = http.createServer(async (req, res) => {
 
     /* Desvio por país. Só funciona atrás da Cloudflare em modo
        proxy, que é quem manda o CF-IPCountry. Sem o cabeçalho,
-       nada acontece — e ninguém fica preso na versão errada. */
+       nada acontece, e ninguém fica preso na versão errada. */
     if (caminho === '/' && process.env.ROTEAR_POR_PAIS !== '0') {
       const pais = req.headers['cf-ipcountry'];
       if (pais && pais !== 'BR' && pais !== 'XX' && pais !== 'T1') caminho = '/global/';
@@ -478,6 +495,6 @@ servidor.listen(PORTA, () => {
   console.log(`arquivos:  ${SITE}`);
   console.log(`dados:     ${dados.RAIZ_DADOS}`);
   if (!temSenhaConfigurada()) {
-    console.warn('ATENÇÃO: SENHA_PAINEL não definida — /admin e /api estão trancados para todos.');
+    console.warn('ATENÇÃO: SENHA_PAINEL não definida: /admin e /api estão trancados para todos.');
   }
 });

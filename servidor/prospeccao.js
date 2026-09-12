@@ -316,7 +316,7 @@ async function overpass(q) {
     if (r.status !== 429 && r.status < 500) break;
   }
   throw new Error(ultimo === 429 || ultimo === 'tempo' || ultimo >= 500
-    ? 'O OpenStreetMap está recebendo buscas demais agora. Espere um minuto e tente de novo — ou ligue a chave do Google (GOOGLE_PLACES_KEY) na stack, que não tem esse limite.'
+    ? 'O OpenStreetMap está recebendo buscas demais agora. Espere um minuto e tente de novo, ou ligue a chave do Google (GOOGLE_PLACES_KEY) na stack, que não tem esse limite.'
     : 'OpenStreetMap respondeu ' + ultimo);
 }
 
@@ -397,7 +397,7 @@ async function varrer(url) {
       const res = await Promise.allSettled(fatia.map(([nome, lat, lon]) => buscarEm(lat, lon, 12000, 1).then((l) => l.map((x) => ({ ...x, praca: nome })))));
       for (const r of res) if (r.status === 'fulfilled') partes.push(...r.value);
     }
-    return fechar(partes, 'Brasil — 10 capitais', { pracas: CAPITAIS.length, fonte, termo });
+    return fechar(partes, 'Brasil · 10 capitais', { pracas: CAPITAIS.length, fonte, termo });
   }
 
   let lat = Number(p.get('lat')), lon = Number(p.get('lon'));
@@ -420,22 +420,22 @@ async function varrer(url) {
 const SISTEMA_PT = `Você escreve mensagens curtas de primeiro contato para um designer que vende sites e páginas para negócios locais. A mensagem vai por WhatsApp para o dono do negócio, que nunca ouviu falar do designer.
 
 Estrutura obrigatória, nesta ordem, sem títulos:
-1. O que eu vi — um detalhe concreto e verificável do negócio (nome como a vizinhança chama, bairro, avaliações, o que falta ou o que está errado no site).
-2. O que isso custa — em uma frase, o cliente que ele perde por causa disso. Sem catastrofismo.
-3. O que eu já fiz — o designer já preparou algo (uma página, uma primeira tela) e vai mandar. Entrega antes da oferta.
-4. Fecho sem pedir permissão — ele manda o link ainda hoje; não pergunta "posso?".
+1. O que eu vi: um detalhe concreto e verificável do negócio (nome como a vizinhança chama, bairro, avaliações, o que falta ou o que está errado no site).
+2. O que isso custa: em uma frase, o cliente que ele perde por causa disso. Sem catastrofismo.
+3. O que eu já fiz: o designer já preparou algo (uma página, uma primeira tela) e vai mandar. Entrega antes da oferta.
+4. Fecho sem pedir permissão: ele manda o link ainda hoje; não pergunta "posso?".
 
-Regras: até 90 palavras. Tom de gente, direto, sem "espero que esteja bem", sem "gostaria de apresentar", sem lista, sem emoji, sem hashtag. Uma saudação curta no começo. Assina com o primeiro nome do designer no fim. Não invente números que não estão nos dados. Quando houver opiniões de clientes, use uma expressão real delas, curta, entre aspas. Responda só com a mensagem.`;
+Regras: até 90 palavras. Tom de gente, direto, sem "espero que esteja bem", sem "gostaria de apresentar", sem lista, sem emoji, sem hashtag, sem travessão (use vírgula ou ponto). Uma saudação curta no começo. Assina com o primeiro nome do designer no fim. Não invente números que não estão nos dados. Quando houver opiniões de clientes, use uma expressão real delas, curta, entre aspas. Responda só com a mensagem.`;
 
 const SISTEMA_EN = `You write short first-contact emails for a designer who sells websites and landing pages to local businesses. The recipient is the business owner, who has never heard of the designer.
 
 Required structure, in this order, no headings:
-1. What I saw — one concrete, verifiable detail about the business (how locals call it, neighborhood, reviews, what's missing or broken on the site).
-2. What it costs — one sentence about the customer they lose because of it. No drama.
-3. What I already did — the designer has already prepared something (a page, a first screen) and will send it. Delivery before the offer.
-4. Close without asking permission — they'll send the link today; never ask "may I?".
+1. What I saw: one concrete, verifiable detail about the business (how locals call it, neighborhood, reviews, what's missing or broken on the site).
+2. What it costs: one sentence about the customer they lose because of it. No drama.
+3. What I already did: the designer has already prepared something (a page, a first screen) and will send it. Delivery before the offer.
+4. Close without asking permission: they'll send the link today; never ask "may I?".
 
-Rules: 100 words max. Start with a subject line ("Subject: …"), then a short greeting. Human, direct; no "hope this finds you well", no bullet lists, no emoji. Sign with the designer's first name. Don't invent numbers not present in the data. If customer reviews are given, quote one short real expression from them. Reply with the email only.`;
+Rules: 100 words max. Start with a subject line ("Subject: …"), then a short greeting. Human, direct; no "hope this finds you well", no bullet lists, no emoji, no em dashes (use a comma or a period). Sign with the designer's first name. Don't invent numbers not present in the data. If customer reviews are given, quote one short real expression from them. Reply with the email only.`;
 
 async function mensagemIa(dado) {
   if (!chaveClaude()) return { semChave: true };
@@ -451,8 +451,8 @@ async function mensagemIa(dado) {
     variacao: Number(dado.variacao) || 1,
   };
   const pedido = idioma === 'en'
-    ? `Business data (JSON):\n${JSON.stringify(contexto, null, 2)}\n\nWrite variation #${contexto.variacao} — a different angle from the previous ones.`
-    : `Dados do negócio (JSON):\n${JSON.stringify(contexto, null, 2)}\n\nEscreva a variação nº ${contexto.variacao} — um ângulo diferente das anteriores.`;
+    ? `Business data (JSON):\n${JSON.stringify(contexto, null, 2)}\n\nWrite variation #${contexto.variacao}, a different angle from the previous ones.`
+    : `Dados do negócio (JSON):\n${JSON.stringify(contexto, null, 2)}\n\nEscreva a variação nº ${contexto.variacao}, com um ângulo diferente das anteriores.`;
 
   const r = await buscar('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -476,7 +476,8 @@ async function mensagemIa(dado) {
   const d = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(d?.error?.message || ('Claude respondeu ' + r.status));
   if (d.stop_reason === 'refusal') throw new Error('O modelo recusou escrever esta mensagem.');
-  const texto = (d.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
+  const texto = (d.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('').trim()
+    .replace(/\s*[—–]\s*/g, ', ');   // regra do projeto: nada de travessão na tela
   if (!texto) throw new Error('Veio uma resposta vazia.');
   return { texto };
 }
@@ -567,7 +568,7 @@ async function vagasRemoteOk(termo) {
   const t = (termo || '').toLowerCase();
   return (Array.isArray(d) ? d : []).filter((j) => j && j.position).filter((j) => !t || (j.position + ' ' + (j.tags || []).join(' ')).toLowerCase().includes(t)).map((j) => ({
     cargo: j.position, empresa: j.company, local: j.location || 'Remoto',
-    salario: j.salary_min && j.salary_max ? `$${j.salary_min}–${j.salary_max}` : '',
+    salario: j.salary_min && j.salary_max ? `$${j.salary_min} a $${j.salary_max}` : '',
     data: dataIso(j.date), link: j.url, resumo: resumo(j.description), fonte: 'RemoteOK', remoto: true,
   }));
 }
@@ -596,7 +597,7 @@ async function vagasHimalayas(termo) {
   const d = await (await buscar(url, { headers: { 'user-agent': UA } }, 12000)).json();
   return (d.jobs || []).map((j) => ({
     cargo: j.title, empresa: j.companyName, local: (j.locationRestrictions || []).join(', ') || 'Remoto',
-    salario: j.minSalary && j.maxSalary ? `$${j.minSalary}–${j.maxSalary}` : '',
+    salario: j.minSalary && j.maxSalary ? `$${j.minSalary} a $${j.maxSalary}` : '',
     data: dataIso(j.pubDate ? j.pubDate * 1000 : j.publishedDate), link: j.applicationLink, resumo: resumo(j.excerpt || j.description),
     fonte: 'Himalayas', remoto: true,
   }));

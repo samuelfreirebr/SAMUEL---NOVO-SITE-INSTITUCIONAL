@@ -3,7 +3,7 @@
 
    A proposta não é um arquivo HTML solto: é um registro. Isso
    permite duplicar para outro cliente, corrigir um valor e
-   republicar sem mexer em markup — e é o que o painel edita.
+   republicar sem mexer em markup. É isso que o painel edita.
 
    O visual sai do mesmo tokens.css do site. Nenhuma cor ou
    medida crua aqui: se a marca mudar, a proposta acompanha.
@@ -11,7 +11,7 @@
 
 import { escapar } from './listas.js';
 
-const V = 'p8';   // versão do proposta.css, para o cache
+const V = 'p9';   // versão do proposta.css, para o cache
 
 const linhas = (t) => String(t || '').split('\n').filter((l) => l.trim());
 
@@ -20,10 +20,21 @@ const linhas = (t) => String(t || '').split('\n').filter((l) => l.trim());
 
    O segundo argumento é uma função de propósito: passando o
    template pronto, ele seria montado antes desta chamada e um
-   `pag.forma` com `pag` ausente derrubaria a página inteira — o
+   `pag.forma` com `pag` ausente derrubaria a página inteira, e o
    guarda não guardaria nada. Assim o HTML só é construído quando
    já se sabe que há o que construir. */
 const talvez = (cond, montar) => (cond ? (typeof montar === 'function' ? montar() : montar) : '');
+
+/* Ligar e desligar: p.visivel guarda só o que foi desligado
+   ({ galeria: false }). Chave ausente vale ligada, então proposta
+   antiga, sem o campo, sai inteira. Desligar não apaga o texto: ele
+   fica guardado para quando ligar de novo. */
+export const PARTES = [
+  'ficha', 'escopo', 'inclui', 'incluiGrupos', 'processo', 'investimento', 'pagamento', 'conta',
+  'condicoes', 'sobre', 'metricas', 'galeria', 'assinatura', 'ecossistema',
+  'encerramento', 'botaoDuvidas', 'contatos', 'faq',
+];
+const ligada = (p, parte) => p?.visivel?.[parte] !== false;
 
 function secEscopo(itens) {
   if (!Array.isArray(itens) || !itens.length) return '';
@@ -47,13 +58,12 @@ function secEscopo(itens) {
   </section>`;
 }
 
-function secInclui(bloco) {
+function secInclui(bloco, comGrupos = true) {
   if (!bloco) return '';
   const soltos = Array.isArray(bloco.itens) ? bloco.itens : [];
-  const grupos = Array.isArray(bloco.grupos) ? bloco.grupos : [];
+  const grupos = comGrupos && Array.isArray(bloco.grupos) ? bloco.grupos : [];
   if (!soltos.length && !grupos.length) return '';
 
-  const total = soltos.length + grupos.reduce((n, g) => n + (g.itens || []).length, 0);
   const linha = (t) => `<li class="prop-inclui__item">${icone('check', 'ico prop-inclui__tick')}<span>${escapar(t)}</span></li>`;
   // Lista longa vira duas colunas de linhas; curta fica numa, com ar.
   const dupla = soltos.length >= 8 ? ' prop-inclui__itens--dupla' : '';
@@ -65,7 +75,6 @@ function secInclui(bloco) {
         <p class="eyebrow">${escapar(bloco.rotulo || 'O que inclui')}</p>
         <h2 class="h2 prop-inclui__titulo">${escapar(bloco.titulo || 'Cada entregável inclui')}</h2>
         ${talvez(bloco.texto, () => `<p class="lead prop-inclui__texto">${escapar(bloco.texto)}</p>`)}
-        <p class="prop-inclui__n"><b>${String(total).padStart(2, '0')}</b>${total === 1 ? 'item' : 'itens'} em cada entrega</p>
       </header>
       <div class="prop-inclui__lista reveal" style="--delay:.08s">
         ${talvez(soltos.length, () => `<ul class="prop-inclui__itens${dupla}">${soltos.map(linha).join('')}</ul>`)}
@@ -80,7 +89,7 @@ function secInclui(bloco) {
 }
 
 /* O investimento pode vir estruturado (moeda, parcelas, valor da
-   parcela — é o que o painel novo grava) ou como texto solto
+   parcela, que é o que o painel grava) ou como texto solto
    ("2× $750", das propostas antigas). Os dois renderizam igual. */
 export function textoInvestimento(inv) {
   if (!inv) return { grande: '', apoio: '' };
@@ -108,8 +117,9 @@ export function textoInvestimento(inv) {
   };
 }
 
-function secInvestimento(inv, pag) {
+function secInvestimento(inv, pag, comConta = true) {
   if (!inv && !pag) return '';
+  if (pag && !comConta) pag = { ...pag, conta: [] };
   const { grande, apoio, partes } = textoInvestimento(inv);
   const valorHtml = partes?.parcelas
     ? `${partes.parcelas}<em class="prop-valor__x">x</em> ${escapar(partes.valor)}`
@@ -184,10 +194,12 @@ function secCondicoes(itens) {
   </section>`;
 }
 
-function secSobre(sobre, assinatura) {
+function secSobre(sobre, assinatura, partes = {}) {
   if (!sobre && !assinatura) return '';
-  const metricas = Array.isArray(sobre?.metricas) ? sobre.metricas.filter((m) => m && (m.n || m.rotulo)) : [];
-  const galeria = Array.isArray(sobre?.galeria) ? sobre.galeria.filter(Boolean) : [];
+  const { metricas: comMetricas = true, galeria: comGaleria = true, assinatura: comAssinatura = true } = partes;
+  if (!comAssinatura) assinatura = { ...assinatura, papel: '' };
+  const metricas = comMetricas && Array.isArray(sobre?.metricas) ? sobre.metricas.filter((m) => m && (m.n || m.rotulo)) : [];
+  const galeria = comGaleria && Array.isArray(sobre?.galeria) ? sobre.galeria.filter(Boolean) : [];
   // Seis fotos: a 2ª e a 3ª empilham numa coluna, como no PDF. Outra
   // quantidade: todas altas, em fileira.
   const baixa = (i) => galeria.length === 6 && (i === 1 || i === 2);
@@ -270,7 +282,7 @@ function secEcossistema(eco) {
 /* Processo com rolagem: a seção é mais alta que a tela e o miolo fica
    preso; conforme se rola, o main.js escreve --p (0 → 1) em
    [data-progresso] e acende cada [data-etapa]. Sem JS, tudo aparece
-   aceso — a página nunca depende do efeito. */
+   aceso: a página nunca depende do efeito. */
 function secProcesso(proc) {
   const etapas = Array.isArray(proc?.etapas) ? proc.etapas.filter((e) => e && (e.titulo || e.texto)) : [];
   if (!etapas.length) return '';
@@ -299,7 +311,7 @@ function secProcesso(proc) {
 }
 
 /* ---------- ícones ----------
-   Traço de 1.6 em caixa de 24, cantos redondos — o mesmo desenho da
+   Traço de 1.6 em caixa de 24, cantos redondos: o mesmo desenho da
    seta. Nada de preenchimento: só linha, como o resto do sistema.
    Cada seção escolhe pelo campo "icone" do item; sem ele, adivinha
    pela palavra-chave do título; sem palavra, usa o padrão da posição. */
@@ -355,6 +367,22 @@ function iconePara(item, padrao) {
   return padrao;
 }
 
+/* O seletor de ícones do painel mostra o desenho, não o nome. As
+   pistas vão junto para o painel dizer qual seria o automático. */
+const NOMES_ICONES = {
+  lupa: 'Lupa', alvo: 'Alvo', roteiro: 'Lista', codigo: 'Código', check: 'Check', caixa: 'Caixa',
+  escudo: 'Escudo', relogio: 'Relógio', ferramenta: 'Ferramenta', documento: 'Documento', pena: 'Pena',
+  globo: 'Globo', megafone: 'Megafone', cpu: 'Chip', mail: 'E-mail', chat: 'Conversa',
+  calendario: 'Calendário', moeda: 'Moeda', raio: 'Raio', camadas: 'Camadas', impressora: 'Impressora',
+  aperto: 'Aperto de mão',
+};
+export function catalogoIcones() {
+  return {
+    icones: Object.entries(NOMES_ICONES).map(([nome, rotulo]) => ({ nome, rotulo, svg: icone(nome) })),
+    pistas: PISTAS.map(([re, nome]) => [re.source, re.flags, nome]),
+  };
+}
+
 const SETA = '<svg class="arrow" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M4 12L12 4M12 4H5.5M12 4v6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 // "+55 83 98207-8301" → link do WhatsApp; um link já pronto passa direto
@@ -370,19 +398,27 @@ function comMensagem(link, texto) {
   return link + (link.includes('?') ? '&' : '?') + 'text=' + encodeURIComponent(texto);
 }
 
+/* "Quero confirmar o orçamento da proposta." vira "... da proposta:
+   Hunter Interior Design." O cliente entra no fim da frase. */
+function comCliente(msg, cliente) {
+  const base = String(msg || '').trim();
+  if (!cliente) return base;
+  return base.replace(/[.!?\s]+$/, '') + ': ' + cliente + '.';
+}
+
 const itensFaq = (faq) => (Array.isArray(faq?.itens) ? faq.itens : []).filter((f) => f && f.pergunta);
 
-/* Fechamento: a frase grande, o apoio, os dois botões — confirmar e
-   tirar dúvidas — e, ao lado, os contatos, para quem lê no celular
+/* Fechamento: a frase grande, o apoio, os dois botões (confirmar e
+   tirar dúvidas) e, ao lado, os contatos, para quem lê no celular
    ter o número na mão sem depender do botão. */
 function secFim(p) {
   const c = p.contato || {};
   if (!p.encerramento && !c.link && !c.whatsapp) return '';
   const zap = c.whatsapp || (c.link && /wa\.me|whatsapp/.test(c.link) ? c.link : '');
   const base = c.link || (zap && linkZap(zap)) || (c.email && 'mailto:' + c.email) || '#';
-  const principal = comMensagem(base, (c.mensagem || 'Oi, Samuel! Quero confirmar o orçamento da proposta.') + (p.cliente ? ' — ' + p.cliente : ''));
-  const temFaq = itensFaq(p.faq).length > 0;
-  const contatos = [
+  const principal = comMensagem(base, comCliente(c.mensagem || 'Oi, Samuel! Quero confirmar o orçamento da proposta.', p.cliente));
+  const temFaq = ligada(p, 'faq') && ligada(p, 'botaoDuvidas') && itensFaq(p.faq).length > 0;
+  const contatos = !ligada(p, 'contatos') ? [] : [
     zap && ['WhatsApp', c.whatsapp || 'abrir conversa', linkZap(zap), 'chat'],
     c.email && ['E-mail', c.email, 'mailto:' + c.email, 'mail'],
     c.portfolio && ['Portfólio', c.portfolio.replace(/^https?:\/\//, ''), linkSite(c.portfolio), /behance/i.test(c.portfolio) ? 'behance' : 'globo'],
@@ -422,9 +458,9 @@ function secFaq(p) {
   if (!itens.length) return '';
   const c = p.contato || {};
   const zap = c.whatsapp || (c.link && /wa\.me|whatsapp/.test(c.link) ? c.link : '');
-  const link = zap ? comMensagem(linkZap(zap), 'Oi, Samuel! Tenho uma dúvida sobre a proposta' + (p.cliente ? ' — ' + p.cliente : '') + '.') : (c.email ? 'mailto:' + c.email : '');
+  const link = zap ? comMensagem(linkZap(zap), comCliente('Oi, Samuel! Tenho uma dúvida sobre a proposta.', p.cliente)) : (c.email ? 'mailto:' + c.email : '');
   return `
-  <section class="section prop-faq" id="duvidas">
+  <section class="section prop-faq${ligada(p, 'botaoDuvidas') && ligada(p, 'encerramento') ? '' : ' aberto'}" id="duvidas">
     <div class="wrap prop-faq__grade">
       <header class="prop-faq__cab">
         <p class="eyebrow">${escapar(faq.rotulo || 'Perguntas frequentes')}</p>
@@ -503,7 +539,10 @@ function fichaCapa(p) {
       </aside>`;
 }
 
-export function renderizarProposta(p) {
+/* Prévia do painel: a mesma página, sem o main.js. Sem ele não há
+   revelação, Lenis nem processo preso na rolagem: tudo nasce visível
+   e parado, que é o que se quer enquanto se edita. */
+export function renderizarProposta(p, { previa = false } = {}) {
   const cliente = escapar(p.cliente || '');
   const titulo = escapar(p.titulo || 'Proposta');
   const ano = new Date().getFullYear();
@@ -513,7 +552,7 @@ export function renderizarProposta(p) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Proposta · ${cliente} — Samuel Freire</title>
+<title>Proposta · ${cliente} | Samuel Freire</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css">
@@ -539,26 +578,26 @@ export function renderizarProposta(p) {
         <h1 class="display prop-capa__titulo reveal" style="--delay:.08s">${titulo}</h1>
         ${talvez(p.subtitulo, () => `<p class="lead prop-capa__sub reveal" style="--delay:.16s">${escapar(p.subtitulo)}</p>`)}
       </div>
-      ${fichaCapa(p)}
+      ${talvez(ligada(p, 'ficha'), () => fichaCapa(p))}
     </div>
   </section>
 
-  ${secEscopo(p.escopo)}
-  ${secInclui(p.inclui)}
-  ${secProcesso(p.processo)}
-  ${secInvestimento(p.investimento, p.pagamento)}
-  ${secCondicoes(p.condicoes)}
-  ${secSobre(p.sobre, p.assinatura)}
-  ${secEcossistema(p.ecossistema)}
+  ${talvez(ligada(p, 'escopo'), () => secEscopo(p.escopo))}
+  ${talvez(ligada(p, 'inclui'), () => secInclui(p.inclui, ligada(p, 'incluiGrupos')))}
+  ${talvez(ligada(p, 'processo'), () => secProcesso(p.processo))}
+  ${secInvestimento(ligada(p, 'investimento') ? p.investimento : null, ligada(p, 'pagamento') ? p.pagamento : null, ligada(p, 'conta'))}
+  ${talvez(ligada(p, 'condicoes'), () => secCondicoes(p.condicoes))}
+  ${talvez(ligada(p, 'sobre'), () => secSobre(p.sobre, p.assinatura, { metricas: ligada(p, 'metricas'), galeria: ligada(p, 'galeria'), assinatura: ligada(p, 'assinatura') }))}
+  ${talvez(ligada(p, 'ecossistema'), () => secEcossistema(p.ecossistema))}
 
-  ${secFim(p)}
-  ${secFaq(p)}
+  ${talvez(ligada(p, 'encerramento'), () => secFim(p))}
+  ${talvez(ligada(p, 'faq'), () => secFaq(p))}
 
 </main>
 
 ${rodape(p, ano)}
 
-<script src="/js/main.js" defer></script>
+${previa ? '' : '<script src="/js/main.js" defer></script>'}
 <script src="/js/proposta.js?v=${V}" defer></script>
 </body>
 </html>`;

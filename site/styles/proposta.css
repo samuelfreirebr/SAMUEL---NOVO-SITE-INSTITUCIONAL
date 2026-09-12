@@ -5,14 +5,14 @@
    trazem tipografia, botões, faixas e hairlines. Aqui só mora o
    arranjo dos blocos que existem apenas na proposta.
 
-   Nenhuma cor ou medida crua — tudo sai de var(). Sem gradiente,
+   Nenhuma cor ou medida crua: tudo sai de var(). Sem gradiente,
    sem sombra, sem card flutuante: separação é hairline.
    ============================================================ */
 
 /* Nada passa da borda direita. O body já tem overflow-x hidden no
    base.css, mas no iOS isso não segura a rolagem do documento: quem
    precisa cortar é o html. "clip" em vez de "hidden" para não virar
-   caixa de rolagem — o sticky do processo depende disso. */
+   caixa de rolagem, e o sticky do processo depende disso. */
 html { overflow-x: clip; }
 
 /* ---------- Topo ------------------------------------------------------ */
@@ -39,7 +39,7 @@ html { overflow-x: clip; }
 @media (max-width: 640px) { .prop-topo__tag { display: none; } }
 
 /* ---------- Capa ------------------------------------------------------
-   Título grande à esquerda; à direita, a ficha — um cartão com
+   Título grande à esquerda; à direita, a ficha: um cartão com
    hairline: monograma com as iniciais de quem recebe, quem faz, data
    e validade. No celular a ficha vem abaixo do título.              */
 
@@ -152,10 +152,8 @@ html { overflow-x: clip; }
 }
 
 /* ---------- O que cada entregável inclui ------------------------------
-   Duas colunas: à esquerda o título de verdade, o apoio e a contagem
-   (que fica presa enquanto a lista rola); à direita a lista em linhas
-   com hairline. Antes era um eyebrow e bullets soltos num bloco
-   escuro — com quatro itens, sobrava vazio.                          */
+   Duas colunas: à esquerda o título e o apoio (presos enquanto a
+   lista rola); à direita a lista em linhas com hairline.            */
 
 .prop-inclui__grade {
   display: grid;
@@ -166,22 +164,6 @@ html { overflow-x: clip; }
 .prop-inclui__cab { position: sticky; top: var(--sp-xl); }
 .prop-inclui__titulo { margin-top: var(--sp-md); max-width: 14ch; color: #FFFFFF; }
 .prop-inclui__texto { margin-top: var(--sp-md); max-width: 34ch; }
-.prop-inclui__n {
-  margin-top: var(--sp-xl);
-  padding-top: var(--sp-md);
-  border-top: var(--hair) solid var(--line-invert);
-  font-size: var(--t-small);
-  color: var(--muted-invert);
-  display: flex; align-items: baseline; gap: .45em;
-}
-.prop-inclui__n b {
-  color: #FFFFFF;
-  font-size: var(--t-h3);
-  font-weight: var(--w-black);
-  letter-spacing: var(--ls-h3);
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
 @media (max-width: 900px) {
   .prop-inclui__grade { grid-template-columns: minmax(0, 1fr); }
   .prop-inclui__cab { position: static; }
@@ -247,7 +229,7 @@ html { overflow-x: clip; }
   line-height: .9;
   color: var(--ink);
 }
-/* O "x" de "2x": letra, menor e mais leve que os números — a
+/* O "x" de "2x": letra, menor e mais leve que os números: a
    tipografia de preço. O × de multiplicação saía pesado. */
 .prop-valor__x {
   font-style: normal;
@@ -315,8 +297,8 @@ html { overflow-x: clip; }
 
 /* ---------- Condições --------------------------------------------------
    Três blocos brancos sobre o cinza, hairline em volta, número no
-   canto. No hover o bloco inverte para tinta — o mesmo gesto dos
-   botões — e o ponto vira laranja. Sem sombra: separação é borda.   */
+   canto. No hover o bloco inverte para tinta (o mesmo gesto dos
+   botões) e o ponto vira laranja. Sem sombra: separação é borda.   */
 
 .prop-condicoes { background: var(--bg-2); }
 @media (min-width: 901px) { .prop-condicoes { padding-block: clamp(3rem, 5vw, 4.5rem); } }
@@ -411,7 +393,7 @@ html { overflow-x: clip; }
 
 /* ---------- Encerramento e rodapé -------------------------------------
    Faixa laranja com o próximo passo: frase grande, apoio, botão branco
-   com a seta em círculo e, ao lado, os contatos em linhas — para o
+   com a seta em círculo e, ao lado, os contatos em linhas, para o
    número ficar à mão sem depender do botão. */
 
 .prop-fim { padding-block: var(--section-y); }
@@ -485,8 +467,8 @@ html { overflow-x: clip; }
   .section { padding-block: var(--sp-xl); break-inside: avoid; }
   .band-invert, .band-brand { background: var(--bg) !important; color: var(--ink) !important; }
   .band-invert .prop-inclui__item, .band-invert .prop-inclui__titulo,
-  .band-invert .prop-inclui__n b, .band-invert .eyebrow { color: var(--ink) !important; }
-  .prop-inclui__itens, .prop-inclui__item, .prop-inclui__n { border-color: var(--line) !important; }
+  .band-invert .eyebrow { color: var(--ink) !important; }
+  .prop-inclui__itens, .prop-inclui__item { border-color: var(--line) !important; }
   .prop-inclui__cab { position: static; }
   .prop-copiar { display: none; }
   .reveal { opacity: 1 !important; transform: none !important; }
@@ -510,7 +492,7 @@ html { overflow-x: clip; }
   min-height: clamp(22rem, 60vh, 44rem);
 }
 .prop-sobre__retrato img { width: 100%; height: 100%; object-fit: cover; display: block; }
-/* Texto: cabeçalho no alto, parágrafos no pé — o vão do meio é o
+/* Texto: cabeçalho no alto, parágrafos no pé: o vão do meio é o
    respiro do retrato, como no PDF. */
 .prop-sobre__txt { display: flex; flex-direction: column; justify-content: space-between; gap: var(--sp-2xl); padding-block: var(--sp-md); }
 .prop-sobre__nome { margin-top: var(--sp-md); }
@@ -639,7 +621,7 @@ html { overflow-x: clip; }
 @media (max-width: 700px) { .prop-eco__texto { text-align: left; } }
 
 /* Quatro blocos em volta de um centro. O centro ocupa a coluna do
-   meio; os anéis são hairlines — nada de tinta nova na paleta. */
+   meio; os anéis são hairlines, nada de tinta nova na paleta. */
 .prop-eco__grade {
   position: relative;
   display: grid;
