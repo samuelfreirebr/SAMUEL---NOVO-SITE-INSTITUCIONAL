@@ -9,6 +9,12 @@
    sem sombra, sem card flutuante: separação é hairline.
    ============================================================ */
 
+/* Nada passa da borda direita. O body já tem overflow-x hidden no
+   base.css, mas no iOS isso não segura a rolagem do documento: quem
+   precisa cortar é o html. "clip" em vez de "hidden" para não virar
+   caixa de rolagem — o sticky do processo depende disso. */
+html { overflow-x: clip; }
+
 /* ---------- Topo ------------------------------------------------------ */
 
 .prop-topo {
@@ -32,13 +38,28 @@
 
 @media (max-width: 640px) { .prop-topo__tag { display: none; } }
 
-/* ---------- Capa ------------------------------------------------------ */
+/* ---------- Capa ------------------------------------------------------
+   Título grande à esquerda; à direita, a ficha — um cartão com
+   hairline: monograma com as iniciais de quem recebe, quem faz, data
+   e validade. No celular a ficha vem abaixo do título.              */
 
 .prop-capa { padding-block: clamp(3.5rem, 9vw, 9rem) var(--section-y-s); }
+.prop-capa__grade {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(17rem, 26vw, 22rem);
+  gap: clamp(var(--sp-xl), 6vw, var(--sp-3xl));
+  align-items: end;
+}
+@media (max-width: 900px) { .prop-capa__grade { grid-template-columns: minmax(0, 1fr); align-items: start; } }
 
 .prop-capa__titulo {
   margin-top: var(--sp-lg);
   max-width: 18ch;
+  /* Uma palavra longa ("posicionamento.") no corpo display estoura
+     335px de celular. O teto em vw garante ~15 letras por linha; o
+     overflow-wrap é o cinto de segurança para nomes ainda maiores. */
+  font-size: min(var(--t-display), 11.5vw);
+  overflow-wrap: anywhere;
 }
 .prop-capa__sub {
   margin-top: var(--sp-lg);
@@ -46,17 +67,34 @@
   color: var(--muted);
 }
 
-.prop-capa__meta {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
-  gap: var(--sp-lg);
-  margin-top: var(--sp-2xl);
-  padding-top: var(--sp-md);
-  border-top: var(--hair) solid var(--line);
-  max-width: 52rem;
+.prop-capa__ficha {
+  display: flex; flex-direction: column;
+  border: var(--hair) solid var(--line-2);
+  border-radius: var(--radius-img);
+  background: var(--bg);
 }
-.prop-capa__meta dd { margin: 0; margin-top: var(--sp-2xs); display: flex; align-items: center; gap: .5em; }
-.prop-capa__meta dd .ico { width: 1.1rem; height: 1.1rem; color: var(--brand); flex: none; }
+.prop-capa__ficha > * { padding: var(--sp-md); }
+.prop-capa__ficha > * + * { border-top: var(--hair) solid var(--line); }
+.prop-capa__para { display: flex; align-items: center; gap: var(--sp-md); background: var(--bg-2); }
+.prop-capa__mono {
+  display: grid; place-items: center; flex: none;
+  width: 3.5rem; height: 3.5rem; border-radius: 50%;
+  background: var(--brand); color: var(--brand-ink);
+  font-size: 1.25rem; font-weight: var(--w-black); letter-spacing: -.03em;
+}
+.prop-capa__dado { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.prop-capa__rot {
+  font-size: var(--t-eyebrow); font-weight: var(--w-semi);
+  letter-spacing: var(--ls-eyebrow); text-transform: uppercase; color: var(--muted);
+}
+.prop-capa__dado b { font-size: var(--t-body); font-weight: var(--w-bold); letter-spacing: -.015em; color: var(--ink); overflow-wrap: anywhere; }
+.prop-capa__para .prop-capa__dado b { font-size: var(--t-lead); font-weight: var(--w-black); letter-spacing: -.03em; line-height: 1.1; }
+.prop-capa__apoio { font-size: var(--t-small); color: var(--muted); }
+/* data e validade lado a lado, com a hairline no meio */
+.prop-capa__par { display: grid; grid-template-columns: 1fr 1fr; padding: 0; }
+.prop-capa__par > * { padding: var(--sp-md); }
+.prop-capa__par > * + * { border-left: var(--hair) solid var(--line); }
+.prop-capa__par > :only-child { grid-column: 1 / -1; }
 
 /* ---------- Escopo ---------------------------------------------------- */
 
@@ -640,6 +678,7 @@
   .prop-frente:nth-child(n) { grid-column: auto; grid-row: auto; min-height: 0; }
   .prop-eco__centro { grid-column: auto; grid-row: auto; order: -1; min-height: 0; margin-block: var(--sp-md); }
   .prop-eco__disco { width: min(60vw, 16rem); margin-inline: auto; }
+  .prop-eco__titulo { font-size: clamp(1.125rem, 5vw, 1.5rem); max-width: 10ch; overflow-wrap: anywhere; }
   .prop-eco__anel { display: none; }
 }
 
@@ -670,6 +709,7 @@
 .prop-etapas {
   list-style: none;
   display: grid;
+  margin-top: var(--sp-xl);   /* ar entre o título (e a barra) e a grade */
   grid-template-columns: repeat(3, minmax(0, 1fr));
   border-top: var(--hair) solid var(--line);
   border-left: var(--hair) solid var(--line);
@@ -729,3 +769,63 @@
   .prop-etapa__ico { background: var(--brand) !important; color: #FFFFFF !important; }
   .prop-eco__anel { display: none; }
 }
+
+/* ---------- Perguntas frequentes ---------------------------------------
+   Nasce escondida. Abre pelo botão "Tenho dúvidas" (classe .aberto,
+   posta pelo proposta.js) ou pelo #duvidas da URL, sem JS. Cada
+   pergunta é um <details>: abre e fecha sem script.                  */
+
+.prop-faq { display: none; background: var(--bg-2); }
+.prop-faq:target, .prop-faq.aberto { display: block; }
+.prop-faq__grade {
+  display: grid;
+  grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+  gap: clamp(var(--sp-xl), 6vw, var(--sp-3xl));
+  align-items: start;
+}
+.prop-faq__cab { position: sticky; top: var(--sp-xl); }
+.prop-faq__titulo { margin-top: var(--sp-md); max-width: 14ch; }
+.prop-faq__texto { margin-top: var(--sp-md); max-width: 36ch; color: var(--muted); }
+@media (max-width: 900px) {
+  .prop-faq__grade { grid-template-columns: minmax(0, 1fr); gap: var(--sp-xl); }
+  .prop-faq__cab { position: static; }
+}
+.prop-faq__lista { border-top: var(--hair) solid var(--line-2); }
+.prop-faq__item { border-bottom: var(--hair) solid var(--line-2); }
+.prop-faq__q {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--sp-md); align-items: baseline;
+  padding-block: var(--sp-md);
+  cursor: pointer; list-style: none;
+  font-size: var(--t-lead); font-weight: var(--w-bold); letter-spacing: -.02em; line-height: 1.25;
+  color: var(--ink);
+  transition: color var(--d-fast) var(--ease-out);
+}
+.prop-faq__q::-webkit-details-marker { display: none; }
+.prop-faq__q:hover { color: var(--brand); }
+.prop-faq__num { font-size: var(--t-eyebrow); font-weight: var(--w-bold); letter-spacing: .14em; color: var(--brand); font-variant-numeric: tabular-nums; }
+/* o "+" que vira "×": dois traços, um gira */
+.prop-faq__mais { position: relative; width: 1rem; height: 1rem; align-self: center; flex: none; }
+.prop-faq__mais::before, .prop-faq__mais::after {
+  content: ""; position: absolute; left: 0; top: 50%; width: 100%; height: var(--hair-2);
+  background: currentColor; transform: translateY(-50%);
+  transition: transform var(--d-base) var(--ease-out);
+}
+.prop-faq__mais::after { transform: translateY(-50%) rotate(90deg); }
+.prop-faq__item[open] .prop-faq__mais::after { transform: translateY(-50%) rotate(0deg); }
+.prop-faq__item[open] .prop-faq__q { color: var(--ink); }
+.prop-faq__r { padding: 0 0 var(--sp-lg) calc(2.4em + var(--sp-md)); max-width: 60ch; }
+.prop-faq__r p + p { margin-top: var(--sp-sm); }
+.prop-faq__r .body { color: var(--ink-2); }
+@media (max-width: 560px) { .prop-faq__r { padding-left: 0; } .prop-faq__q { font-size: var(--t-body); } }
+.prop-faq__pe { margin-top: var(--sp-xl); font-size: var(--t-body); color: var(--muted); }
+.prop-faq__pe a {
+  display: inline-flex; align-items: center; gap: .4em;
+  color: var(--ink); font-weight: var(--w-bold);
+  border-bottom: var(--hair-2) solid var(--brand);
+  transition: color var(--d-fast) var(--ease-out);
+}
+.prop-faq__pe a:hover { color: var(--brand); }
+.prop-faq__pe .arrow { width: .9em; height: .9em; }
+@media (prefers-reduced-motion: reduce) { .prop-faq__mais::before, .prop-faq__mais::after { transition: none; } }
+@media print { .prop-faq { display: block; } }

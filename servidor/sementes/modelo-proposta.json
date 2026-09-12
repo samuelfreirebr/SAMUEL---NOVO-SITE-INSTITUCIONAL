@@ -208,11 +208,46 @@
   "encerramento": "Vamos construir isso juntos?",
   "contato": {
     "rotuloSecao": "Próximo passo",
-    "texto": "Se fez sentido para você, o próximo passo é uma conversa rápida — sem compromisso. Respondo no mesmo dia.",
-    "rotulo": "Falar com o Samuel",
+    "texto": "Se fez sentido para você, confirme por aqui e eu já começo. Ainda com dúvida? Abra as perguntas frequentes ou me chame — respondo no mesmo dia.",
+    "rotulo": "Confirmar orçamento",
     "link": "https://wa.me/5583982078301",
     "whatsapp": "+55 83 98207-8301",
     "email": "samuelfreirebr@gmail.com",
-    "portfolio": "behance.net/samuelfreirebr"
+    "portfolio": "behance.net/samuelfreirebr",
+    "rotuloDuvidas": "Tenho dúvidas",
+    "mensagem": "Oi, Samuel! Quero confirmar o orçamento da proposta."
+  },
+  "faq": {
+    "rotulo": "Perguntas frequentes",
+    "titulo": "O que costumam me perguntar antes de fechar",
+    "texto": "Respostas curtas para as dúvidas que aparecem em quase toda proposta. Se a sua não estiver aqui, é só me chamar.",
+    "itens": [
+      {
+        "pergunta": "Como confirmo o orçamento?",
+        "resposta": "Clique em Confirmar orçamento: abre uma conversa comigo no WhatsApp já com esta proposta identificada. A confirmação é o pagamento da primeira parcela — a partir dela o projeto entra na agenda e eu te mando o cronograma."
+      },
+      {
+        "pergunta": "Como funciona o pagamento?",
+        "resposta": "Do jeito descrito na seção de investimento: a primeira parcela confirma o início e a última acompanha a entrega. Os dados para pagamento estão na proposta, com botão de copiar."
+      },
+      {
+        "pergunta": "Quanto tempo leva?",
+        "resposta": "Depende do escopo, e o prazo combinado fica registrado nas condições. Você acompanha cada etapa do processo e sabe exatamente onde estamos."
+      },
+      {
+        "pergunta": "E se eu quiser mudar alguma coisa no meio do caminho?",
+        "resposta": "Ajustes dentro do escopo fazem parte do processo: cada etapa tem a sua rodada de revisão.\n\nO que sair do escopo eu aviso antes de fazer e proponho à parte — sem surpresa na conta."
+      },
+      {
+        "pergunta": "O site fica meu? Tem mensalidade?",
+        "resposta": "Fica seu: arquivos, domínio e hospedagem no seu nome. Não há mensalidade minha. Os únicos custos recorrentes são domínio e hospedagem, que eu explico e configuro com você."
+      },
+      {
+        "pergunta": "E depois da entrega?",
+        "resposta": "Você recebe tudo organizado, com as orientações de uso, e um período de suporte para ajustes. Se quiser seguir com manutenção ou abrir novas frentes, a gente combina na hora certa."
+      }
+    ],
+    "rodape": "Ficou alguma dúvida que não está aqui?",
+    "rodapeLink": "Me chama no WhatsApp"
   }
 }

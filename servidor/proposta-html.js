@@ -11,7 +11,7 @@
 
 import { escapar } from './listas.js';
 
-const V = 'p5';   // versão do proposta.css, para o cache
+const V = 'p6';   // versão do proposta.css, para o cache
 
 const linhas = (t) => String(t || '').split('\n').filter((l) => l.trim());
 
@@ -361,14 +361,27 @@ const SETA = '<svg class="arrow" viewBox="0 0 16 16" width="16" height="16" aria
 const linkZap = (v) => /^https?:/.test(v || '') ? v : 'https://wa.me/' + String(v || '').replace(/\D/g, '');
 const linkSite = (v) => /^https?:/.test(v || '') ? v : 'https://' + String(v || '').replace(/^\/+/, '');
 
-/* Fechamento: a frase grande, o apoio, o botão principal e, ao lado,
-   os contatos — para quem lê no celular ter o número na mão sem
-   depender do botão. */
+/* O link do WhatsApp já vai com a mensagem escrita: quem clica em
+   "Confirmar orçamento" abre a conversa com a proposta identificada,
+   sem precisar explicar de onde veio. Link que não é WhatsApp, ou
+   que já traz texto, passa como está. */
+function comMensagem(link, texto) {
+  if (!link || !/wa\.me|whatsapp/.test(link) || /[?&]text=/.test(link) || !texto) return link;
+  return link + (link.includes('?') ? '&' : '?') + 'text=' + encodeURIComponent(texto);
+}
+
+const itensFaq = (faq) => (Array.isArray(faq?.itens) ? faq.itens : []).filter((f) => f && f.pergunta);
+
+/* Fechamento: a frase grande, o apoio, os dois botões — confirmar e
+   tirar dúvidas — e, ao lado, os contatos, para quem lê no celular
+   ter o número na mão sem depender do botão. */
 function secFim(p) {
   const c = p.contato || {};
   if (!p.encerramento && !c.link && !c.whatsapp) return '';
   const zap = c.whatsapp || (c.link && /wa\.me|whatsapp/.test(c.link) ? c.link : '');
-  const principal = c.link || (zap && linkZap(zap)) || (c.email && 'mailto:' + c.email) || '#';
+  const base = c.link || (zap && linkZap(zap)) || (c.email && 'mailto:' + c.email) || '#';
+  const principal = comMensagem(base, (c.mensagem || 'Oi, Samuel! Quero confirmar o orçamento da proposta.') + (p.cliente ? ' — ' + p.cliente : ''));
+  const temFaq = itensFaq(p.faq).length > 0;
   const contatos = [
     zap && ['WhatsApp', c.whatsapp || 'abrir conversa', linkZap(zap), 'chat'],
     c.email && ['E-mail', c.email, 'mailto:' + c.email, 'mail'],
@@ -384,8 +397,10 @@ function secFim(p) {
         <p class="h1 prop-fim__frase">${escapar(p.encerramento || 'Vamos conversar?')}</p>
         ${talvez(c.texto, () => `<p class="lead prop-fim__apoio">${escapar(c.texto)}</p>`)}
         <div class="prop-fim__acoes">
-          <a class="btn prop-fim__btn" href="${escapar(principal)}" target="_blank" rel="noopener">${escapar(c.rotulo || 'Falar com o Samuel')}${SETA}</a>
-          ${talvez(c.email && principal !== 'mailto:' + c.email, () => `<a class="btn btn--ghost" href="mailto:${escapar(c.email)}">Enviar e-mail</a>`)}
+          <a class="btn prop-fim__btn" href="${escapar(principal)}" target="_blank" rel="noopener">${escapar(c.rotulo || 'Confirmar orçamento')}${SETA}</a>
+          ${temFaq
+            ? `<a class="btn btn--ghost prop-fim__duvidas" href="#duvidas" data-duvidas aria-controls="duvidas" aria-expanded="false">${escapar(c.rotuloDuvidas || 'Tenho dúvidas')}</a>`
+            : talvez(c.email && principal !== 'mailto:' + c.email, () => `<a class="btn btn--ghost" href="mailto:${escapar(c.email)}">Enviar e-mail</a>`)}
         </div>
       </div>
       ${talvez(contatos.length, () => `
@@ -393,6 +408,41 @@ function secFim(p) {
         ${contatos.map(([r, v, h, ic]) => `<div><dt>${icone(ic)}${escapar(r)}</dt><dd><a href="${escapar(h)}" target="_blank" rel="noopener">${escapar(v)}</a></dd></div>`).join('')}
         ${talvez(p.cliente, () => `<div><dt>${icone('documento')}Esta proposta</dt><dd>${escapar(p.cliente)}${p.validade ? ' · válida por ' + escapar(p.validade) : ''}</dd></div>`)}
       </dl>`)}
+    </div>
+  </section>`;
+}
+
+/* Perguntas frequentes: fica escondida até o cliente clicar em
+   "Tenho dúvidas" (classe .aberto pelo proposta.js, ou :target sem
+   JS). Sem .reveal aqui de propósito: o main.js mede as posições no
+   carregamento, e um bloco que nasce invisível mediria zero. */
+function secFaq(p) {
+  const faq = p.faq || {};
+  const itens = itensFaq(faq);
+  if (!itens.length) return '';
+  const c = p.contato || {};
+  const zap = c.whatsapp || (c.link && /wa\.me|whatsapp/.test(c.link) ? c.link : '');
+  const link = zap ? comMensagem(linkZap(zap), 'Oi, Samuel! Tenho uma dúvida sobre a proposta' + (p.cliente ? ' — ' + p.cliente : '') + '.') : (c.email ? 'mailto:' + c.email : '');
+  return `
+  <section class="section prop-faq" id="duvidas">
+    <div class="wrap prop-faq__grade">
+      <header class="prop-faq__cab">
+        <p class="eyebrow">${escapar(faq.rotulo || 'Perguntas frequentes')}</p>
+        <h2 class="h2 prop-faq__titulo">${escapar(faq.titulo || 'O que costumam me perguntar')}</h2>
+        ${talvez(faq.texto, () => `<p class="body prop-faq__texto">${escapar(faq.texto)}</p>`)}
+      </header>
+      <div class="prop-faq__lista">
+        ${itens.map((f, i) => `
+        <details class="prop-faq__item" name="faq">
+          <summary class="prop-faq__q">
+            <span class="prop-faq__num" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
+            <span class="prop-faq__pergunta">${escapar(f.pergunta)}</span>
+            <span class="prop-faq__mais" aria-hidden="true"></span>
+          </summary>
+          <div class="prop-faq__r">${linhas(f.resposta).map((l) => `<p class="body">${escapar(l)}</p>`).join('')}</div>
+        </details>`).join('')}
+        ${talvez(link, () => `<p class="prop-faq__pe">${escapar(faq.rodape || 'Ficou alguma dúvida que não está aqui?')} <a href="${escapar(link)}" target="_blank" rel="noopener">${escapar(faq.rodapeLink || 'Me chama no WhatsApp')}${SETA}</a></p>`)}
+      </div>
     </div>
   </section>`;
 }
@@ -407,6 +457,50 @@ function rodape(p, ano) {
     <p class="small prop-rodape__legal">© ${ano} Samuel Freire Web Designer · Proposta confidencial, preparada para ${escapar(p.cliente || 'você')}.</p>
   </div>
 </footer>`;
+}
+
+/* ---------- capa ----------
+   A ficha: quem recebe (monograma com as iniciais, no lugar de um
+   ícone genérico), quem faz, a data e a validade. No desktop fica ao
+   lado do título, como um cartão; no celular vem abaixo. */
+function iniciais(nome) {
+  const partes = String(nome || '').replace(/[&|·,]/g, ' ').split(/\s+/)
+    .filter((x) => x && !/^(de|da|do|dos|das|e|and|of|the|for|para)$/i.test(x));
+  return partes.slice(0, 2).map((x) => x[0].toUpperCase()).join('') || '•';
+}
+
+function dataDaProposta(p) {
+  if (p.data) return String(p.data);
+  const d = new Date(p.criadaEm || p.atualizadaEm || Date.now());
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString(String(p.idioma || '').startsWith('en') ? 'en-US' : 'pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function fichaCapa(p) {
+  const para = p.preparadaPara || p.cliente || '';
+  const a = p.assinatura || {};
+  const por = ((a.nome || 'Samuel') + ' ' + (a.sobrenome || (a.nome ? '' : 'Freire'))).trim();
+  const data = dataDaProposta(p);
+  return `
+      <aside class="prop-capa__ficha reveal" style="--delay:.24s" aria-label="Ficha da proposta">
+        <div class="prop-capa__para">
+          <span class="prop-capa__mono" aria-hidden="true">${escapar(iniciais(para))}</span>
+          <div class="prop-capa__dado">
+            <span class="prop-capa__rot">Preparada para</span>
+            <b>${escapar(para)}</b>
+            ${talvez(p.cliente && !para.toLowerCase().includes(String(p.cliente).toLowerCase()), () => `<span class="prop-capa__apoio">${escapar(p.cliente)}</span>`)}
+          </div>
+        </div>
+        <div class="prop-capa__dado">
+          <span class="prop-capa__rot">Feita por</span>
+          <b>${escapar(por)}</b>
+          ${talvez(a.papel, () => `<span class="prop-capa__apoio">${escapar(a.papel)}</span>`)}
+        </div>
+        <div class="prop-capa__par">
+          ${talvez(data, () => `<div class="prop-capa__dado"><span class="prop-capa__rot">Data</span><b>${escapar(data)}</b></div>`)}
+          ${talvez(p.validade, () => `<div class="prop-capa__dado"><span class="prop-capa__rot">Validade</span><b>${escapar(p.validade)}</b></div>`)}
+        </div>
+      </aside>`;
 }
 
 export function renderizarProposta(p) {
@@ -439,15 +533,13 @@ export function renderizarProposta(p) {
 <main>
 
   <section class="section prop-capa">
-    <div class="wrap">
-      <p class="eyebrow reveal">Proposta · ${cliente}</p>
-      <h1 class="display prop-capa__titulo reveal" style="--delay:.08s">${titulo}</h1>
-      ${talvez(p.subtitulo, () => `<p class="lead prop-capa__sub reveal" style="--delay:.16s">${escapar(p.subtitulo)}</p>`)}
-      <dl class="prop-capa__meta reveal" style="--delay:.24s">
-        ${talvez(p.preparadaPara, () => `<div><dt class="eyebrow">Preparada para</dt><dd class="body">${icone('aperto')}${escapar(p.preparadaPara)}</dd></div>`)}
-        ${talvez(p.data, () => `<div><dt class="eyebrow">Data</dt><dd class="body">${icone('calendario')}${escapar(p.data)}</dd></div>`)}
-        ${talvez(p.validade, () => `<div><dt class="eyebrow">Validade</dt><dd class="body">${icone('relogio')}${escapar(p.validade)}</dd></div>`)}
-      </dl>
+    <div class="wrap prop-capa__grade">
+      <div class="prop-capa__txt">
+        <p class="eyebrow reveal">Proposta · ${cliente}</p>
+        <h1 class="display prop-capa__titulo reveal" style="--delay:.08s">${titulo}</h1>
+        ${talvez(p.subtitulo, () => `<p class="lead prop-capa__sub reveal" style="--delay:.16s">${escapar(p.subtitulo)}</p>`)}
+      </div>
+      ${fichaCapa(p)}
     </div>
   </section>
 
@@ -460,6 +552,7 @@ export function renderizarProposta(p) {
   ${secEcossistema(p.ecossistema)}
 
   ${secFim(p)}
+  ${secFaq(p)}
 
 </main>
 

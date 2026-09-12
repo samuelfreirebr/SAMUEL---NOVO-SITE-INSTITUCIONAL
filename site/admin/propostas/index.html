@@ -90,7 +90,7 @@ const suja = () => Boolean(proposta) && JSON.stringify(proposta) !== salva;
 
 // Campos que pertencem ao MODELO (o que toda proposta nova já traz).
 // Cliente, endereço, título, situação são de cada proposta.
-const CAMPOS_MODELO = ['subtitulo', 'escopo', 'inclui', 'processo', 'investimento', 'pagamento', 'condicoes', 'sobre', 'ecossistema', 'assinatura', 'encerramento', 'contato'];
+const CAMPOS_MODELO = ['subtitulo', 'escopo', 'inclui', 'processo', 'investimento', 'pagamento', 'condicoes', 'sobre', 'ecossistema', 'assinatura', 'encerramento', 'contato', 'faq'];
 
 /* ---------- lista ---------- */
 async function carregar() {
@@ -216,6 +216,7 @@ function montarEditor() {
   const proc = p.processo ||= { rotulo: 'Como trabalhamos', titulo: 'Nosso processo', etapas: [], rodape: '' };
   const eco = p.ecossistema ||= { rotulo: 'Nosso ecossistema', texto: '', centro: { sup: '', titulo: '' }, frentes: [] };
   eco.centro ||= {};
+  const faq = p.faq ||= { rotulo: 'Perguntas frequentes', titulo: 'O que costumam me perguntar antes de fechar', texto: '', itens: [], rodape: '', rodapeLink: '' };
 
   raiz.innerHTML = ''
     + (editandoModelo
@@ -341,13 +342,32 @@ function montarEditor() {
     + '</div>'
     + campo('Texto de apoio', con.texto, 'contato.texto', 'Uma ou duas linhas abaixo da frase.', 'area')
     + '<div class="linha linha--2">'
-    + campo('Botao', con.rotulo, 'contato.rotulo', 'Ex.: Falar com o Samuel')
-    + campo('Link do botao', con.link, 'contato.link', 'Ex.: https://wa.me/...')
+    + campo('Botao principal', con.rotulo, 'contato.rotulo', 'Ex.: Confirmar orcamento')
+    + campo('Link do botao', con.link, 'contato.link', 'Ex.: https://wa.me/... &mdash; se for WhatsApp, a mensagem abaixo ja vai escrita.')
+    + '</div>'
+    + '<div class="linha linha--2">'
+    + campo('Mensagem do WhatsApp', con.mensagem, 'contato.mensagem', 'O que chega pronto na conversa. O nome do cliente e acrescentado no fim.')
+    + campo('Botao secundario', con.rotuloDuvidas, 'contato.rotuloDuvidas', 'Ex.: Tenho duvidas &mdash; abre as perguntas frequentes. Sem perguntas cadastradas, vira "Enviar e-mail".')
     + '</div>'
     + '<div class="linha linha--3">'
     + campo('WhatsApp', con.whatsapp, 'contato.whatsapp', 'Como aparece. Ex.: +55 83 98207-8301')
     + campo('E-mail', con.email, 'contato.email')
     + campo('Portfolio', con.portfolio, 'contato.portfolio', 'Ex.: behance.net/samuelfreirebr')
+    + '</div>'
+    + '</fieldset>'
+
+    + '<fieldset><legend>Perguntas frequentes</legend>'
+    + '<p class="dica" style="background:none;border:0;padding:0 0 var(--sp-md)">Fica escondida na p&aacute;gina at&eacute; o cliente clicar em <b>Tenho d&uacute;vidas</b>. Cada pergunta abre e fecha sozinha.</p>'
+    + '<div class="linha linha--2">'
+    + campo('Rotulo pequeno', faq.rotulo, 'faq.rotulo', 'Ex.: Perguntas frequentes')
+    + campo('Titulo', faq.titulo, 'faq.titulo', 'Ex.: O que costumam me perguntar antes de fechar')
+    + '</div>'
+    + campo('Texto de apoio', faq.texto, 'faq.texto', 'Uma ou duas linhas abaixo do titulo. Opcional.', 'area')
+    + '<div id="lista-faq"></div>'
+    + '<button class="mini" type="button" data-add="faq">+ Adicionar pergunta</button>'
+    + '<div class="linha linha--2" style="margin-top:var(--sp-lg)">'
+    + campo('Frase do rodape', faq.rodape, 'faq.rodape', 'Ex.: Ficou alguma duvida que nao esta aqui?')
+    + campo('Texto do link', faq.rodapeLink, 'faq.rodapeLink', 'Ex.: Me chama no WhatsApp')
     + '</div>'
     + '</fieldset>'
 
@@ -362,13 +382,14 @@ function montarEditor() {
     + '</div>';
 
   montarEscopo(); montarGrupos(); montarCondicoes();
-  montarEtapas(); montarMetricas(); montarGaleria(); montarFrentes();
+  montarEtapas(); montarMetricas(); montarGaleria(); montarFrentes(); montarFaq();
   ligarCampos(raiz);
   ligarInvestimento(raiz);
   raiz.querySelector('[data-add="etapa"]').onclick = () => { (proc.etapas ||= []).push({ titulo: '', texto: '', nota: '' }); montarEtapas(); };
   raiz.querySelector('[data-add="metrica"]').onclick = () => { (sob.metricas ||= []).push({ n: '', rotulo: '', destaque: false }); montarMetricas(); };
   raiz.querySelector('[data-add="foto"]').onclick = async () => { const url = await escolherImagem(); if (url) { (sob.galeria ||= []).push(url); montarGaleria(); } };
   raiz.querySelector('[data-add="frente"]').onclick = () => { (eco.frentes ||= []).push({ titulo: '', itens: [], escuro: false }); montarFrentes(); };
+  raiz.querySelector('[data-add="faq"]').onclick = () => { (faq.itens ||= []).push({ pergunta: '', resposta: '' }); montarFaq(); };
 
   raiz.querySelector('[data-add="escopo"]').onclick = () => { (p.escopo ||= []).push({ titulo: '', descricao: '', marca: '' }); montarEscopo(); };
   raiz.querySelector('[data-add="grupo"]').onclick = () => { (inc.grupos ||= []).push({ titulo: '', itens: [] }); montarGrupos(); };
@@ -562,6 +583,19 @@ function montarFrentes() {
       + '<label><span><input type="checkbox" data-escuro' + (f.escuro ? ' checked' : '') + '> Bloco escuro</span></label>');
     ligarSoltos(d, f, ['titulo', 'itens', 'icone']);
     d.querySelector('[data-escuro]').onchange = (ev) => { f.escuro = ev.target.checked; };
+    raiz.appendChild(d);
+  });
+}
+
+function montarFaq() {
+  const raiz = $('#lista-faq'); if (!raiz) return;
+  const lista = proposta.faq.itens ||= [];
+  raiz.innerHTML = lista.length ? '' : '<p class="vazio">Nenhuma pergunta ainda. Sem perguntas, o botao "Tenho duvidas" nao aparece na pagina.</p>';
+  lista.forEach((f, i) => {
+    const d = itemRepetido('Pergunta', i, lista, montarFaq,
+      campo('Pergunta', f.pergunta, '', 'Ex.: Como funciona o pagamento?')
+      + campo('Resposta', f.resposta, '', 'Uma linha em branco separa paragrafos.', 'area'));
+    ligarSoltos(d, f, ['pergunta', 'resposta']);
     raiz.appendChild(d);
   });
 }

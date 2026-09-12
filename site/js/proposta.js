@@ -60,4 +60,21 @@
       function () { avisar(b, 'Selecione e copie'); }
     );
   });
+
+  /* "Tenho dúvidas" abre a seção de perguntas, que nasce escondida.
+     Na fase de captura, de propósito: o main.js já prendeu um clique
+     nas âncoras que manda o Lenis rolar até o alvo — se o alvo ainda
+     estiver display:none nessa hora, ele rola para o lugar errado.
+     Aqui a seção aparece antes; depois cada um faz a sua parte (o
+     Lenis rola no desktop; no celular vale a âncora nativa). */
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-duvidas]');
+    if (!b) return;
+    var faq = document.getElementById('duvidas');
+    if (!faq) return;
+    faq.classList.add('aberto');
+    b.setAttribute('aria-expanded', 'true');
+    var primeira = faq.querySelector('details');
+    if (primeira && !faq.querySelector('details[open]')) primeira.open = true;
+  }, true);
 })();
