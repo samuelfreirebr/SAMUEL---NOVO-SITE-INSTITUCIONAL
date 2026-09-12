@@ -11,7 +11,7 @@
 
 import { escapar } from './listas.js';
 
-const V = 'p3';   // versão do proposta.css, para o cache
+const V = 'p4';   // versão do proposta.css, para o cache
 
 const linhas = (t) => String(t || '').split('\n').filter((l) => l.trim());
 
@@ -296,6 +296,60 @@ function secProcesso(proc) {
   </section>`;
 }
 
+const SETA = '<svg class="arrow" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M4 12L12 4M12 4H5.5M12 4v6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+// "+55 83 98207-8301" → link do WhatsApp; um link já pronto passa direto
+const linkZap = (v) => /^https?:/.test(v || '') ? v : 'https://wa.me/' + String(v || '').replace(/\D/g, '');
+const linkSite = (v) => /^https?:/.test(v || '') ? v : 'https://' + String(v || '').replace(/^\/+/, '');
+
+/* Fechamento: a frase grande, o apoio, o botão principal e, ao lado,
+   os contatos — para quem lê no celular ter o número na mão sem
+   depender do botão. */
+function secFim(p) {
+  const c = p.contato || {};
+  if (!p.encerramento && !c.link && !c.whatsapp) return '';
+  const zap = c.whatsapp || (c.link && /wa\.me|whatsapp/.test(c.link) ? c.link : '');
+  const principal = c.link || (zap && linkZap(zap)) || (c.email && 'mailto:' + c.email) || '#';
+  const contatos = [
+    zap && ['WhatsApp', c.whatsapp || 'abrir conversa', linkZap(zap)],
+    c.email && ['E-mail', c.email, 'mailto:' + c.email],
+    c.portfolio && ['Portfólio', c.portfolio.replace(/^https?:\/\//, ''), linkSite(c.portfolio)],
+    c.site && ['Site', c.site.replace(/^https?:\/\//, ''), linkSite(c.site)],
+  ].filter(Boolean);
+
+  return `
+  <section class="section band-brand on-dark prop-fim" id="contato">
+    <div class="wrap prop-fim__grade">
+      <div class="prop-fim__txt reveal">
+        <p class="eyebrow">${escapar(c.rotuloSecao || 'Próximo passo')}</p>
+        <p class="h1 prop-fim__frase">${escapar(p.encerramento || 'Vamos conversar?')}</p>
+        ${talvez(c.texto, () => `<p class="lead prop-fim__apoio">${escapar(c.texto)}</p>`)}
+        <div class="prop-fim__acoes">
+          <a class="btn prop-fim__btn" href="${escapar(principal)}" target="_blank" rel="noopener">${escapar(c.rotulo || 'Falar com o Samuel')}${SETA}</a>
+          ${talvez(c.email && principal !== 'mailto:' + c.email, () => `<a class="btn btn--ghost" href="mailto:${escapar(c.email)}">Enviar e-mail</a>`)}
+        </div>
+      </div>
+      ${talvez(contatos.length, () => `
+      <dl class="prop-fim__dados reveal" style="--delay:.08s">
+        ${contatos.map(([r, v, h]) => `<div><dt>${escapar(r)}</dt><dd><a href="${escapar(h)}" target="_blank" rel="noopener">${escapar(v)}</a></dd></div>`).join('')}
+        ${talvez(p.cliente, () => `<div><dt>Esta proposta</dt><dd>${escapar(p.cliente)}${p.validade ? ' · válida por ' + escapar(p.validade) : ''}</dd></div>`)}
+      </dl>`)}
+    </div>
+  </section>`;
+}
+
+function rodape(p, ano) {
+  return `<footer class="prop-rodape">
+  <div class="wrap prop-rodape__grade">
+    <div>
+      <p class="prop-rodape__marca">Samuel<em>Freire</em></p>
+      <p class="small prop-rodape__desc">Web designer · lançamentos, marca e presença digital</p>
+    </div>
+    <p class="small prop-rodape__legal">© ${ano} Samuel Freire Web Designer · Proposta confidencial, preparada para ${escapar(p.cliente || 'você')}.</p>
+  </div>
+</footer>`;
+}
+
 export function renderizarProposta(p) {
   const cliente = escapar(p.cliente || '');
   const titulo = escapar(p.titulo || 'Proposta');
@@ -346,21 +400,11 @@ export function renderizarProposta(p) {
   ${secSobre(p.sobre, p.assinatura)}
   ${secEcossistema(p.ecossistema)}
 
-  ${talvez(p.encerramento, () => `
-  <section class="section section--tight band-brand prop-fim">
-    <div class="wrap">
-      <p class="h2 prop-fim__frase">${escapar(p.encerramento)}</p>
-      ${talvez(p.contato, () => `<a class="btn btn--ghost on-dark" href="${escapar(p.contato.link || '#')}">${escapar(p.contato.rotulo || 'Falar comigo')}</a>`)}
-    </div>
-  </section>`)}
+  ${secFim(p)}
 
 </main>
 
-<footer class="prop-rodape">
-  <div class="wrap">
-    <p class="small">Todos os direitos reservados © ${ano} · Samuel Freire Web Designer</p>
-  </div>
-</footer>
+${rodape(p, ano)}
 
 <script src="/js/main.js" defer></script>
 <script src="/js/proposta.js?v=${V}" defer></script>

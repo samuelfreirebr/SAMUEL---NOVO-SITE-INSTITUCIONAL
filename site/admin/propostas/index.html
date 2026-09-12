@@ -335,10 +335,19 @@ function montarEditor() {
     + '</fieldset>'
 
     + '<fieldset><legend>Encerramento</legend>'
-    + campo('Frase final', p.encerramento, 'encerramento', 'Vai na faixa laranja do fim.', 'area')
+    + '<div class="linha linha--2">'
+    + campo('Rotulo pequeno', con.rotuloSecao, 'contato.rotuloSecao', 'Ex.: Proximo passo')
+    + campo('Frase final', p.encerramento, 'encerramento', 'A frase grande da faixa laranja.')
+    + '</div>'
+    + campo('Texto de apoio', con.texto, 'contato.texto', 'Uma ou duas linhas abaixo da frase.', 'area')
     + '<div class="linha linha--2">'
     + campo('Botao', con.rotulo, 'contato.rotulo', 'Ex.: Falar com o Samuel')
     + campo('Link do botao', con.link, 'contato.link', 'Ex.: https://wa.me/...')
+    + '</div>'
+    + '<div class="linha linha--3">'
+    + campo('WhatsApp', con.whatsapp, 'contato.whatsapp', 'Como aparece. Ex.: +55 83 98207-8301')
+    + campo('E-mail', con.email, 'contato.email')
+    + campo('Portfolio', con.portfolio, 'contato.portfolio', 'Ex.: behance.net/samuelfreirebr')
     + '</div>'
     + '</fieldset>'
 

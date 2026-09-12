@@ -207,7 +207,12 @@
   },
   "encerramento": "Vamos construir isso juntos?",
   "contato": {
+    "rotuloSecao": "Próximo passo",
+    "texto": "Se fez sentido para você, o próximo passo é uma conversa rápida — sem compromisso. Respondo no mesmo dia.",
     "rotulo": "Falar com o Samuel",
-    "link": "https://wa.me/5583982078301"
+    "link": "https://wa.me/5583982078301",
+    "whatsapp": "+55 83 98207-8301",
+    "email": "samuelfreirebr@gmail.com",
+    "portfolio": "behance.net/samuelfreirebr"
   }
 }
