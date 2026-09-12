@@ -61,6 +61,9 @@ html { overflow-x: clip; }
   font-size: min(var(--t-display), 11.5vw);
   overflow-wrap: anywhere;
 }
+/* No desktop o título divide a largura com a ficha: a coluna tem ~60%
+   da tela, e no corpo cheio a palavra longa partia no meio. */
+@media (min-width: 901px) { .prop-capa__titulo { font-size: min(var(--t-display), 6.4vw); } }
 .prop-capa__sub {
   margin-top: var(--sp-lg);
   max-width: var(--maxw-text);
@@ -316,17 +319,17 @@ html { overflow-x: clip; }
    botões — e o ponto vira laranja. Sem sombra: separação é borda.   */
 
 .prop-condicoes { background: var(--bg-2); }
+@media (min-width: 901px) { .prop-condicoes { padding-block: clamp(3rem, 5vw, 4.5rem); } }
 .prop-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
-  gap: var(--sp-md);
-  margin-top: var(--sp-xl);
+  gap: var(--sp-sm);
+  margin-top: var(--sp-md);
 }
 .prop-card {
   position: relative;
   display: flex; flex-direction: column;
-  min-height: 15rem;
-  padding: var(--sp-lg);
+  padding: var(--sp-md);
   background: var(--bg);
   border: var(--hair) solid var(--line);
   border-radius: var(--radius-img);
@@ -336,7 +339,7 @@ html { overflow-x: clip; }
               transform var(--d-base) var(--ease-out);
 }
 .prop-card__num {
-  position: absolute; top: var(--sp-lg); right: var(--sp-lg);
+  position: absolute; top: var(--sp-md); right: var(--sp-md);
   font-size: var(--t-eyebrow);
   font-weight: var(--w-bold);
   letter-spacing: .14em;
@@ -346,17 +349,18 @@ html { overflow-x: clip; }
 }
 .prop-card__ico {
   display: grid; place-items: center;
-  width: 2.75rem; height: 2.75rem;
-  margin-bottom: var(--sp-xl);
+  width: 2.5rem; height: 2.5rem;
+  margin-bottom: var(--sp-md);
   border: var(--hair) solid var(--line-2);
   border-radius: var(--radius-img);
   color: var(--brand);
   transition: background var(--d-base) var(--ease-out), border-color var(--d-base) var(--ease-out), color var(--d-base) var(--ease-out);
 }
-.prop-card__titulo { margin-bottom: var(--sp-sm); transition: color var(--d-base) var(--ease-out); }
-.prop-card__corpo { margin-top: auto; }
-.prop-card__corpo p + p { margin-top: var(--sp-sm); }
-.prop-card .body { color: var(--muted); transition: color var(--d-base) var(--ease-out); }
+/* Título menor que o h3 do sistema: são quatro cartões numa fileira,
+   e em h3 "Ferramentas e hospedagem" quebrava em três linhas. */
+.prop-card__titulo { margin-bottom: var(--sp-xs); font-size: clamp(1.25rem, 1.6vw, 1.625rem); line-height: 1.1; transition: color var(--d-base) var(--ease-out); }
+.prop-card__corpo p + p { margin-top: var(--sp-2xs); }
+.prop-card .body { font-size: var(--t-small); line-height: 1.5; color: var(--muted); transition: color var(--d-base) var(--ease-out); }
 
 .prop-card:hover {
   background: var(--ink);
@@ -525,11 +529,29 @@ html { overflow-x: clip; }
 .prop-assina__nome { font-size: var(--t-h3); font-weight: var(--w-black); letter-spacing: var(--ls-h3); line-height: var(--lh-h3); color: var(--ink); }
 .prop-assina__nome em { font-style: normal; color: var(--brand); margin-left: .3em; }
 @media (max-width: 900px) {
-  .prop-sobre__grade { grid-template-columns: minmax(0, 1fr); gap: var(--sp-xl); }
-  .prop-sobre__retrato { min-height: 0; aspect-ratio: 4 / 5; max-width: 26rem; }
-  /* no celular não há retrato ao lado para justificar o vão: o texto
-     vem logo depois do cargo */
+  .prop-sobre__grade { grid-template-columns: minmax(0, 1fr); gap: var(--sp-lg); }
+  .prop-sobre__retrato { min-height: 0; aspect-ratio: 4 / 5; }
+  .prop-sobre__retrato img { object-position: 50% 30%; }
+  /* sem retrato ao lado não há vão para justificar: o texto vem logo
+     depois do cargo */
   .prop-sobre__txt { justify-content: flex-start; gap: var(--sp-lg); padding-block: 0; }
+  .prop-sobre__nome { margin-top: var(--sp-sm); }
+  .prop-sobre__cargo { margin-top: var(--sp-2xs); }
+}
+/* Tablet: retrato e cabeçalho lado a lado, alinhados pelo pé; o texto
+   corre embaixo na largura toda. O .prop-sobre__txt some da grade
+   (display: contents) para cabeçalho e corpo virarem células. */
+@media (min-width: 561px) and (max-width: 900px) {
+  .prop-sobre__grade { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); column-gap: var(--sp-lg); row-gap: var(--sp-xl); align-items: end; }
+  .prop-sobre__txt { display: contents; }
+  .prop-sobre__retrato { grid-column: 1; grid-row: 1; }
+  .prop-sobre__cab { grid-column: 2; grid-row: 1; padding-bottom: var(--sp-2xs); }
+  .prop-sobre__corpo { grid-column: 1 / -1; }
+}
+/* Celular: retrato na largura toda, sem virar uma tela inteira */
+@media (max-width: 560px) {
+  .prop-sobre__retrato { max-height: min(30rem, 72svh); }
+  .prop-sobre__txt { gap: var(--sp-md); }
 }
 
 /* métricas + galeria */
@@ -555,6 +577,28 @@ html { overflow-x: clip; }
 /* Métrica que não é número (bandeiras, por exemplo): corpo menor. */
 .prop-metrica__n--texto { font-size: var(--t-h3); letter-spacing: .12em; line-height: 1.3; max-width: 6em; }
 .prop-metrica__rot { font-size: var(--t-body); line-height: 1.4; color: var(--muted); }
+/* Abaixo de 900px as quebras de linha do rótulo (pensadas para o
+   desktop) saem: o texto quebra onde couber. */
+@media (max-width: 900px) {
+  .prop-sobre__mais { margin-top: var(--sp-2xl); }
+  .prop-metrica__rot br { display: none; }
+  .prop-metrica__n { font-size: clamp(2.75rem, 9vw, 3.75rem); }
+  .prop-metrica__n--texto { font-size: 1.25rem; letter-spacing: .08em; line-height: 1.4; max-width: none; }
+}
+/* tablet: três colunas, número em cima e rótulo embaixo */
+@media (min-width: 561px) and (max-width: 900px) {
+  .prop-metricas { grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); gap: var(--sp-lg); }
+  .prop-metrica__in { flex-direction: column; align-items: flex-start; gap: var(--sp-xs); }
+  /* a linha das bandeiras tem a altura do número ao lado: os rótulos
+     começam na mesma altura */
+  .prop-metrica__n--texto { min-height: calc(clamp(2.75rem, 9vw, 3.75rem) * .9); display: flex; align-items: center; }
+}
+/* celular: uma métrica por linha, número numa coluna fixa */
+@media (max-width: 560px) {
+  .prop-metricas { grid-template-columns: minmax(0, 1fr); gap: var(--sp-md); }
+  .prop-metrica .rule--strong { margin-bottom: var(--sp-sm); }
+  .prop-metrica__in { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: var(--sp-md); }
+}
 
 .prop-galeria {
   list-style: none;
@@ -587,6 +631,9 @@ html { overflow-x: clip; }
 /* ---------- Nosso ecossistema ------------------------------------------ */
 
 .prop-eco { background: var(--bg-2); }
+/* No desktop a seção inteira cabe numa tela: menos respiro em cima e
+   embaixo, blocos e letras menores, sem altura mínima nos blocos. */
+@media (min-width: 901px) { .prop-eco { padding-block: clamp(2.5rem, 4vw, 4.5rem); } }
 .prop-eco__cab { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--sp-xl); flex-wrap: wrap; }
 .prop-eco__texto { max-width: 40ch; color: var(--muted); text-align: right; }
 @media (max-width: 700px) { .prop-eco__texto { text-align: left; } }
@@ -596,17 +643,17 @@ html { overflow-x: clip; }
 .prop-eco__grade {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(12rem, 22vw, 20rem) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) clamp(11rem, 17vw, 16rem) minmax(0, 1fr);
   grid-template-rows: auto auto;
-  gap: var(--sp-md);
-  margin-top: var(--sp-xl);
+  gap: var(--sp-sm);
+  margin-top: var(--sp-md);
 }
 .prop-frente {
-  padding: var(--sp-lg);
+  position: relative; z-index: 1;   /* os anéis do centro passam por trás */
+  padding: var(--sp-md);
   background: var(--bg);
   border-radius: var(--radius-img);
   border: var(--hair) solid var(--line);
-  min-height: 15rem;
   display: flex; flex-direction: column; justify-content: center;
 }
 .prop-frente:nth-child(1) { grid-column: 1; grid-row: 1; }
@@ -614,24 +661,24 @@ html { overflow-x: clip; }
 .prop-frente:nth-child(3) { grid-column: 1; grid-row: 2; }
 .prop-frente:nth-child(4) { grid-column: 3; grid-row: 2; }
 .prop-frente--escura { background: var(--ink); border-color: var(--ink); }
-.prop-frente__topo { display: flex; align-items: center; gap: var(--sp-sm); margin-bottom: var(--sp-md); }
+.prop-frente__topo { display: flex; align-items: center; gap: var(--sp-xs); margin-bottom: var(--sp-sm); }
 .prop-frente__topo .eyebrow { flex: 1; }
 .prop-frente__ico {
   display: grid; place-items: center;
-  width: 2.5rem; height: 2.5rem;
+  width: 2.25rem; height: 2.25rem;
   border: var(--hair) solid var(--line-2);
   border-radius: var(--radius-img);
   color: var(--brand);
   flex: none;
 }
 .prop-frente--escura .prop-frente__ico { border-color: var(--line-invert); }
-.prop-frente__num { font-size: var(--t-h3); font-weight: var(--w-bold); letter-spacing: -.02em; color: var(--muted); }
+.prop-frente__num { font-size: clamp(1.25rem, 1.7vw, 1.75rem); font-weight: var(--w-bold); letter-spacing: -.02em; color: var(--muted); }
 .prop-frente--escura .prop-frente__num { color: var(--muted-invert); }
-.prop-frente__itens { list-style: none; display: grid; gap: var(--sp-xs); }
+.prop-frente__itens { list-style: none; display: grid; gap: var(--sp-3xs); }
 .prop-frente__itens li {
   position: relative;
-  padding-left: calc(var(--sp-md) + 6px);
-  font-size: var(--t-lead);
+  padding-left: calc(var(--sp-sm) + 8px);
+  font-size: clamp(1rem, 1.2vw, 1.1875rem);
   font-weight: var(--w-medium);
   letter-spacing: var(--ls-body);
   line-height: 1.3;
@@ -671,14 +718,16 @@ html { overflow-x: clip; }
   padding: 12%;
 }
 .prop-eco__sup { font-size: var(--t-eyebrow); font-weight: var(--w-semi); letter-spacing: var(--ls-eyebrow); text-transform: uppercase; opacity: .9; }
-.prop-eco__titulo { font-size: clamp(1.5rem, 2.4vw, 2.25rem); font-weight: var(--w-black); letter-spacing: var(--ls-h3); line-height: 1.02; max-width: 8ch; }
+.prop-eco__titulo { font-size: clamp(1.25rem, 1.9vw, 1.875rem); font-weight: var(--w-black); letter-spacing: var(--ls-h3); line-height: 1.02; max-width: 8ch; }
 .prop-eco__traco { width: 2.5rem; height: var(--hair); background: rgba(255,255,255,.55); margin-top: var(--sp-2xs); }
 @media (max-width: 900px) {
   .prop-eco__grade { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
   .prop-frente:nth-child(n) { grid-column: auto; grid-row: auto; min-height: 0; }
   .prop-eco__centro { grid-column: auto; grid-row: auto; order: -1; min-height: 0; margin-block: var(--sp-md); }
-  .prop-eco__disco { width: min(60vw, 16rem); margin-inline: auto; }
-  .prop-eco__titulo { font-size: clamp(1.125rem, 5vw, 1.5rem); max-width: 10ch; overflow-wrap: anywhere; }
+  /* padding em % é da largura do pai (a seção), não do disco: aqui
+     sobrariam 120px para o título. Vão fixo. */
+  .prop-eco__disco { width: min(60vw, 16rem); margin-inline: auto; padding: var(--sp-md); }
+  .prop-eco__titulo { font-size: clamp(1.125rem, 5vw, 1.5rem); max-width: 100%; overflow-wrap: anywhere; }
   .prop-eco__anel { display: none; }
 }
 

@@ -11,7 +11,7 @@
 
 import { escapar } from './listas.js';
 
-const V = 'p6';   // versão do proposta.css, para o cache
+const V = 'p8';   // versão do proposta.css, para o cache
 
 const linhas = (t) => String(t || '').split('\n').filter((l) => l.trim());
 
@@ -224,7 +224,7 @@ function secSobre(sobre, assinatura) {
           <span class="rule rule--strong" aria-hidden="true"></span>
           <div class="prop-metrica__in">
             <b class="prop-metrica__n${/^[\d+.,%]+$/.test(m.n || '') ? '' : ' prop-metrica__n--texto'}">${escapar(m.n || '')}</b>
-            <span class="prop-metrica__rot">${linhas(m.rotulo).map(escapar).join('<br>')}</span>
+            <span class="prop-metrica__rot">${linhas(m.rotulo).map(escapar).join(' <br>')}</span>
           </div>
         </li>`).join('')}
       </ul>`)}
