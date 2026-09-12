@@ -271,6 +271,28 @@ async function api(req, res, url) {
   return json(res, { erro: 'Rota não existe.' }, 404);
 }
 
+/* Seção que a proposta não tem vem do modelo. Assim uma seção nova
+   (processo, ecossistema) aparece nas propostas já criadas sem
+   reeditar cada uma — e o que a proposta tem, ela manda. Objetos
+   são completados campo a campo; listas e textos não se misturam. */
+function comModelo(proposta, modelo) {
+  if (!modelo || typeof modelo !== 'object') return proposta;
+  const saida = { ...proposta };
+  for (const [chave, padrao] of Object.entries(modelo)) {
+    const atual = saida[chave];
+    if (atual === undefined || atual === null || atual === '') { saida[chave] = padrao; continue; }
+    const objeto = (v) => v && typeof v === 'object' && !Array.isArray(v);
+    if (objeto(atual) && objeto(padrao)) {
+      const fusao = { ...atual };
+      for (const [k, v] of Object.entries(padrao)) {
+        if (fusao[k] === undefined || fusao[k] === null || fusao[k] === '') fusao[k] = v;
+      }
+      saida[chave] = fusao;
+    }
+  }
+  return saida;
+}
+
 /* ---------- diagnóstico ---------- */
 
 async function estado(res) {
@@ -357,7 +379,7 @@ const servidor = http.createServer(async (req, res) => {
       const p = await dados.lerProposta(id);
       if (!p) return texto(res, 'Proposta não encontrada.', 404);
       if (p.publicada === false && !liberado(req)) return texto(res, 'Proposta não encontrada.', 404);
-      const html = renderizarProposta(p);
+      const html = renderizarProposta(comModelo(p, await dados.lerModelo()));
       res.writeHead(200, {
         'content-type': 'text/html; charset=utf-8',
         'content-length': Buffer.byteLength(html),

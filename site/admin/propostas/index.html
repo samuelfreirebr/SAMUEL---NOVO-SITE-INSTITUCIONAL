@@ -90,7 +90,7 @@ const suja = () => Boolean(proposta) && JSON.stringify(proposta) !== salva;
 
 // Campos que pertencem ao MODELO (o que toda proposta nova já traz).
 // Cliente, endereço, título, situação são de cada proposta.
-const CAMPOS_MODELO = ['subtitulo', 'escopo', 'inclui', 'investimento', 'pagamento', 'condicoes', 'sobre', 'assinatura', 'encerramento', 'contato'];
+const CAMPOS_MODELO = ['subtitulo', 'escopo', 'inclui', 'processo', 'investimento', 'pagamento', 'condicoes', 'sobre', 'ecossistema', 'assinatura', 'encerramento', 'contato'];
 
 /* ---------- lista ---------- */
 async function carregar() {
@@ -213,6 +213,9 @@ function montarEditor() {
   const sob = p.sobre ||= {};
   const ass = p.assinatura ||= {};
   const con = p.contato ||= {};
+  const proc = p.processo ||= { rotulo: 'Como trabalhamos', titulo: 'Nosso processo', etapas: [], rodape: '' };
+  const eco = p.ecossistema ||= { rotulo: 'Nosso ecossistema', texto: '', centro: { sup: '', titulo: '' }, frentes: [] };
+  eco.centro ||= {};
 
   raiz.innerHTML = ''
     + (editandoModelo
@@ -245,10 +248,25 @@ function montarEditor() {
     + '</fieldset>'
 
     + '<fieldset><legend>O que cada entregavel inclui</legend>'
-    + campo('Titulo do bloco', inc.titulo, 'inclui.titulo')
+    + '<div class="linha linha--2">'
+    + campo('Rotulo pequeno', inc.rotulo, 'inclui.rotulo', 'O eyebrow. Ex.: O que inclui')
+    + campo('Titulo', inc.titulo, 'inclui.titulo', 'A frase grande do bloco.')
+    + '</div>'
+    + campo('Texto de apoio', inc.texto, 'inclui.texto', 'Uma ou duas linhas abaixo do titulo. Opcional.', 'area')
     + '<label><span>Itens</span><textarea data-p="inclui.itens" data-lista rows="8">' + esc(linhasPara(inc.itens)) + '</textarea><small>Um por linha.</small></label>'
     + '<div id="lista-grupos"></div>'
     + '<button class="mini" type="button" data-add="grupo">+ Adicionar subgrupo</button>'
+    + '</fieldset>'
+
+    + '<fieldset><legend>Nosso processo</legend>'
+    + '<p class="dica" style="background:none;border:0;padding:0 0 var(--sp-md)">Na p&aacute;gina, esta se&ccedil;&atilde;o fica presa na tela e as etapas acendem uma a uma conforme o cliente rola.</p>'
+    + '<div class="linha linha--2">'
+    + campo('Rotulo pequeno', proc.rotulo, 'processo.rotulo', 'Ex.: Como trabalhamos')
+    + campo('Titulo', proc.titulo, 'processo.titulo', 'Ex.: Nosso processo')
+    + '</div>'
+    + '<div id="lista-etapas"></div>'
+    + '<button class="mini" type="button" data-add="etapa">+ Adicionar etapa</button>'
+    + campo('Frase de rodape', proc.rodape, 'processo.rodape', 'Opcional. Ex.: O escopo pode variar, o processo permanece.')
     + '</fieldset>'
 
     + '<fieldset><legend>Investimento</legend>'
@@ -278,17 +296,42 @@ function montarEditor() {
     + '<button class="mini" type="button" data-add="condicao">+ Adicionar condicao</button>'
     + '</fieldset>'
 
-    + '<fieldset><legend>Quem assina</legend>'
+    + '<fieldset><legend>Sobre mim</legend>'
     + '<div class="item__topo">'
-    + '<img class="previa" src="' + esc(sob.foto) + '" alt="" onerror="this.removeAttribute(\'src\')">'
+    + '<img class="previa previa--larga" src="' + esc(sob.foto) + '" alt="" onerror="this.removeAttribute(\'src\')">'
     + '<button class="mini" type="button" id="trocar-retrato">Trocar retrato</button>'
+    + '<small style="color:var(--muted)">Retrato grande, vertical. Fica &agrave; esquerda do texto.</small>'
     + '</div>'
-    + campo('Texto sobre voce', sob.texto, 'sobre.texto', 'Uma linha em branco separa paragrafos.', 'area')
     + '<div class="linha linha--3">'
-    + campo('Papel', ass.papel, 'assinatura.papel')
+    + campo('Rotulo pequeno', sob.rotulo, 'sobre.rotulo', 'Ex.: Sobre mim')
+    + campo('Nome', sob.nome, 'sobre.nome', 'O titulo grande.')
+    + campo('Cargo', sob.cargo, 'sobre.cargo', 'Ex.: Designer digital & estrategista')
+    + '</div>'
+    + campo('Texto', sob.texto, 'sobre.texto', 'Uma linha em branco separa paragrafos.', 'area')
+    + '<label><span>Metricas</span><small>Numero grande + frase. Um numero que nao e numero (bandeiras, por exemplo) sai em corpo menor. "Destaque" pinta a regua de laranja.</small></label>'
+    + '<div id="lista-metricas"></div>'
+    + '<button class="mini" type="button" data-add="metrica">+ Adicionar metrica</button>'
+    + '<label style="margin-top:var(--sp-lg)"><span>Galeria de fotos</span><small>Com seis fotos, a 2&ordf; e a 3&ordf; empilham numa coluna, como no PDF. Com outra quantidade, ficam em fileira.</small></label>'
+    + '<div class="galeria-adm" id="lista-galeria"></div>'
+    + '<button class="mini" type="button" data-add="foto" style="margin-top:var(--sp-sm)">+ Adicionar foto</button>'
+    + '<div class="linha linha--3" style="margin-top:var(--sp-lg)">'
+    + campo('Papel (assinatura)', ass.papel, 'assinatura.papel', 'Ex.: Responsavel pelo projeto')
     + campo('Nome', ass.nome, 'assinatura.nome')
     + campo('Sobrenome', ass.sobrenome, 'assinatura.sobrenome', 'Sai em laranja.')
     + '</div>'
+    + '</fieldset>'
+
+    + '<fieldset><legend>Nosso ecossistema</legend>'
+    + '<div class="linha linha--2">'
+    + campo('Rotulo pequeno', eco.rotulo, 'ecossistema.rotulo', 'Ex.: Nosso ecossistema')
+    + campo('Texto de apoio', eco.texto, 'ecossistema.texto', 'A frase no canto direito.')
+    + '</div>'
+    + '<div class="linha linha--2">'
+    + campo('Circulo: linha de cima', eco.centro.sup, 'ecossistema.centro.sup', 'Ex.: 04 frentes')
+    + campo('Circulo: titulo', eco.centro.titulo, 'ecossistema.centro.titulo', 'Ex.: Nosso ecossistema')
+    + '</div>'
+    + '<div id="lista-frentes"></div>'
+    + '<button class="mini" type="button" data-add="frente">+ Adicionar frente</button>'
     + '</fieldset>'
 
     + '<fieldset><legend>Encerramento</legend>'
@@ -310,8 +353,13 @@ function montarEditor() {
     + '</div>';
 
   montarEscopo(); montarGrupos(); montarCondicoes();
+  montarEtapas(); montarMetricas(); montarGaleria(); montarFrentes();
   ligarCampos(raiz);
   ligarInvestimento(raiz);
+  raiz.querySelector('[data-add="etapa"]').onclick = () => { (proc.etapas ||= []).push({ titulo: '', texto: '', nota: '' }); montarEtapas(); };
+  raiz.querySelector('[data-add="metrica"]').onclick = () => { (sob.metricas ||= []).push({ n: '', rotulo: '', destaque: false }); montarMetricas(); };
+  raiz.querySelector('[data-add="foto"]').onclick = async () => { const url = await escolherImagem(); if (url) { (sob.galeria ||= []).push(url); montarGaleria(); } };
+  raiz.querySelector('[data-add="frente"]').onclick = () => { (eco.frentes ||= []).push({ titulo: '', itens: [], escuro: false }); montarFrentes(); };
 
   raiz.querySelector('[data-add="escopo"]').onclick = () => { (p.escopo ||= []).push({ titulo: '', descricao: '', marca: '' }); montarEscopo(); };
   raiz.querySelector('[data-add="grupo"]').onclick = () => { (inc.grupos ||= []).push({ titulo: '', itens: [] }); montarGrupos(); };
@@ -381,7 +429,7 @@ function previaValor() {
   const g = $('#previa-valor'), a = $('#previa-apoio');
   if (!g) return;
   if (!v) { g.textContent = '—'; a.textContent = 'Preencha o valor da parcela.'; return; }
-  g.textContent = n === 1 ? din(v) : n + '× ' + din(v);
+  g.textContent = n === 1 ? din(v) : n + 'x ' + din(v);
   a.textContent = n === 1 ? 'à vista' : 'total ' + din(n * v);
 }
 
@@ -399,7 +447,7 @@ function itemRepetido(rotulo, i, lista, remontar, campos) {
   return d;
 }
 function ligarSoltos(d, obj, mapa) {
-  const cs = d.querySelectorAll('input, textarea');
+  const cs = d.querySelectorAll('input:not([type=checkbox]), textarea');
   mapa.forEach((k, n) => { cs[n].removeAttribute('data-p'); cs[n].oninput = () => { obj[k] = k === 'itens' ? paraLinhas(cs[n].value) : cs[n].value; }; });
 }
 function montarEscopo() {
@@ -432,6 +480,75 @@ function montarCondicoes() {
     const d = itemRepetido('Condicao', i, lista, montarCondicoes,
       campo('Titulo', c.titulo, '') + campo('Texto', c.texto, '', 'Uma linha em branco separa paragrafos.', 'area'));
     ligarSoltos(d, c, ['titulo', 'texto']);
+    raiz.appendChild(d);
+  });
+}
+
+function montarEtapas() {
+  const raiz = $('#lista-etapas'); if (!raiz) return;
+  const lista = proposta.processo.etapas ||= [];
+  raiz.innerHTML = lista.length ? '' : '<p class="vazio">Nenhuma etapa ainda.</p>';
+  lista.forEach((e, i) => {
+    const d = itemRepetido('Etapa', i, lista, montarEtapas,
+      campo('Nome', e.titulo, '', 'Ex.: Descoberta')
+      + campo('Texto', e.texto, '', '', 'area')
+      + campo('Nota', e.nota, '', 'Opcional. Linha menor, abaixo do texto.'));
+    ligarSoltos(d, e, ['titulo', 'texto', 'nota']);
+    raiz.appendChild(d);
+  });
+}
+
+function montarMetricas() {
+  const raiz = $('#lista-metricas'); if (!raiz) return;
+  const lista = proposta.sobre.metricas ||= [];
+  raiz.innerHTML = lista.length ? '' : '<p class="vazio">Nenhuma metrica.</p>';
+  lista.forEach((m, i) => {
+    const d = itemRepetido('Metrica', i, lista, montarMetricas,
+      '<div class="linha linha--2">'
+      + campo('Numero', m.n, '', 'Ex.: 6+  ou  \ud83c\udf0e \ud83c\uddfa\ud83c\uddf8')
+      + campo('Frase', m.rotulo, '', 'Enter quebra linha.', 'area')
+      + '</div>'
+      + '<label><span><input type="checkbox" data-destaque' + (m.destaque ? ' checked' : '') + '> Destaque (regua laranja)</span></label>');
+    ligarSoltos(d, m, ['n', 'rotulo']);
+    d.querySelector('[data-destaque]').onchange = (ev) => { m.destaque = ev.target.checked; };
+    raiz.appendChild(d);
+  });
+}
+
+function montarGaleria() {
+  const raiz = $('#lista-galeria'); if (!raiz) return;
+  const lista = proposta.sobre.galeria ||= [];
+  raiz.innerHTML = lista.length ? '' : '<p class="vazio" style="grid-column:1/-1">Nenhuma foto. Adicione seis para o arranjo do PDF.</p>';
+  lista.forEach((src, i) => {
+    const d = document.createElement('div');
+    d.className = 'foto-adm';
+    d.innerHTML = '<img src="' + esc(src) + '" alt="">'
+      + '<div class="foto-adm__pe">'
+      + '<button class="mini" type="button" data-mover="-1" title="Mover para tras">&larr;</button>'
+      + '<button class="mini" type="button" data-mover="1" title="Mover para frente">&rarr;</button>'
+      + '<span class="foto-adm__nome">' + (i + 1) + '</span>'
+      + '<button class="mini mini--perigo" type="button" data-remover title="Tirar da galeria">&times;</button>'
+      + '</div>';
+    d.querySelector('[data-remover]').onclick = () => { lista.splice(i, 1); montarGaleria(); };
+    for (const b of d.querySelectorAll('[data-mover]')) b.onclick = () => {
+      const j = i + Number(b.dataset.mover); if (j < 0 || j >= lista.length) return;
+      [lista[i], lista[j]] = [lista[j], lista[i]]; montarGaleria();
+    };
+    raiz.appendChild(d);
+  });
+}
+
+function montarFrentes() {
+  const raiz = $('#lista-frentes'); if (!raiz) return;
+  const lista = proposta.ecossistema.frentes ||= [];
+  raiz.innerHTML = lista.length ? '' : '<p class="vazio">Nenhuma frente ainda. O PDF tem quatro: Marca, Digital, Marketing, Sistemas.</p>';
+  lista.forEach((f, i) => {
+    const d = itemRepetido('Frente', i, lista, montarFrentes,
+      campo('Titulo', f.titulo, '', 'Ex.: Digital')
+      + '<label><span>Itens</span><textarea rows="5">' + esc(linhasPara(f.itens)) + '</textarea><small>Um por linha.</small></label>'
+      + '<label><span><input type="checkbox" data-escuro' + (f.escuro ? ' checked' : '') + '> Bloco escuro</span></label>');
+    ligarSoltos(d, f, ['titulo', 'itens']);
+    d.querySelector('[data-escuro]').onchange = (ev) => { f.escuro = ev.target.checked; };
     raiz.appendChild(d);
   });
 }

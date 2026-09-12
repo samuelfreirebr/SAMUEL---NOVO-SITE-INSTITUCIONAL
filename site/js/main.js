@@ -221,6 +221,60 @@
   }
 
 
+  /* ---------- 2b. Progresso por rolagem -----------------------------
+     [data-progresso] é uma seção mais alta que a tela com um miolo
+     sticky. Conforme ela atravessa a viewport, --p vai de 0 a 1 e os
+     [data-etapa] de dentro ganham .ativa um a um. As posições ficam
+     em cache; o laço só faz a conta e escreve.                      */
+
+  var progressos = [];
+
+  function ligarProgressos() {
+    var caixas = document.querySelectorAll('[data-progresso]');
+    for (var i = 0; i < caixas.length; i++) {
+      // Só com o efeito ligado o CSS escurece as etapas por acender.
+      // Sem JS ou com movimento reduzido, tudo nasce aceso.
+      caixas[i].classList.add('progresso-ativo');
+      progressos.push({
+        el: caixas[i],
+        etapas: caixas[i].querySelectorAll('[data-etapa]'),
+        topo: 0, trajeto: 1, ultimo: -1
+      });
+    }
+    medirProgressos();
+  }
+
+  function medirProgressos() {
+    var y = window.scrollY || window.pageYOffset || 0;
+    for (var i = 0; i < progressos.length; i++) {
+      var p = progressos[i];
+      var r = p.el.getBoundingClientRect();
+      p.topo = r.top + y;
+      // o miolo fica preso enquanto a seção rola por (altura - tela)
+      p.trajeto = Math.max(r.height - window.innerHeight, 1);
+      p.ultimo = -1;   // força reescrever no próximo quadro
+    }
+  }
+
+  function avancarProgressos(y) {
+    for (var i = 0; i < progressos.length; i++) {
+      var p = progressos[i];
+      var f = Math.min(Math.max((y - p.topo) / p.trajeto, 0), 1);
+      // etapa k acende quando o progresso passa de k / n, com uma
+      // folga no fim para a última acender antes de a seção soltar
+      var n = p.etapas.length;
+      var acesas = Math.min(n, Math.floor(f * (n + 0.35)) + (f > 0 ? 1 : 0));
+      if (acesas === p.ultimo) continue;
+      p.ultimo = acesas;
+      p.el.style.setProperty('--p', (n ? acesas / n : f).toFixed(3));
+      for (var k = 0; k < n; k++) {
+        if (k < acesas) p.etapas[k].classList.add('ativa');
+        else p.etapas[k].classList.remove('ativa');
+      }
+    }
+  }
+
+
   /* ---------- 3. Deriva do hero --------------------------------------
      O hero é sticky: sozinho ele travaria de vez assim que encostasse no
      topo, e a seção seguinte pareceria subir sobre um bloco parado. Aqui
@@ -307,6 +361,7 @@
 
     varrerPendentes(y);
     derivarHero(y);
+    avancarProgressos(y);
 
     for (var i = 0; i < esteiras.length; i++) {
       var e = esteiras[i];
@@ -354,6 +409,7 @@
       for (var i = 0; i < esteiras.length; i++) medirEsteira(esteiras[i]);
       medirPendentes();
       medirHero();
+      medirProgressos();
     }, 180);
   }
 
@@ -395,6 +451,7 @@
 
     ligarLenis();
     ligarEsteiras();
+    ligarProgressos();
     medirHero();
 
     window.addEventListener('resize', function () { aoRedimensionar(false); }, { passive: true });

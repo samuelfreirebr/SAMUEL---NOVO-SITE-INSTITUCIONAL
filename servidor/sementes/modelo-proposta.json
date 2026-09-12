@@ -1,12 +1,26 @@
 {
   "subtitulo": "",
   "escopo": [
-    { "titulo": "Branding", "descricao": "Identidade visual completa: logo, paleta, tipografia e manual de uso.", "marca": "Identidade" },
-    { "titulo": "Website", "descricao": "Site institucional responsivo, otimizado para velocidade e SEO.", "marca": "Web" },
-    { "titulo": "Materiais impressos", "descricao": "Business card, adesivo comercial e folders de serviços.", "marca": "Impresso" }
+    {
+      "titulo": "Branding",
+      "descricao": "Identidade visual completa: logo, paleta, tipografia e manual de uso.",
+      "marca": "Identidade"
+    },
+    {
+      "titulo": "Website",
+      "descricao": "Site institucional responsivo, otimizado para velocidade e SEO.",
+      "marca": "Web"
+    },
+    {
+      "titulo": "Materiais impressos",
+      "descricao": "Business card, adesivo comercial e folders de serviços.",
+      "marca": "Impresso"
+    }
   ],
   "inclui": {
+    "rotulo": "O que inclui",
     "titulo": "Cada entregável inclui",
+    "texto": "Tudo isto já faz parte de cada entrega — sem custo à parte e sem etapa fora do combinado.",
     "itens": [
       "Estudo de público-alvo e posicionamento",
       "Captação de informação e montagem",
@@ -33,6 +47,38 @@
       }
     ]
   },
+  "processo": {
+    "rotulo": "Como trabalhamos",
+    "titulo": "Nosso processo",
+    "etapas": [
+      {
+        "titulo": "Descoberta",
+        "texto": "Entendemos o negócio, os problemas, o público e onde queremos chegar."
+      },
+      {
+        "titulo": "Estratégia",
+        "texto": "Definimos a mudança com base nos dados."
+      },
+      {
+        "titulo": "Roteiro",
+        "texto": "Estabelecemos todas as etapas do processo."
+      },
+      {
+        "titulo": "Implementação",
+        "texto": "Desenvolvemos todas as soluções definidas na estratégia."
+      },
+      {
+        "titulo": "Testes",
+        "texto": "Testamos, encontramos erros e ajustamos detalhes até finalizar o projeto."
+      },
+      {
+        "titulo": "Entrega",
+        "texto": "Organizamos e entregamos todos os materiais, arquivos, sistemas e acessos necessários para o negócio.",
+        "nota": "E continuamos próximos, com suporte e acompanhamento."
+      }
+    ],
+    "rodape": "O escopo exato pode variar de acordo com o projeto, mas o nosso processo permanece o mesmo."
+  },
   "investimento": {
     "rotulo": "Investimento",
     "moeda": "R$",
@@ -45,23 +91,123 @@
     "forma": "2 parcelas (50% / 50%)",
     "etapas": "Início do projeto + finalização",
     "conta": [
-      ["Banco", "Wise"],
-      ["Account number", "955873538158163"],
-      ["Routing number (wire e ACH)", "084009519"],
-      ["Nome", "SAMUEL FREIRE DA SILVA"]
+      [
+        "Banco",
+        "Wise"
+      ],
+      [
+        "Account number",
+        "955873538158163"
+      ],
+      [
+        "Routing number (wire e ACH)",
+        "084009519"
+      ],
+      [
+        "Nome",
+        "SAMUEL FREIRE DA SILVA"
+      ]
     ]
   },
   "condicoes": [
-    { "titulo": "Garantia total", "texto": "Até o fim da implementação, estão cobertos na garantia os ajustes de erros necessários." },
-    { "titulo": "Prazo médio: 45 dias", "texto": "O prazo total conta a partir do ponto em que o web designer tem em mãos todas as informações e materiais para produção, sendo contados em dias úteis.\nOs projetos podem finalizar antes do prazo." },
-    { "titulo": "Ferramentas e hospedagem", "texto": "O preço de ferramentas e plugins necessários para a criação do projeto, como Elementor Pro e WP Rocket, já está incluso no orçamento.\nO preço de hospedagem está incluído no orçamento, caso necessário." },
-    { "titulo": "Contratos e notas fiscais", "texto": "Os contratos e as notas fiscais serão emitidos após a confirmação do projeto. Todo o processo de criação e implementação será conduzido com total segurança, transparência e competência profissional." }
+    {
+      "titulo": "Garantia total",
+      "texto": "Até o fim da implementação, estão cobertos na garantia os ajustes de erros necessários."
+    },
+    {
+      "titulo": "Prazo médio: 45 dias",
+      "texto": "O prazo total conta a partir do ponto em que o web designer tem em mãos todas as informações e materiais para produção, sendo contados em dias úteis.\nOs projetos podem finalizar antes do prazo."
+    },
+    {
+      "titulo": "Ferramentas e hospedagem",
+      "texto": "O preço de ferramentas e plugins necessários para a criação do projeto, como Elementor Pro e WP Rocket, já está incluso no orçamento.\nO preço de hospedagem está incluído no orçamento, caso necessário."
+    },
+    {
+      "titulo": "Contratos e notas fiscais",
+      "texto": "Os contratos e as notas fiscais serão emitidos após a confirmação do projeto. Todo o processo de criação e implementação será conduzido com total segurança, transparência e competência profissional."
+    }
   ],
   "sobre": {
+    "rotulo": "Sobre mim",
+    "nome": "Samuel Freire",
+    "cargo": "Designer digital & estrategista",
     "foto": "/img/samuel-retrato.jpg",
-    "texto": "Muito prazer, sou Samuel. Trabalho como designer há 5 anos e, nos últimos 3, venho dividindo minha operação entre lançamentos presenciais (eventos) e web design. Em 2023 realizei meu primeiro evento presencial, cuidando de tudo, do design ao pitch. Agora, em 2025, já estamos na 6ª edição.\nHoje minha atuação no web design carrega toda a minha experiência com infoprodutos e eventos, unindo branding e performance para grandes nomes do digital. Tive o privilégio de contribuir com muitos projetos, e é uma honra ter você aqui. Espero poder te ajudar de alguma forma."
+    "texto": "Sou brand designer e estrategista, com experiência na criação de websites, identidades visuais, impressos e ferramentas digitais personalizadas para negócios.\nAo longo da minha trajetória, recebi a confiança de empresas e times de design, desenvolvendo projetos para negócios no mundo todo, com foco na América do Norte — em maior parte empresas de construção, reforma e melhoria residencial.\nMinha atuação combina design, tecnologia e negócios: da construção de uma marca e da sua presença digital ao desenvolvimento de ferramentas, automações e soluções com IA.",
+    "metricas": [
+      {
+        "n": "6+",
+        "rotulo": "anos de experiência\nno mercado digital"
+      },
+      {
+        "n": "5",
+        "rotulo": "eventos presenciais realizados\nsobre negócios e network"
+      },
+      {
+        "n": "🌎 🇺🇸 🇵🇹 🇪🇸 🇵🇭 🇨🇦",
+        "rotulo": "Negócios atendidos\nno mundo todo",
+        "destaque": true
+      }
+    ],
+    "galeria": []
   },
-  "assinatura": { "papel": "Responsável pelo projeto", "nome": "Samuel", "sobrenome": "Freire" },
+  "ecossistema": {
+    "rotulo": "Nosso ecossistema",
+    "texto": "Este é o nosso ecossistema de capacidades — e definimos exatamente o que faz sentido para o seu negócio.",
+    "centro": {
+      "sup": "04 frentes",
+      "titulo": "Nosso ecossistema"
+    },
+    "frentes": [
+      {
+        "titulo": "Marca",
+        "itens": [
+          "Identidade visual",
+          "Design systems"
+        ]
+      },
+      {
+        "titulo": "Digital",
+        "itens": [
+          "Websites",
+          "Funis de venda",
+          "Landing pages",
+          "Blogs",
+          "Perfil da empresa no Google",
+          "PDFs e apresentações"
+        ]
+      },
+      {
+        "titulo": "Marketing",
+        "itens": [
+          "Peças para redes sociais",
+          "Criativos de campanha",
+          "Materiais impressos",
+          "Cartões de visita",
+          "Flyers",
+          "Adesivos"
+        ]
+      },
+      {
+        "titulo": "Sistemas & ferramentas",
+        "escuro": true,
+        "itens": [
+          "Fluxos de trabalho com IA",
+          "Automação de processos",
+          "Sistemas para o negócio",
+          "Otimização de processos",
+          "Ferramentas internas"
+        ]
+      }
+    ]
+  },
+  "assinatura": {
+    "papel": "Responsável pelo projeto",
+    "nome": "Samuel",
+    "sobrenome": "Freire"
+  },
   "encerramento": "Vamos construir isso juntos?",
-  "contato": { "rotulo": "Falar com o Samuel", "link": "https://wa.me/5583982078301" }
+  "contato": {
+    "rotulo": "Falar com o Samuel",
+    "link": "https://wa.me/5583982078301"
+  }
 }
