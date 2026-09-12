@@ -289,18 +289,64 @@ async function buscarGoogle({ termo, lat, lon, raio, pais, paginas = 3 }) {
 
 /* ---------- OpenStreetMap (Overpass) — sem chave ---------- */
 
+/* O Overpass público limita por IP e devolve 429 quando está cheio —
+   o que acontece fácil com nicho escrito à mão, que vira busca por
+   nome (bem mais pesada que a tag). Tenta o principal e, se ele
+   recusar ou cair, os espelhos. Erro de consulta (400) não adianta
+   repetir em outro lugar. */
+const OVERPASS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+];
+
+async function overpass(q) {
+  let ultimo = 0;
+  for (const endereco of OVERPASS) {
+    let r;
+    try {
+      r = await buscar(endereco, {
+        method: 'POST',
+        headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': UA },
+        body: 'data=' + encodeURIComponent(q),
+      }, 20000);
+    } catch { ultimo = 'tempo'; continue; }
+    if (r.ok) return r.json();
+    ultimo = r.status;
+    if (r.status !== 429 && r.status < 500) break;
+  }
+  throw new Error(ultimo === 429 || ultimo === 'tempo' || ultimo >= 500
+    ? 'O OpenStreetMap está recebendo buscas demais agora. Espere um minuto e tente de novo — ou ligue a chave do Google (GOOGLE_PLACES_KEY) na stack, que não tem esse limite.'
+    : 'OpenStreetMap respondeu ' + ultimo);
+}
+
+/* Nicho escrito à mão vira busca por nome. Procurar em tudo que tem
+   nome no raio (ruas, bairros, prédios) estoura o tempo do Overpass
+   em qualquer servidor — e cada estouro conta contra a cota, que é
+   de onde vinha o 429. Então: só entre o que já é comércio ou serviço,
+   numa caixa em vez de círculo, com o acento opcional ("estetica"
+   acha "Estética"). */
+const ACENTOS = { a: 'aáàâã', e: 'eéê', i: 'ií', o: 'oóôõ', u: 'uúü', c: 'cç' };
+function regexNome(termo) {
+  return String(termo).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/[^a-z0-9 &'-]/g, '').trim()
+    .replace(/[aeiouc]/g, (l) => '[' + ACENTOS[l] + ']');
+}
+const CHAVES_NEGOCIO = ['shop', 'office', 'amenity', 'craft', 'healthcare', 'leisure'];
+
 async function buscarOsm({ nicho, termo, lat, lon, raio }) {
-  const filtro = nicho?.osm
-    ? `["${nicho.osm[0]}"="${nicho.osm[1]}"]`
-    : `["name"~"${String(termo).replace(/["\\]/g, '')}",i]`;
-  const q = `[out:json][timeout:25];nwr${filtro}(around:${Math.round(raio)},${lat},${lon});out center tags 120;`;
-  const r = await buscar('https://overpass-api.de/api/interpreter', {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': UA },
-    body: 'data=' + encodeURIComponent(q),
-  }, 30000);
-  if (!r.ok) throw new Error('OpenStreetMap respondeu ' + r.status);
-  const d = await r.json();
+  let q;
+  if (nicho?.osm) {
+    q = `[out:json][timeout:25];nwr["${nicho.osm[0]}"="${nicho.osm[1]}"](around:${Math.round(raio)},${lat},${lon});out center tags 120;`;
+  } else {
+    const rx = regexNome(termo);
+    if (!rx) return [];
+    const { low, high } = caixa(lat, lon, raio);
+    const bbox = [low.latitude, low.longitude, high.latitude, high.longitude].map((n) => n.toFixed(4)).join(',');
+    const partes = CHAVES_NEGOCIO.map((k) => `nwr["${k}"]["name"~"${rx}",i];`).join('') + `nwr["cuisine"~"${rx}",i];`;
+    q = `[out:json][timeout:25][bbox:${bbox}];(${partes});out center tags 120;`;
+  }
+  const d = await overpass(q);
   return (d.elements || []).map((e) => {
     const t = e.tags || {};
     const rua = [t['addr:street'], t['addr:housenumber']].filter(Boolean).join(', ');
