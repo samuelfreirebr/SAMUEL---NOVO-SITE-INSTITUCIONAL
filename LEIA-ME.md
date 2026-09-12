@@ -12,6 +12,7 @@ site/                  o site como vai ao ar
   index.html             versão BR
   global/index.html      versão internacional
   admin/                 painel de edição
+  google-prospection/    prospecção: varredura do Google Maps, diagnóstico, mensagens, leads
   styles/tokens.css      variáveis (cores, fontes, espaços, tempos)
   styles/base.css        reset, tipografia, botões, utilitários
   styles/site.css        cada seção da página
@@ -27,6 +28,8 @@ servidor/              o servidor Node que roda no Portainer (zero dependências
   injetar.js             põe o texto editado no HTML antes de servir
   dados.js               textos, imagens e propostas no volume
   proposta-html.js       monta a página de uma proposta
+  prospeccao.js          rotas da prospecção: busca, cidades, IA, Instagram, vagas, leads
+  prospeccao-site.js     diagnóstico rápido de um site (fetch cru + heurísticas)
   seguranca.js           senha do painel
   multipart.js           leitura do upload de imagem
   listas.js              clientes, bastidores, projetos
@@ -173,15 +176,16 @@ resultado com número. É o número que vende.
 ## Painel
 
 Em `links.samuelfreire.com.br/admin`. Pede usuário e senha numa tela de
-login (não é o popup do navegador), e depois abre um **hub** com dois
-blocos: *Criar proposta* e *Editar site ativo*. Novas funcionalidades
-entram como novos blocos.
+login (não é o popup do navegador), e depois abre um **hub** com três
+blocos: *Criar proposta*, *Editar site ativo* e *Prospectar no Google*.
+Novas funcionalidades entram como novos blocos.
 
 ```
-/admin/entrar       login
-/admin/             hub
-/admin/site/        editor do site
-/admin/propostas/   propostas
+/admin/entrar         login
+/admin/               hub
+/admin/site/          editor do site
+/admin/propostas/     propostas
+/google-prospection/  prospecção (mesma sessão do painel)
 ```
 
 ### A senha
@@ -323,6 +327,115 @@ Interior Design, com o mesmo conteúdo da que estava em
 o volume no primeiro start e **nunca sobrescrevem** o que já estiver lá:
 editar pelo painel e dar deploy de novo não desfaz a edição.
 
+## Prospecção
+
+Em `links.samuelfreire.com.br/google-prospection`. É a ferramenta de
+prospecção do MIRA (`ARQUITETURA-MIRA.md`) refeita para caber neste
+servidor: sem Supabase, sem créditos, sem cadastro. Quem entra é quem
+tem a senha do painel — sem sessão, a página volta para o login.
+
+> *"Encontre quem precisa de você antes de mandar mensagem."*
+> Varre os negócios de uma região, separa quem não tem site de quem tem
+> site ruim, dá uma nota de oportunidade, escreve a abordagem e guarda o
+> lead numa lista.
+
+Quatro abas:
+
+| Aba | O que faz |
+|---|---|
+| **Quem está no mapa** | O coração. Nicho + cidade (ou perto de você, ou as 10 capitais) → lista de negócios com telefone, site, nota, avaliações e um **score de oportunidade**. Abrir o card diagnostica o site, monta a mensagem e sugere o que recriar. |
+| **Quem vende na internet** | (a) Anunciantes: abre a Biblioteca de Anúncios da Meta no nicho, você cola a página de destino e ela é diagnosticada — mensagem com o gancho de verba de clique queimada. (b) Perfis do Instagram via busca do Google (Serper), com faixa "vale a conversa". |
+| **Quem está contratando** | Vagas remotas de design (Remotive, RemoteOK, WeWorkRemotely, Himalayas), sem repetição, com link para a mesma busca no LinkedIn. |
+| **Minha lista** | Mini-CRM: funil cumulativo (mirado → abordado → respondeu → proposta → fechado), taxa de resposta, abordagens por semana, anotação com autosave. |
+
+### As chaves (todas opcionais)
+
+Nada disso é obrigatório para a stack subir. Cada chave liga uma parte:
+
+| Variável | Liga | Sem ela |
+|---|---|---|
+| `GOOGLE_PLACES_KEY` | Google Places API (New): nota, nº de avaliações, opiniões, telefone, site | Cai no **OpenStreetMap** (Overpass): funciona, mas sem nota nem avaliações, e com menos negócios |
+| `ANTHROPIC_API_KEY` | Botão **Escrever com IA** (Claude) — mensagem personalizada usando as opiniões e o diagnóstico | Só os modelos locais (4 versões por situação, em PT; 2 em EN) |
+| `SERPER_API_KEY` | Busca de perfis do Instagram | A busca fica desligada, com aviso na tela |
+| `PAGESPEED_KEY` | Só aumenta a cota do PageSpeed | Funciona igual, com a cota anônima do Google |
+
+`/estado` mostra o que está ligado: `"prospeccao": { "mapas": "google" | "osm", "ia": true, "instagram": false }`.
+
+Sobre a chave do Google: é a **Places API (New)**, no Google Cloud, com
+faturamento ligado. A busca pede `reviews` no *field mask* — é o SKU
+mais caro do Text Search (cerca de US$ 40 por mil requisições), e cada
+varredura de cidade faz até 3 requisições (60 negócios); o modo Brasil
+faz 10. Se quiser baratear, tire `places.reviews` da constante `MASCARA`
+em `servidor/prospeccao.js` — a IA perde as opiniões, o resto continua.
+
+### Score de oportunidade
+
+Calculado no servidor (`pontuar` em `prospeccao.js`):
+
+- **Sem site → começa em 70.** Soma +6 com 40+ avaliações, +6 com 150+,
+  +4 se tem telefone, +3 se nota ≥ 4,5, +2 se não tem nem rede social.
+- **Com site → 29 + 4·(nota − 4,5) + √avaliações**, entre 15 e 64. Quem
+  tem muita avaliação já atende e fatura, então pode pagar.
+- Depois do diagnóstico, no navegador: site com nota < 50 ganha +18;
+  < 75 ganha +8. Site ruim é oportunidade.
+
+Filtros: **Sem site**, **Site pra refazer**, **Mais quentes** (≥ 70),
+**Com telefone**. **Copiar lista** e **Baixar CSV** respeitam o filtro.
+
+### Diagnóstico do site
+
+Duas camadas. A rápida roda no servidor ao abrir o card
+(`prospeccao-site.js`): um `fetch` cru do HTML, sem navegador, e
+heurísticas com peso — HTTPS, tempo de resposta, viewport, título,
+descrição, h1, botão de contato, WhatsApp, rodapé antigo, construtor
+gratuito, página vazia. Nota = 100 − Σ pesos. Estima também o **porte**
+(operação enxuta / porte médio / tem equipe) pelos sinais no HTML.
+
+A profunda é o botão **Análise profunda com o Google**: chama o
+PageSpeed Insights **direto do navegador** (o Google leva 20–40 s, e não
+vale segurar o servidor esse tempo). Velocidade, LCP, CLS, TBT e SEO
+viram problemas com peso, mesclados por chave com os da camada rápida.
+Se o Google abriu o site, os problemas "não abriu" / "barrou a leitura"
+são apagados — era bloqueio de robô, não site fora do ar.
+
+### Mensagens
+
+Os modelos locais seguem uma estrutura fixa: *o que eu vi → o que isso
+custa → o que eu já fiz (entrega antes da oferta) → fecho sem pedir
+permissão*. Três bancos, escolhidos pela situação do negócio:
+
+- **sem site e sem rede** — cliente chega e não tem pra onde ir ·
+  indicação tem teto · sem site a decisão vira preço · decisão em menos
+  de 1 minuto
+- **só Instagram/Facebook** — direct fecha às 18h · post some do feed ·
+  atendimento manual repetitivo · perfil exige rolar 15 posts
+- **tem site** — site trabalha contra (usa os defeitos do diagnóstico)
+  · site não mostra a prova · defeito que ninguém comentou · parado no
+  tempo
+
+O idioma vem do **país da busca**: PT para Brasil e Portugal, EN (em
+formato de e-mail, com assunto) para o resto. A assinatura e o "sou
+fulano, faço sites aqui de…" vêm do **Perfil** (botão no topo), gravado
+em `/dados/prospeccao/perfil.json`.
+
+Com `ANTHROPIC_API_KEY`, **Escrever com IA** manda pro Claude
+(`claude-opus-5`) os dados do negócio, as opiniões do Google, os
+problemas do diagnóstico e o seu perfil, com a mesma estrutura de copy
+no prompt de sistema. Cada clique pede uma variação nova. Fora do
+Brasil sai em inglês, como e-mail.
+
+### Onde ficam os dados
+
+```
+/dados/prospeccao/
+  perfil.json    quem assina
+  leads.json     a lista inteira, um array
+```
+
+No mesmo volume `links_dados` — backup e update não mudam. A última
+varredura fica no `localStorage` do navegador por 7 dias e volta sozinha
+ao reabrir a página.
+
 ## Diagnóstico: `/estado`
 
 Abra `links.samuelfreire.com.br/estado`. É a forma mais rápida de saber o
@@ -334,6 +447,7 @@ trancado por falta de senha, esta URL ainda responde.
   "pastaDados": "/dados", "dadosGravaveis": true,
   "conteudoSalvo": true, "propostas": 1,
   "siteBr": true, "siteGlobal": true, "painel": true,
+  "prospeccao": { "pagina": true, "mapas": "osm", "ia": false, "instagram": false },
   "pronto": true }
 ```
 
@@ -369,7 +483,8 @@ git push → Action → ghcr.io/samuelfreirebr/links → Portainer → Traefik �
    a validação do certificado pelo Traefik.
 4. **Portainer.** *Stacks* → *Add stack* → **Web editor** → colar o
    `docker-stack.yml` inteiro → em *Environment variables* criar
-   `SENHA_PAINEL` → *Deploy the stack*.
+   `SENHA_PAINEL` (e, se quiser a prospecção completa, as chaves
+   opcionais da seção *Prospecção*) → *Deploy the stack*.
 5. Esperar uns 40 segundos e abrir `links.samuelfreire.com.br/estado`.
 
 **Sem `SENHA_PAINEL` a stack não sobe.** É de propósito: uma tranca que
@@ -391,6 +506,8 @@ O que o painel salva mora num volume do Docker, não na imagem:
   conteudo.anterior.json   a versão de antes do último salvar
   propostas/<id>.json      uma proposta por arquivo
   img/<pasta>/<arquivo>    as fotos que você enviou
+  prospeccao/perfil.json   quem assina as mensagens da prospecção
+  prospeccao/leads.json    a lista de leads
 ```
 
 Update, rebuild e restart não encostam nele. **Backup é copiar essa

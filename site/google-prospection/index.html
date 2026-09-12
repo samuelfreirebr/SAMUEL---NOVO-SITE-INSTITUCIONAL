@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Prospecção — Painel Samuel Freire</title>
+<link rel="icon" href="/img/favicon.png" type="image/png">
+<link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/styles/tokens.css?v=20260909h">
+<link rel="stylesheet" href="/styles/base.css?v=20260911a">
+<link rel="stylesheet" href="/admin/painel.css?v=1">
+<link rel="stylesheet" href="/google-prospection/app.css?v=1">
+</head>
+<body>
+
+<header class="topo">
+  <h1><a href="/admin/">Painel</a> <i>Samuel Freire</i><span class="sec">Prospecção</span></h1>
+  <nav class="abas" role="tablist" aria-label="Seções">
+    <button type="button" role="tab" data-aba="internet">Quem vende na internet</button>
+    <button type="button" role="tab" data-aba="mapa" aria-selected="true">Quem está no mapa</button>
+    <button type="button" role="tab" data-aba="vagas">Quem está contratando</button>
+    <button type="button" role="tab" data-aba="lista">Minha lista <span class="abas__n" id="n-leads" hidden></span></button>
+  </nav>
+  <button class="mini" type="button" id="perfil-abrir" title="Quem assina as mensagens">Perfil</button>
+  <button class="mini" type="button" id="sair">Sair</button>
+</header>
+
+<p class="aviso" id="aviso" role="status"></p>
+
+<main class="corpo">
+
+<!-- ============ Quem está no mapa ============ -->
+<section class="painel prosp" id="p-mapa" data-painel="mapa">
+  <div class="prosp__in">
+
+    <div class="busca">
+      <div class="busca__form">
+        <p class="eyebrow"><span class="idx">02</span> Quem está no mapa</p>
+        <h2 class="h2 busca__titulo">Encontre quem precisa<br>de você antes de mandar<br>mensagem.</h2>
+        <p class="body">Varre os negócios de uma região no Google, separa quem não tem site de quem tem site ruim, dá uma nota de oportunidade e escreve a abordagem.</p>
+
+        <form id="form-busca" autocomplete="off">
+          <div class="modos" role="radiogroup" aria-label="Onde buscar">
+            <button type="button" data-modo="perto">Perto de mim</button>
+            <button type="button" data-modo="cidade" aria-checked="true">Numa cidade</button>
+            <button type="button" data-modo="brasil">Brasil inteiro</button>
+          </div>
+
+          <div class="linha linha--2">
+            <label>
+              <span>Nicho</span>
+              <select id="nicho"></select>
+            </label>
+            <label id="l-termo" hidden>
+              <span>Qual nicho?</span>
+              <input type="text" id="termo" placeholder="Ex: pilates, marcenaria, buffet" maxlength="60">
+            </label>
+          </div>
+
+          <div class="linha linha--3" id="l-lugar">
+            <label>
+              <span>País</span>
+              <select id="pais"></select>
+            </label>
+            <label class="auto" id="l-cidade">
+              <span>Cidade</span>
+              <input type="text" id="cidade" placeholder="Ex: Curitiba" maxlength="80" spellcheck="false">
+              <ul class="sugestoes" id="sugestoes" hidden></ul>
+              <small id="cidade-dica">Digite 3 letras e escolha da lista.</small>
+            </label>
+            <label id="l-raio">
+              <span>Raio</span>
+              <select id="raio">
+                <option value="5000">5 km</option>
+                <option value="12000" selected>12 km</option>
+                <option value="20000">20 km</option>
+                <option value="30000">30 km</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="busca__acoes">
+            <button class="btn btn--brand" type="submit" id="varrer">Varrer a região <svg class="arrow" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M4 12L12 4M12 4H5.5M12 4v6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <span class="fonte" id="fonte-dados"></span>
+          </div>
+        </form>
+      </div>
+
+      <div class="busca__radar">
+        <canvas id="radar" width="360" height="360" aria-hidden="true"></canvas>
+        <pre class="log" id="log" aria-live="polite">&gt; aguardando a primeira varredura</pre>
+      </div>
+    </div>
+
+    <div class="resultado" id="resultado" hidden>
+      <div class="kpis">
+        <div class="kpi"><b id="k-total">0</b><span>negócios</span></div>
+        <div class="kpi kpi--fogo"><b id="k-sem">0</b><span>sem site</span></div>
+        <div class="kpi"><b id="k-quentes">0</b><span>mais quentes</span></div>
+        <div class="kpi"><b id="k-fone">0</b><span>com telefone</span></div>
+      </div>
+
+      <div class="barra-lista">
+        <div class="filtros" role="radiogroup" aria-label="Filtro">
+          <button type="button" data-filtro="todos" aria-checked="true">Todos</button>
+          <button type="button" data-filtro="sem">Sem site</button>
+          <button type="button" data-filtro="com">Site pra refazer</button>
+          <button type="button" data-filtro="quente">Mais quentes</button>
+          <button type="button" data-filtro="fone">Com telefone</button>
+        </div>
+        <div class="barra-lista__acoes">
+          <button class="mini" type="button" id="copiar-lista">Copiar lista</button>
+          <button class="mini" type="button" id="baixar-csv">Baixar CSV</button>
+        </div>
+      </div>
+
+      <p class="saida" id="saida"></p>
+      <div class="cards" id="cards"></div>
+      <p class="vazio" id="cards-vazio" hidden>Nenhum negócio nesse filtro.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ Quem vende na internet ============ -->
+<section class="painel prosp" id="p-internet" data-painel="internet" hidden>
+  <div class="prosp__in">
+    <p class="eyebrow"><span class="idx">01</span> Quem vende na internet</p>
+    <h2 class="h2 busca__titulo">Quem já paga por clique<br>e manda pra uma página ruim.</h2>
+
+    <div class="duas">
+      <fieldset>
+        <legend>Quem está anunciando</legend>
+        <p class="body small-gap">A Meta não abre a Biblioteca de Anúncios por API fora da Europa. Então o caminho é manual: abra a biblioteca no seu nicho, entre num anúncio ativo, copie o endereço da página de destino e cole aqui. Eu diagnostico a página e escrevo a mensagem com o gancho de verba queimada.</p>
+        <label>
+          <span>Nicho do anúncio</span>
+          <div class="junto">
+            <input type="text" id="anuncio-nicho" placeholder="Ex: dentista, curso online, imobiliária" maxlength="60">
+            <a class="mini" id="anuncio-abrir" href="#" target="_blank" rel="noopener">Abrir biblioteca ↗</a>
+          </div>
+        </label>
+        <label>
+          <span>Página de destino do anúncio</span>
+          <div class="junto">
+            <input type="url" id="anuncio-url" placeholder="https://…" spellcheck="false">
+            <button class="mini mini--ativo" type="button" id="anuncio-diag">Diagnosticar</button>
+          </div>
+        </label>
+        <div id="anuncio-resultado"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Perfis no Instagram</legend>
+        <p class="body small-gap">Nada é lido do Instagram: é uma busca do Google restrita a <code>instagram.com</code>. Volta nome, arroba, seguidores e bio — e uma faixa dizendo se vale a conversa. Lista suja é pior que lista curta: o filtro padrão já esconde quem não vale.</p>
+        <div class="linha linha--2">
+          <label><span>O que procura</span><input type="text" id="insta-termo" placeholder="Ex: nutricionista, arquiteta, personal" maxlength="60"></label>
+          <label><span>Cidade</span><input type="text" id="insta-cidade" placeholder="Ex: Curitiba" maxlength="60"></label>
+        </div>
+        <div class="junto">
+          <button class="btn" type="button" id="insta-buscar">Buscar perfis</button>
+          <div class="filtros" id="insta-filtros" role="radiogroup" hidden>
+            <button type="button" data-faixa="vale" aria-checked="true">Vale a conversa</button>
+            <button type="button" data-faixa="todos">Todos</button>
+          </div>
+        </div>
+        <p class="nota-config" id="insta-semchave" hidden>Para ligar esta busca, defina <code>SERPER_API_KEY</code> nas variáveis da stack.</p>
+        <div class="kpis kpis--3" id="insta-kpis" hidden>
+          <div class="kpi"><b id="ik-total">0</b><span>perfis</span></div>
+          <div class="kpi kpi--fogo"><b id="ik-vale">0</b><span>valem a conversa</span></div>
+          <div class="kpi"><b id="ik-seg">0</b><span>com seguidores</span></div>
+        </div>
+        <div class="cards" id="insta-cards"></div>
+      </fieldset>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Quem está contratando ============ -->
+<section class="painel prosp" id="p-vagas" data-painel="vagas" hidden>
+  <div class="prosp__in">
+    <p class="eyebrow"><span class="idx">03</span> Quem está contratando</p>
+    <h2 class="h2 busca__titulo">Vagas remotas de design,<br>em dólar, desta semana.</h2>
+    <p class="body">Remotive, RemoteOK, WeWorkRemotely e Himalayas, juntas e sem repetição.</p>
+
+    <form id="form-vagas" class="junto">
+      <input type="text" id="vagas-termo" placeholder="Ex: designer, ux, webflow, brand" maxlength="60" value="designer">
+      <button class="btn" type="submit" id="vagas-buscar">Buscar vagas</button>
+      <a class="mini" id="vagas-linkedin" href="#" target="_blank" rel="noopener">A mesma busca no LinkedIn ↗</a>
+    </form>
+
+    <div class="kpis kpis--4" id="vagas-kpis" hidden>
+      <div class="kpi"><b id="vk-total">0</b><span>vagas</span></div>
+      <div class="kpi kpi--fogo"><b id="vk-salario">0</b><span>com salário</span></div>
+      <div class="kpi"><b id="vk-fontes">0</b><span>fontes</span></div>
+      <div class="kpi"><b id="vk-semana">0</b><span>últimos 7 dias</span></div>
+    </div>
+    <div class="vagas" id="vagas-lista"></div>
+  </div>
+</section>
+
+<!-- ============ Minha lista ============ -->
+<section class="painel prosp" id="p-lista" data-painel="lista" hidden>
+  <div class="prosp__in">
+    <p class="eyebrow"><span class="idx">04</span> Minha lista</p>
+    <h2 class="h2 busca__titulo">Quem você mirou,<br>quem respondeu, quem fechou.</h2>
+
+    <div class="kpis kpis--5" id="funil-kpis">
+      <div class="kpi"><b id="fk-mira">0</b><span>prospectados</span></div>
+      <div class="kpi"><b id="fk-abordado">0</b><span>abordados</span></div>
+      <div class="kpi kpi--fogo"><b id="fk-resposta">0%</b><span>taxa de resposta</span></div>
+      <div class="kpi"><b id="fk-fechado">0</b><span>fechados</span></div>
+      <div class="kpi"><b id="fk-fechamento">0%</b><span>fechamento</span></div>
+    </div>
+
+    <div class="duas duas--funil">
+      <div class="board">
+        <p class="eyebrow">Funil</p>
+        <div class="funil" id="funil"></div>
+      </div>
+      <div class="board">
+        <p class="eyebrow">Abordagens por semana</p>
+        <div class="semanas" id="semanas"></div>
+      </div>
+    </div>
+
+    <div class="barra-lista">
+      <div class="filtros" id="lista-filtros" role="radiogroup" aria-label="Estado">
+        <button type="button" data-estado="ativos" aria-checked="true">Em andamento</button>
+        <button type="button" data-estado="mira">Mirados</button>
+        <button type="button" data-estado="abordado">Abordados</button>
+        <button type="button" data-estado="respondeu">Responderam</button>
+        <button type="button" data-estado="proposta">Proposta</button>
+        <button type="button" data-estado="fechado">Fechados</button>
+        <button type="button" data-estado="descartado">Descartados</button>
+        <button type="button" data-estado="todos">Todos</button>
+      </div>
+    </div>
+    <div class="leads" id="leads"></div>
+    <p class="vazio" id="leads-vazio" hidden>Nenhum lead aqui. Salve um da varredura e ele aparece nesta lista.</p>
+  </div>
+</section>
+
+</main>
+
+<!-- ============ Perfil ============ -->
+<dialog id="perfil">
+  <div class="modal__topo">
+    <b>Quem assina as mensagens</b>
+    <button class="mini" type="button" id="perfil-fechar">Fechar</button>
+  </div>
+  <form class="modal__corpo" id="form-perfil">
+    <div class="linha linha--2">
+      <label><span>Seu nome</span><input type="text" id="pf-nome" maxlength="80"></label>
+      <label><span>O que você faz</span>
+        <select id="pf-faz">
+          <option value="sites">sites</option>
+          <option value="páginas">páginas</option>
+          <option value="sites e sistemas">sites e sistemas</option>
+          <option value="identidade visual">identidade visual</option>
+          <option value="design">design</option>
+        </select>
+      </label>
+    </div>
+    <div class="linha linha--2">
+      <label><span>Sua cidade</span><input type="text" id="pf-cidade" maxlength="80" placeholder="Ex: Curitiba"></label>
+      <label><span>Seu WhatsApp</span><input type="text" id="pf-zap" maxlength="30" placeholder="(41) 9…"><small>Só pra você; não entra na mensagem.</small></label>
+    </div>
+    <div class="junto">
+      <button class="btn btn--brand" type="submit">Salvar perfil</button>
+      <span class="small">Entra na assinatura e no "sou fulano, faço sites aqui de…".</span>
+    </div>
+  </form>
+</dialog>
+
+<script type="module" src="/google-prospection/app.js?v=1"></script>
+</body>
+</html>

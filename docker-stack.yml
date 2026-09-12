@@ -5,7 +5,17 @@
 #  arquivo → Environment variables → Deploy.
 #
 #  Variáveis a preencher:
-#    SENHA_PAINEL     obrigatória — a senha do /admin
+#    SENHA_PAINEL       obrigatória — a senha do /admin
+#
+#  Opcionais, da prospecção (/google-prospection). Sem elas o
+#  app sobe do mesmo jeito, com menos:
+#    GOOGLE_PLACES_KEY  Places API (New) — nota, avaliações,
+#                       opiniões. Sem ela: OpenStreetMap.
+#    ANTHROPIC_API_KEY  mensagem escrita pela IA. Sem ela: só os
+#                       modelos locais.
+#    SERPER_API_KEY     busca de perfis do Instagram. Sem ela: a
+#                       busca fica desligada.
+#    PAGESPEED_KEY      só aumenta a cota do PageSpeed.
 #
 #  A imagem vem do ghcr.io, montada pela Action a cada push na
 #  main. Para atualizar: git push → Action verde → Update the
@@ -33,8 +43,14 @@ services:
       # Sem a Cloudflare na frente não chega cabeçalho de país;
       # fica ligado para funcionar sozinho se ela voltar.
       - ROTEAR_POR_PAIS=${ROTEAR_POR_PAIS:-1}
+      # Prospecção: todas opcionais (ver o cabeçalho).
+      - GOOGLE_PLACES_KEY=${GOOGLE_PLACES_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - SERPER_API_KEY=${SERPER_API_KEY:-}
+      - PAGESPEED_KEY=${PAGESPEED_KEY:-}
     volumes:
-      # Textos, imagens enviadas e propostas. Sobrevive a update.
+      # Textos, imagens enviadas, propostas e os leads da
+      # prospecção. Sobrevive a update.
       - links_dados:/dados
     deploy:
       replicas: 1

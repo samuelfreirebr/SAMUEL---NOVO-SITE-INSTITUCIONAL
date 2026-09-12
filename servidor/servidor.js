@@ -13,7 +13,9 @@
      /admin/              hub do painel     · exige sessão
      /admin/site/         editor do site    · exige sessão
      /admin/propostas/    propostas         · exige sessão
+     /google-prospection/ prospecção        · exige sessão
      /api/...             API do painel     · exige sessão (entrar/sair abertas)
+     /api/prospeccao/...  API da prospecção · exige sessão (ver prospeccao.js)
      /img/...             imagens: repositório primeiro, volume depois
      /estado              diagnóstico, sem revelar valor nenhum
    ============================================================ */
@@ -31,6 +33,7 @@ import {
 } from './seguranca.js';
 import { lerCorpo, lerMultipart } from './multipart.js';
 import { renderizarProposta } from './proposta-html.js';
+import { apiProspeccao, configuracao as configProspeccao } from './prospeccao.js';
 import * as dados from './dados.js';
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
@@ -172,6 +175,11 @@ async function apiAberta(req, res, rota) {
 async function api(req, res, url) {
   const rota = url.pathname.replace(/^\/api\/?/, '');
 
+  /* --- prospecção: vive em módulo próprio --- */
+  if (rota === 'prospeccao' || rota.startsWith('prospeccao/')) {
+    return apiProspeccao(req, res, url, rota.slice('prospeccao/'.length));
+  }
+
   /* --- modelo de proposta: o que toda proposta nova já traz --- */
   if (rota === 'modelo-proposta') {
     if (req.method === 'GET') return json(res, await dados.lerModelo());
@@ -308,6 +316,12 @@ async function estado(res) {
     siteBr: await ver(path.join(SITE, 'index.html')),
     siteGlobal: await ver(path.join(SITE, 'global', 'index.html')),
     painel: await ver(path.join(SITE, 'admin', 'index.html')),
+    prospeccao: {
+      pagina: await ver(path.join(SITE, 'google-prospection', 'index.html')),
+      mapas: configProspeccao().mapas,        // 'google' com chave, 'osm' sem
+      ia: configProspeccao().ia,
+      instagram: configProspeccao().instagram,
+    },
     pronto: temSenhaConfigurada() && await podeGravar(),
   });
 }
@@ -363,6 +377,31 @@ const servidor = http.createServer(async (req, res) => {
         return texto(res, 'Faça login.', 401);
       }
 
+      const st = await fs.stat(arq);
+      res.writeHead(200, {
+        'content-type': MIME[path.extname(arq).toLowerCase()] || 'application/octet-stream',
+        'content-length': st.size,
+        'cache-control': 'no-store',
+        'x-robots-tag': 'noindex, nofollow',
+      });
+      return createReadStream(arq).pipe(res);
+    }
+
+    /* --- Prospecção: mesma tranca do painel, pasta própria --- */
+    if (caminho === '/google-prospection' || caminho.startsWith('/google-prospection/')) {
+      if (caminho === '/google-prospection') {
+        res.writeHead(308, { location: '/google-prospection/' + url.search, 'cache-control': 'no-store' });
+        return res.end();
+      }
+      const arq = await acharArquivo(caminho);
+      if (!arq) return texto(res, 'Não encontrado.', 404);
+      if (!liberado(req)) {
+        if (path.extname(arq) === '.html') {
+          res.writeHead(302, { location: '/admin/entrar?voltar=' + encodeURIComponent('/google-prospection/'), 'cache-control': 'no-store' });
+          return res.end();
+        }
+        return texto(res, 'Faça login.', 401);
+      }
       const st = await fs.stat(arq);
       res.writeHead(200, {
         'content-type': MIME[path.extname(arq).toLowerCase()] || 'application/octet-stream',

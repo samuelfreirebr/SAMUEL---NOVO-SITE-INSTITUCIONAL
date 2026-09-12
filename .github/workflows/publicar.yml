@@ -32,7 +32,8 @@ jobs:
       - name: Conferir o servidor
         run: |
           for f in servidor/*.js; do node --check "$f"; done
-          node --input-type=module -e "await import('./servidor/injetar.js'); await import('./servidor/proposta-html.js'); console.log('módulos carregam')"
+          node --input-type=module -e "await import('./servidor/injetar.js'); await import('./servidor/proposta-html.js'); await import('./servidor/prospeccao.js'); await import('./servidor/prospeccao-site.js'); console.log('módulos carregam')"
+          node --check site/google-prospection/app.js
 
       - name: Entrar no ghcr.io
         uses: docker/login-action@v3

@@ -70,7 +70,7 @@
   var botao = document.getElementById('botao');
   var voltar = new URLSearchParams(location.search).get('voltar') || '/admin/';
   // nunca sai deste site: um ?voltar=https://outro.com seria phishing
-  if (!/^\/admin(\/|$)/.test(voltar)) voltar = '/admin/';
+  if (!/^\/(admin|google-prospection)(\/|$)/.test(voltar)) voltar = '/admin/';
 
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
