@@ -667,6 +667,10 @@ async function buscarGoogle({ termo, lat, lon, raio, pais, paginas = 3 }) {
    nome (bem mais pesada que a tag). Tenta o principal e, se ele
    recusar ou cair, os espelhos. Erro de consulta (400) não adianta
    repetir em outro lugar. */
+/* Só espelho de planeta inteiro. Cheguei a testar overpass.osm.ch,
+   overpass.osm.jp e o russo: o suíço responde 200 e devolve zero pra
+   Charlotte, porque só carrega a Suíça. Espelho regional aqui seria
+   pior que espelho fora do ar, porque mente que não achou nada. */
 const OVERPASS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
@@ -678,7 +682,7 @@ const OVERPASS = [
    memória resolvem isso sem nenhum custo. */
 const CACHE_OSM = new Map();
 const VALIDADE_OSM = 10 * 60 * 1000;
-const VALIDADE_ERRO = 60 * 1000;
+const VALIDADE_ERRO = 25 * 1000;   // recusa é do momento: logo já vale tentar de novo
 
 async function overpass(q) {
   const guardado = CACHE_OSM.get(q);
@@ -687,27 +691,36 @@ async function overpass(q) {
     return guardado.dado;
   }
 
+  const guardar = (dado) => {
+    if (CACHE_OSM.size > 60) CACHE_OSM.clear();
+    CACHE_OSM.set(q, { quando: Date.now(), dado });
+    return dado;
+  };
+  const tentar = async (endereco) => {
+    const r = await buscar(endereco, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': UA },
+      body: 'data=' + encodeURIComponent(q),
+    }, 11000);
+    if (!r.ok) throw Object.assign(new Error('overpass ' + r.status), { status: r.status });
+    return r.json();
+  };
+
+  /* Recusa aqui é sorte do momento, não erro de consulta: o mesmo
+     pedido volta 200 num espelho e 504 no outro. Primeiro tenta um
+     sozinho; se ele recusar, os outros dois vão juntos, porque
+     esperar um de cada vez dobrava o tempo pra dar no mesmo. */
+  const [primeiro, ...resto] = OVERPASS;
   let ultimo = 0;
-  for (const endereco of OVERPASS) {
-    let r;
-    try {
-      r = await buscar(endereco, {
-        method: 'POST',
-        headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': UA },
-        body: 'data=' + encodeURIComponent(q),
-      }, 14000);
-    } catch { ultimo = 'tempo'; continue; }
-    if (r.ok) {
-      const dado = await r.json();
-      if (CACHE_OSM.size > 60) CACHE_OSM.clear();
-      CACHE_OSM.set(q, { quando: Date.now(), dado });
-      return dado;
-    }
-    ultimo = r.status;
-    if (r.status !== 429 && r.status < 500) break;
+  try { return guardar(await tentar(primeiro)); }
+  catch (e) { ultimo = e.status || 'tempo'; }
+  if (resto.length) {
+    try { return guardar(await Promise.any(resto.map(tentar))); }
+    catch (e) { ultimo = e.errors?.find((x) => x.status)?.status || ultimo; }
   }
+
   const recado = ultimo === 429 || ultimo === 'tempo' || ultimo >= 500
-    ? 'Os três servidores do OpenStreetMap recusaram agora (limite de uso por IP). Espere um minuto, ou ligue a GOOGLE_PLACES_KEY na stack, que não tem esse limite e traz nota, avaliações e fotos.'
+    ? `Os ${OVERPASS.length} servidores públicos do OpenStreetMap recusaram agora. Não é a sua busca: eles limitam por IP e recusam bastante coisa em horário cheio. Espere meio minuto e tente de novo, ou ligue a GOOGLE_PLACES_KEY na stack, que não tem esse limite e ainda traz nota, avaliações e fotos.`
     : 'OpenStreetMap respondeu ' + ultimo;
   // A recusa também fica guardada por um minuto: repetir a mesma
   // busca na hora custava outra espera longa pra dar no mesmo.
