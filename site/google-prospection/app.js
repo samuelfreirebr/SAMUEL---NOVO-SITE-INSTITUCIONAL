@@ -18,9 +18,20 @@ const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = se
 const SEM_MOVIMENTO = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const num = (n) => Number(n || 0).toLocaleString('pt-BR');
 
-/* ---------- API ---------- */
-async function api(url, opcoes) {
-  const r = await fetch(url, opcoes);
+/* ---------- API ----------
+   Com prazo: o OpenStreetMap às vezes demora e a tela ficava girando
+   sem fim, sem dizer nada a quem está esperando. */
+async function api(url, opcoes = {}, ms = 70000) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  let r;
+  try { r = await fetch(url, { ...opcoes, signal: ctrl.signal }); }
+  catch (e) { throw new Error(e.name === 'AbortError' ? 'a busca passou de ' + Math.round(ms / 1000) + ' s e eu desisti. Tente de novo em um minuto.' : 'não consegui falar com o servidor.'); }
+  finally { clearTimeout(timer); }
+  return lerResposta(r);
+}
+
+async function lerResposta(r) {
   const texto = await r.text();
   let dado;
   try { dado = JSON.parse(texto); }
@@ -124,8 +135,18 @@ function montarSelects() {
   inNicho.innerHTML = html + '<option value="outro">Outro nicho, eu escrevo</option>';
   inPais.innerHTML = CONFIG.paises.map(([c, n]) => `<option value="${esc(c)}">${esc(n)}</option>`).join('');
   inPais.value = 'br';
-  $('#fonte-dados').innerHTML = CONFIG.mapas === 'google'
-    ? 'Dados do <b>Google Maps</b>: nota, avaliações e opiniões.'
+  pintarFonte();
+}
+
+/* O aviso da fonte muda com o país: no Brasil o OpenStreetMap ainda
+   serve; nos Estados Unidos ele não mapeia prestador de serviço, e
+   sem a chave do Google a varredura volta vazia sem culpa de ninguém. */
+function pintarFonte() {
+  const el = $('#fonte-dados');
+  if (!el) return;
+  if (CONFIG.mapas === 'google') { el.innerHTML = 'Dados do <b>Google Maps</b>: nota, avaliações, fotos e opiniões.'; return; }
+  el.innerHTML = (inPais.value || 'br') !== 'br'
+    ? 'Sem a chave do Google, a busca usa o <b>OpenStreetMap</b>, que fora do Brasil quase não tem prestador de serviço (obra, reforma, limpeza). Loja e restaurante ainda aparecem. Pra valer mesmo lá fora, ligue a <code>GOOGLE_PLACES_KEY</code> na stack.'
     : 'Sem chave do Google: dados do <b>OpenStreetMap</b>, sem nota nem avaliações. Defina <code>GOOGLE_PLACES_KEY</code> na stack pra ligar o Google.';
 }
 
@@ -135,6 +156,7 @@ inPais.onchange = () => {
   // Trocar o país limpa a cidade: a lista de sugestões é por país.
   inCidade.value = ''; CIDADE_SEL = null; inCidade.dataset.ok = '';
   inCidade.placeholder = inPais.value === 'br' ? 'Ex: Curitiba' : inPais.value === 'us' ? 'Ex: Austin, TX' : 'Ex: Lisboa';
+  pintarFonte();
 };
 
 $$('.modos [data-modo]').forEach((b) => {
@@ -218,17 +240,55 @@ form.onsubmit = async (e) => {
   limparLog();
   log(`varrendo <b>${esc(rotuloNicho.toLowerCase())}</b> ${MODO === 'brasil' ? 'nas 10 capitais' : MODO === 'perto' ? 'perto de você' : 'em <b>' + esc(inCidade.value.trim()) + '</b>'}…`);
   $('#varrer').disabled = true;
+
+  // Contador na tela: quem espera precisa ver que ainda está andando.
+  const t0 = Date.now();
+  const rotuloBotao = $('#varrer').firstChild.textContent;
+  let avisou = false;
+  const relogio = setInterval(() => {
+    const s = Math.round((Date.now() - t0) / 1000);
+    $('#varrer').firstChild.textContent = `Varrendo… ${s} s `;
+    if (s >= 14 && !avisou && CONFIG.mapas === 'osm') {
+      avisou = true;
+      log('<i>demorando:</i> o OpenStreetMap limita busca por IP. Se recusar, espere um minuto');
+    }
+  }, 1000);
+
   try {
     const d = await api('/api/prospeccao/buscar?' + q.toString());
     CTX = { termo: rotuloNicho, nicho, grupo: d.grupo || '', nichoNome: d.nichoNome || rotuloNicho, cidade: d.lugar?.nome || '', pais: inPais.value, fonte: d.fonte, quando: Date.now() };
+    if (d.termo) log(`termos buscados: <b>${esc(d.termo)}</b>`);
     receber(d);
     guardarBusca(d);
+    if (!d.total) semResultado(d);
   } catch (x) {
     varreOn(false);
     log(`<i>falhou:</i> ${esc(x.message)}`);
     avisar('A varredura falhou: ' + x.message, 'erro');
-  } finally { $('#varrer').disabled = false; }
+  } finally {
+    clearInterval(relogio);
+    $('#varrer').firstChild.textContent = rotuloBotao;
+    $('#varrer').disabled = false;
+  }
 };
+
+/* Zero resultado tem causa conhecida, e quase sempre é a mesma:
+   fora do Brasil o OpenStreetMap quase não mapeia prestador de
+   serviço. Dizer isso vale mais que "nenhum negócio encontrado". */
+function semResultado(d) {
+  const foraDoBrasil = (inPais.value || 'br') !== 'br';
+  if (d.fonte === 'osm' && foraDoBrasil) {
+    log('<i>nada aqui:</i> o OpenStreetMap mapeia pouco serviço fora do Brasil');
+    avisar('Zero resultados: sem a chave do Google, a busca usa o OpenStreetMap, que fora do Brasil quase não tem prestador de serviço cadastrado. Para os Estados Unidos, ligue a GOOGLE_PLACES_KEY na stack.', 'erro');
+    return;
+  }
+  if (d.fonte === 'osm') {
+    log('<i>nada aqui:</i> tente um pacote de nichos, raio maior ou outra cidade');
+    avisar('Zero resultados. Nesse nicho o OpenStreetMap pode não ter nada: tente um pacote (vários termos de uma vez) ou aumente o raio.', 'erro');
+    return;
+  }
+  avisar('Zero resultados nesse raio. Tente um raio maior ou outro termo.', 'erro');
+}
 
 function receber(d, rolar = true) {
   RESULTADOS = d.lista || [];
@@ -263,7 +323,7 @@ function restaurarBusca() {
     if (f.nicho) inNicho.value = f.nicho;
     inNicho.onchange();
     inTermo.value = f.termo || '';
-    if (f.pais) inPais.value = f.pais;
+    if (f.pais) { inPais.value = f.pais; pintarFonte(); }
     inCidade.value = f.cidade || ''; CIDADE_SEL = f.sel || null; inCidade.dataset.ok = CIDADE_SEL ? '1' : '';
     if (f.raio) inRaio.value = f.raio;
     CTX = g.ctx || {};
@@ -549,14 +609,14 @@ function montarCorpo(i, art) {
       <section class="bloco-analise" data-porque></section>
       <section class="bloco-analise" data-perfil></section>
       <section class="bloco-analise diag" data-diag>
-        <p class="eyebrow">${ico('site')} O site</p>
+        <p class="eyebrow">${ico('site')}<span>O site</span></p>
         <div data-diag-corpo><p class="diag__vazio">${x.site ? '<span class="girando"></span> lendo ' + esc(x.site) : x.diretorio ? 'O endereço do perfil é uma ficha em ' + esc(dominio(x.diretorio)) + ', não um site.' : x.soRede ? 'Não tem site, só ' + esc(dominio(x.insta || '')) + '.' : 'Não tem site nem rede no cadastro.'}</p></div>
       </section>
       <section class="bloco-analise" data-contatos></section>
       <div class="oque" data-oque></div>
     </div>
     <div class="msg">
-      <div class="msg__topo"><p class="eyebrow">${ico('zap')} Mensagem</p><span class="msg__versao" data-versao></span></div>
+      <div class="msg__topo"><p class="eyebrow">${ico('zap')}<span>Mensagem</span></p><span class="msg__versao" data-versao></span></div>
       <textarea class="msg__texto" data-texto spellcheck="false"></textarea>
       <div class="msg__acoes">
         <button class="mini mini--ia" type="button" data-ia title="${CONFIG.ia ? 'Escreve uma mensagem nova com o Claude, usando as opiniões e o diagnóstico' : 'Defina ANTHROPIC_API_KEY na stack pra ligar'}" ${CONFIG.ia ? '' : 'disabled'}>Escrever com IA ✦</button>
@@ -594,7 +654,7 @@ function pintarPorque(i) {
   const lista = x.porque || [];
   const s = scoreDe(i);
   el.innerHTML = `
-    <p class="eyebrow">${ico('mais')} Por que ${s} de oportunidade</p>
+    <p class="eyebrow">${ico('mais')}<span>Por que ${s} de oportunidade</span></p>
     ${lista.length
       ? '<ul class="motivos">' + lista.map((p) => `<li class="motivo motivo--${p.pontos >= 0 ? 'soma' : 'tira'}">${ico(p.pontos >= 0 ? 'mais' : 'menos')}<span>${esc(p.texto)}</span><b>${p.pontos >= 0 ? '+' : ''}${p.pontos}</b></li>`).join('') + '</ul>'
       : '<p class="diag__vazio">Nota da varredura, sem detalhe. Abra o diagnóstico do site pra recalcular.</p>'}`;
@@ -609,7 +669,7 @@ function pintarPerfil(i) {
   const p = x.perfil;
   if (!p?.itens?.length) { el.innerHTML = ''; return; }
   el.innerHTML = `
-    <p class="eyebrow">${ico('google')} Perfil no Google · <b>${p.bons}</b> ok, <b>${p.ruins}</b> a melhorar, <b>${p.faltas}</b> faltando</p>
+    <p class="eyebrow">${ico('google')}<span>Perfil no Google · <b>${p.bons}</b> ok, <b>${p.ruins}</b> a melhorar, <b>${p.faltas}</b> faltando</span></p>
     <ul class="perfil">
       ${p.itens.map((it) => `<li class="perfil__item" data-estado="${esc(it.estado)}">${ico(ICONE_ESTADO[it.estado] || 'falta')}<span><b>${esc(it.item)}</b> ${esc(it.texto)}</span></li>`).join('')}
     </ul>
@@ -624,7 +684,7 @@ function pintarContatos(i) {
   const lista = contatosDe(i);
   const v = VERIF[i];
   el.innerHTML = `
-    <p class="eyebrow">${ico('fone')} Como falar com eles</p>
+    <p class="eyebrow">${ico('fone')}<span>Como falar com eles</span></p>
     ${lista.length ? `<ul class="contatos">${lista.map((c) => `
       <li class="contato contato--${esc(c.tipo)}">
         ${ico(ICONE_CANAL[c.tipo] || 'lista')}

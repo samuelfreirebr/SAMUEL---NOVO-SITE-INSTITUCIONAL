@@ -191,7 +191,13 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .
 .ico { width: 1em; height: 1em; flex: none; vertical-align: -.14em; opacity: .85; }
 .analise { display: grid; gap: var(--sp-md); align-content: start; min-width: 0; }
 .bloco-analise:empty { display: none; }
-.bloco-analise .eyebrow { display: flex; align-items: center; gap: .45em; margin-bottom: var(--sp-2xs); }
+/* O .eyebrow do painel é flex: o rótulo vai dentro de um span só,
+   senão cada pedaço vira item solto e o título quebra torto. */
+.bloco-analise .eyebrow, .msg__topo .eyebrow { gap: .5em; align-items: baseline; margin-bottom: var(--sp-2xs); }
+/* min-width zero deixa o texto quebrar dentro do span em vez de
+   empurrar o ícone pra linha de cima sozinho. */
+.bloco-analise .eyebrow > span, .msg__topo .eyebrow > span { min-width: 0; }
+.bloco-analise .eyebrow .ico, .msg__topo .eyebrow .ico { position: relative; top: .15em; }
 .nota-fonte { font-size: var(--t-eyebrow); color: var(--muted); margin-top: 6px; }
 
 /* canais no topo do cartão */

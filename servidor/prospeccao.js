@@ -82,6 +82,7 @@ async function buscar(url, opcoes = {}, ms = 15000) {
    OpenStreetMap não tem tag pro serviço, vai `osmNome`: palavras
    procuradas no nome do negócio, separadas por barra. */
 export const GRUPOS = [
+  ['pacotes', 'Vários de uma vez'],
   ['obra', 'Casa, obra e reforma'],
   ['imovel', 'Imóveis'],
   ['auto', 'Carro e moto'],
@@ -98,12 +99,88 @@ export const GRUPOS = [
 ];
 
 export const NICHOS = [
+  /* ---- pacotes: uma varredura com três ou quatro termos ----
+     É o atalho pra não ter que varrer "encanador", depois
+     "eletricista", depois "ar-condicionado". No Google cada termo
+     vira uma busca e o resultado vem junto, sem repetido. No
+     OpenStreetMap as tags entram todas na mesma consulta. */
+  { id: 'obra-geral',       g: 'pacotes', pt: 'Obra e reforma (construtora, reforma, empreiteira, handyman)',
+    termos: { pt: ['Construtora', 'Reforma de casas', 'Empreiteira', 'Marido de aluguel'],
+      en: ['General contractor', 'Home remodeling contractor', 'Home improvement company', 'Handyman service'],
+      es: ['Constructora', 'Reformas de viviendas', 'Empresa de reformas', 'Manitas'] },
+    osm: [['office', 'construction_company'], ['craft', 'builder'], ['craft', 'carpenter']] },
+  { id: 'obra-acabamento',  g: 'pacotes', pt: 'Acabamento (cozinha, banheiro, piso, pintura)',
+    termos: { pt: ['Reforma de cozinha', 'Reforma de banheiro', 'Colocação de piso', 'Pintura residencial'],
+      en: ['Kitchen remodeling', 'Bathroom remodeling', 'Flooring contractor', 'Painting contractor'],
+      es: ['Reforma de cocinas', 'Reforma de baños', 'Suelos', 'Pintor'] },
+    osm: [['shop', 'kitchen'], ['shop', 'bathroom_furnishing'], ['craft', 'floorer'], ['craft', 'painter'], ['craft', 'tiler']] },
+  { id: 'obra-instalacoes', g: 'pacotes', pt: 'Instalações (encanador, eletricista, ar, telhado)',
+    termos: { pt: ['Encanador', 'Eletricista', 'Ar-condicionado', 'Telhados'],
+      en: ['Plumber', 'Electrician', 'HVAC contractor', 'Roofing contractor'],
+      es: ['Fontanero', 'Electricista', 'Climatización', 'Tejados'] },
+    osm: [['craft', 'plumber'], ['craft', 'electrician'], ['craft', 'hvac'], ['craft', 'roofer']] },
+  { id: 'obra-externa',     g: 'pacotes', pt: 'Área externa (paisagismo, gramado, cerca, deck)',
+    termos: { pt: ['Paisagismo', 'Jardinagem', 'Cercas e muros', 'Deck e pergolado'],
+      en: ['Landscaping company', 'Lawn care service', 'Fence contractor', 'Deck builder'],
+      es: ['Paisajismo', 'Jardinería', 'Vallas y cercas', 'Terrazas de madera'] },
+    osm: [['craft', 'gardener'], ['craft', 'fence_maker'], ['shop', 'garden_centre']] },
+  { id: 'obra-manutencao',  g: 'pacotes', pt: 'Manutenção (faxina, lavagem, dedetização, entulho)',
+    termos: { pt: ['Limpeza e faxina', 'Lavagem de fachada', 'Dedetização', 'Caçamba e entulho'],
+      en: ['Cleaning service', 'Pressure washing service', 'Pest control', 'Junk removal service'],
+      es: ['Servicio de limpieza', 'Limpieza a presión', 'Control de plagas', 'Retirada de escombros'] },
+    osm: [['craft', 'pest_control'], ['craft', 'cleaning']] },
+  { id: 'saude-geral',      g: 'pacotes', pt: 'Saúde (dentista, clínica, fisioterapia, quiropraxia)',
+    termos: { pt: ['Dentista', 'Clínica médica', 'Fisioterapia', 'Quiropraxia'],
+      en: ['Dentist', 'Medical clinic', 'Physical therapy clinic', 'Chiropractor'],
+      es: ['Dentista', 'Clínica médica', 'Fisioterapeuta', 'Quiropráctico'] },
+    osm: [['amenity', 'dentist'], ['amenity', 'clinic'], ['healthcare', 'physiotherapist'], ['healthcare', 'chiropractor']] },
+  { id: 'beleza-geral',     g: 'pacotes', pt: 'Beleza (salão, barbearia, unhas, estética)',
+    termos: { pt: ['Salão de cabelo', 'Barbearia', 'Unhas e manicure', 'Estética e beleza'],
+      en: ['Hair salon', 'Barber shop', 'Nail salon', 'Beauty clinic'],
+      es: ['Peluquería', 'Barbería', 'Salón de uñas', 'Clínica de estética'] },
+    osm: [['shop', 'hairdresser'], ['shop', 'beauty'], ['shop', 'tattoo']] },
+  { id: 'comida-geral',     g: 'pacotes', pt: 'Comida (restaurante, pizzaria, café, padaria)',
+    termos: { pt: ['Restaurante', 'Pizzaria', 'Cafeteria', 'Padaria'],
+      en: ['Restaurant', 'Pizzeria', 'Coffee shop', 'Bakery'],
+      es: ['Restaurante', 'Pizzería', 'Cafetería', 'Panadería'] },
+    osm: [['amenity', 'restaurant'], ['amenity', 'cafe'], ['shop', 'bakery'], ['amenity', 'fast_food']] },
+  { id: 'auto-geral',       g: 'pacotes', pt: 'Carro (oficina, funilaria, pneus, lava-rápido)',
+    termos: { pt: ['Oficina mecânica', 'Funilaria e pintura', 'Pneus', 'Lava-rápido'],
+      en: ['Auto repair shop', 'Auto body shop', 'Tire shop', 'Car wash and detailing'],
+      es: ['Taller mecánico', 'Taller de chapa y pintura', 'Neumáticos', 'Lavado de coches'] },
+    osm: [['shop', 'car_repair'], ['craft', 'car_painter'], ['shop', 'tyres'], ['amenity', 'car_wash']] },
+  { id: 'servicos-geral',   g: 'pacotes', pt: 'Serviços (advocacia, contabilidade, seguros, marketing)',
+    termos: { pt: ['Advocacia', 'Contabilidade', 'Corretora de seguros', 'Agência de marketing'],
+      en: ['Law firm', 'Accounting firm', 'Insurance agency', 'Marketing agency'],
+      es: ['Abogado', 'Contador', 'Correduría de seguros', 'Agencia de marketing'] },
+    osm: [['office', 'lawyer'], ['office', 'accountant'], ['office', 'insurance'], ['office', 'advertising_agency']] },
+  { id: 'imovel-geral',     g: 'pacotes', pt: 'Imóveis (imobiliária, administradora, temporada)',
+    termos: { pt: ['Imobiliária', 'Administradora de condomínio', 'Aluguel por temporada'],
+      en: ['Real estate agency', 'Property management company', 'Vacation rental manager'],
+      es: ['Inmobiliaria', 'Administración de fincas', 'Alquiler vacacional'] },
+    osm: [['office', 'estate_agent'], ['office', 'property_management']] },
+  { id: 'fitness-geral',    g: 'pacotes', pt: 'Movimento (academia, pilates, yoga, lutas)',
+    termos: { pt: ['Academia', 'Pilates', 'Yoga', 'Artes marciais'],
+      en: ['Gym', 'Pilates studio', 'Yoga studio', 'Martial arts school'],
+      es: ['Gimnasio', 'Pilates', 'Yoga', 'Artes marciales'] },
+    osm: [['leisure', 'fitness_centre'], ['leisure', 'sports_centre']] },
+  { id: 'pet-geral',        g: 'pacotes', pt: 'Pets (pet shop, banho e tosa, veterinária)',
+    termos: { pt: ['Pet shop', 'Banho e tosa', 'Veterinária', 'Adestramento'],
+      en: ['Pet shop', 'Pet grooming', 'Veterinarian', 'Dog trainer'],
+      es: ['Tienda de mascotas', 'Peluquería canina', 'Veterinario', 'Adiestrador canino'] },
+    osm: [['shop', 'pet'], ['shop', 'pet_grooming'], ['amenity', 'veterinary']] },
+  { id: 'eventos-geral',    g: 'pacotes', pt: 'Eventos (espaço, casamento, buffet, fotografia)',
+    termos: { pt: ['Espaço de eventos', 'Casamento e cerimonial', 'Buffet', 'Fotografia'],
+      en: ['Event venue', 'Wedding planner', 'Catering company', 'Photographer'],
+      es: ['Salón de eventos', 'Bodas', 'Catering', 'Fotógrafo'] },
+    osm: [['amenity', 'events_venue'], ['craft', 'caterer'], ['craft', 'photographer']] },
+
   /* ---- casa, obra e reforma: o alvo principal lá fora ---- */
   { id: 'construtora',      g: 'obra', pt: 'Construtora',                 en: 'General contractor',         es: 'Constructora',               osm: ['office', 'construction_company'] },
   { id: 'reforma',          g: 'obra', pt: 'Reforma de casas',            en: 'Home remodeling contractor', es: 'Reformas de viviendas',      osm: ['craft', 'builder'] },
   { id: 'reforma-cozinha',  g: 'obra', pt: 'Reforma de cozinha',          en: 'Kitchen remodeling',         es: 'Reforma de cocinas',         osm: ['shop', 'kitchen'] },
   { id: 'reforma-banheiro', g: 'obra', pt: 'Reforma de banheiro',         en: 'Bathroom remodeling',        es: 'Reforma de baños',           osm: ['shop', 'bathroom_furnishing'] },
-  { id: 'telhado',          g: 'obra', pt: 'Telhados',                    en: 'Roofing contractor',         es: 'Tejados',                    osm: ['craft', 'roofer'] },
+  { id: 'telhado',          g: 'obra', pt: 'Telhado e calhas',            en: 'Roofing and gutter company', es: 'Tejados y canalones',        osm: ['craft', 'roofer'] },
   { id: 'encanador',        g: 'obra', pt: 'Encanador e hidráulica',      en: 'Plumber',                    es: 'Fontanero',                  osm: ['craft', 'plumber'] },
   { id: 'eletricista',      g: 'obra', pt: 'Eletricista',                 en: 'Electrician',                es: 'Electricista',               osm: ['craft', 'electrician'] },
   { id: 'climatizacao',     g: 'obra', pt: 'Ar-condicionado e aquecimento', en: 'HVAC contractor',          es: 'Climatización',              osm: ['craft', 'hvac'] },
@@ -112,33 +189,27 @@ export const NICHOS = [
   { id: 'azulejista',       g: 'obra', pt: 'Azulejo e revestimento',      en: 'Tile contractor',            es: 'Alicatador',                 osm: ['craft', 'tiler'] },
   { id: 'carpinteiro',      g: 'obra', pt: 'Carpintaria',                 en: 'Carpenter',                  es: 'Carpintero',                 osm: ['craft', 'carpenter'] },
   { id: 'marcenaria',       g: 'obra', pt: 'Marcenaria e armários',       en: 'Cabinet maker',              es: 'Ebanistería',                osm: ['craft', 'cabinet_maker'] },
-  { id: 'janelas',          g: 'obra', pt: 'Janelas',                     en: 'Window installation',        es: 'Ventanas',                   osm: ['craft', 'window_construction'] },
-  { id: 'portas',           g: 'obra', pt: 'Portas',                      en: 'Door installation',          es: 'Puertas',                    osm: ['craft', 'door_construction'] },
+  { id: 'janelas',          g: 'obra', pt: 'Janelas e portas',            en: 'Window and door installation', es: 'Ventanas y puertas',       osm: [['craft', 'window_construction'], ['craft', 'door_construction']] },
   { id: 'portao',           g: 'obra', pt: 'Portões e automação',         en: 'Garage door service',        es: 'Puertas de garaje',          osmNome: 'portao/portoes/garage door/porton' },
   { id: 'cerca',            g: 'obra', pt: 'Cercas e muros',              en: 'Fence contractor',           es: 'Vallas y cercas',            osm: ['craft', 'fence_maker'] },
   { id: 'deck',             g: 'obra', pt: 'Deck e pergolado',            en: 'Deck builder',               es: 'Terrazas de madera',         osmNome: 'deck/pergola/pergolado/patio' },
-  { id: 'concreto',         g: 'obra', pt: 'Concreto',                    en: 'Concrete contractor',        es: 'Hormigón',                   osmNome: 'concreto/concrete/hormigon' },
-  { id: 'alvenaria',        g: 'obra', pt: 'Alvenaria e pedra',           en: 'Masonry contractor',         es: 'Albañilería',                osm: ['craft', 'stonemason'] },
+  { id: 'concreto',         g: 'obra', pt: 'Concreto e alvenaria',        en: 'Concrete and masonry',       es: 'Hormigón y albañilería',     osm: ['craft', 'stonemason'] },
   { id: 'marmoraria',       g: 'obra', pt: 'Mármore e granito',           en: 'Countertop installer',       es: 'Mármoles y granitos',        osmNome: 'marmoraria/granito/marmore/countertop/marble' },
   { id: 'vidracaria',       g: 'obra', pt: 'Vidraçaria',                  en: 'Glass and glazing company',  es: 'Vidriería',                  osm: ['craft', 'glaziery'] },
   { id: 'serralheria',      g: 'obra', pt: 'Serralheria e solda',         en: 'Welding and metal work',     es: 'Herrería',                   osm: ['craft', 'metal_construction'] },
   { id: 'drywall',          g: 'obra', pt: 'Drywall e gesso',             en: 'Drywall contractor',         es: 'Pladur y yeso',              osm: ['craft', 'plasterer'] },
   { id: 'isolamento',       g: 'obra', pt: 'Isolamento térmico',          en: 'Insulation contractor',      es: 'Aislamiento',                osm: ['craft', 'insulation'] },
   { id: 'impermeabilizacao',g: 'obra', pt: 'Impermeabilização',           en: 'Waterproofing contractor',   es: 'Impermeabilización',         osmNome: 'impermeabiliz/waterproof' },
-  { id: 'calhas',           g: 'obra', pt: 'Calhas e rufos',              en: 'Gutter installation',        es: 'Canalones',                  osmNome: 'calha/gutter/canalon' },
   { id: 'chamine',          g: 'obra', pt: 'Lareira e chaminé',           en: 'Chimney sweep',              es: 'Deshollinador',              osm: ['craft', 'chimney_sweeper'] },
   { id: 'toldos',           g: 'obra', pt: 'Toldos e persianas',          en: 'Awning and shade company',   es: 'Toldos',                     osm: ['craft', 'sun_protection'] },
   { id: 'solar',            g: 'obra', pt: 'Energia solar',               en: 'Solar panel installer',      es: 'Energía solar',              osmNome: 'solar' },
   { id: 'pavimentacao',     g: 'obra', pt: 'Pavimentação e asfalto',      en: 'Paving contractor',          es: 'Pavimentación',              osm: ['craft', 'paver'] },
-  { id: 'terraplanagem',    g: 'obra', pt: 'Terraplanagem e escavação',   en: 'Excavation contractor',      es: 'Excavación',                 osmNome: 'terraplan/escavacao/excavat/movimiento de tierras' },
-  { id: 'demolicao',        g: 'obra', pt: 'Demolição',                   en: 'Demolition contractor',      es: 'Demolición',                 osmNome: 'demoli' },
-  { id: 'poco',             g: 'obra', pt: 'Poço artesiano',              en: 'Well drilling company',      es: 'Perforación de pozos',       osm: ['craft', 'water_well_drilling'] },
-  { id: 'fossa',            g: 'obra', pt: 'Fossa e saneamento',          en: 'Septic tank service',        es: 'Fosas sépticas',             osmNome: 'fossa/septic/saneamento' },
+  { id: 'terraplanagem',    g: 'obra', pt: 'Terraplanagem e demolição',   en: 'Excavation and demolition',  es: 'Excavación y demolición',    osmNome: 'terraplan/escavacao/excavat/demoli' },
+  { id: 'poco',             g: 'obra', pt: 'Poço e fossa',                en: 'Well and septic service',    es: 'Pozos y fosas sépticas',     osm: ['craft', 'water_well_drilling'] },
   { id: 'piscina',          g: 'obra', pt: 'Piscinas',                    en: 'Pool builder and service',   es: 'Piscinas',                   osm: ['shop', 'swimming_pool'] },
   { id: 'paisagismo',       g: 'obra', pt: 'Paisagismo',                  en: 'Landscaping company',        es: 'Paisajismo',                 osm: ['craft', 'gardener'] },
-  { id: 'jardinagem',       g: 'obra', pt: 'Jardinagem e gramado',        en: 'Lawn care service',          es: 'Jardinería',                 osmNome: 'jardinagem/jardineria/lawn/gramado/landscap' },
+  { id: 'jardinagem',       g: 'obra', pt: 'Jardinagem, gramado e irrigação', en: 'Lawn care and irrigation', es: 'Jardinería y riego',        osmNome: 'jardinagem/jardineria/lawn/gramado/landscap/irriga/sprinkler' },
   { id: 'arborizacao',      g: 'obra', pt: 'Poda e corte de árvore',      en: 'Tree service',               es: 'Poda de árboles',            osmNome: 'arborista/poda/tree service/tree care' },
-  { id: 'irrigacao',        g: 'obra', pt: 'Irrigação',                   en: 'Irrigation contractor',      es: 'Riego',                      osmNome: 'irriga/sprinkler/riego' },
   { id: 'lavagem-fachada',  g: 'obra', pt: 'Lavagem de fachada',          en: 'Pressure washing service',   es: 'Limpieza a presión',         osmNome: 'lava jato/pressure wash/power wash/hidrojato' },
   { id: 'limpeza',          g: 'obra', pt: 'Limpeza e faxina',            en: 'Cleaning service',           es: 'Servicio de limpieza',       osmNome: 'limpeza/faxina/cleaning/maid/limpieza' },
   { id: 'dedetizacao',      g: 'obra', pt: 'Dedetização',                 en: 'Pest control company',       es: 'Control de plagas',          osm: ['craft', 'pest_control'] },
@@ -602,7 +673,20 @@ const OVERPASS = [
   'https://overpass.private.coffee/api/interpreter',
 ];
 
+/* A mesma consulta repetida (trocar de nicho e voltar, mexer no raio
+   e desfazer) era o jeito mais rápido de levar 429. Dez minutos de
+   memória resolvem isso sem nenhum custo. */
+const CACHE_OSM = new Map();
+const VALIDADE_OSM = 10 * 60 * 1000;
+const VALIDADE_ERRO = 60 * 1000;
+
 async function overpass(q) {
+  const guardado = CACHE_OSM.get(q);
+  if (guardado && Date.now() - guardado.quando < (guardado.erro ? VALIDADE_ERRO : VALIDADE_OSM)) {
+    if (guardado.erro) throw new Error(guardado.erro);
+    return guardado.dado;
+  }
+
   let ultimo = 0;
   for (const endereco of OVERPASS) {
     let r;
@@ -611,15 +695,24 @@ async function overpass(q) {
         method: 'POST',
         headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': UA },
         body: 'data=' + encodeURIComponent(q),
-      }, 20000);
+      }, 14000);
     } catch { ultimo = 'tempo'; continue; }
-    if (r.ok) return r.json();
+    if (r.ok) {
+      const dado = await r.json();
+      if (CACHE_OSM.size > 60) CACHE_OSM.clear();
+      CACHE_OSM.set(q, { quando: Date.now(), dado });
+      return dado;
+    }
     ultimo = r.status;
     if (r.status !== 429 && r.status < 500) break;
   }
-  throw new Error(ultimo === 429 || ultimo === 'tempo' || ultimo >= 500
-    ? 'O OpenStreetMap está recebendo buscas demais agora. Espere um minuto e tente de novo, ou ligue a chave do Google (GOOGLE_PLACES_KEY) na stack, que não tem esse limite.'
-    : 'OpenStreetMap respondeu ' + ultimo);
+  const recado = ultimo === 429 || ultimo === 'tempo' || ultimo >= 500
+    ? 'Os três servidores do OpenStreetMap recusaram agora (limite de uso por IP). Espere um minuto, ou ligue a GOOGLE_PLACES_KEY na stack, que não tem esse limite e traz nota, avaliações e fotos.'
+    : 'OpenStreetMap respondeu ' + ultimo;
+  // A recusa também fica guardada por um minuto: repetir a mesma
+  // busca na hora custava outra espera longa pra dar no mesmo.
+  CACHE_OSM.set(q, { quando: Date.now(), erro: recado });
+  throw new Error(recado);
 }
 
 /* Nicho escrito à mão vira busca por nome. Procurar em tudo que tem
@@ -643,15 +736,20 @@ async function buscarOsm({ nicho, termo, lat, lon, raio }) {
   // O nicho pode trazer uma tag (['craft','roofer']) ou várias.
   const tags = nicho?.osm ? (Array.isArray(nicho.osm[0]) ? nicho.osm : [nicho.osm]) : null;
   if (tags) {
-    const dentro = tags.map(([k, v]) => `nwr["${k}"="${v}"](around:${Math.round(raio)},${lat},${lon});`).join('');
-    q = `[out:json][timeout:25];(${dentro});out center tags 120;`;
+    // Caixa em vez de círculo: o Overpass indexa a caixa e responde
+    // rápido, enquanto o "around" mede distância item a item e era
+    // de onde vinham as esperas de meio minuto e o 429.
+    const { low, high } = caixa(lat, lon, raio);
+    const bbox = [low.latitude, low.longitude, high.latitude, high.longitude].map((n) => n.toFixed(4)).join(',');
+    const dentro = tags.map(([k, v]) => `nwr["${k}"="${v}"];`).join('');
+    q = `[out:json][timeout:12][bbox:${bbox}];(${dentro});out center tags 120;`;
   } else {
     const rx = regexNome(nicho?.osmNome || termo);
     if (!rx) return [];
     const { low, high } = caixa(lat, lon, raio);
     const bbox = [low.latitude, low.longitude, high.latitude, high.longitude].map((n) => n.toFixed(4)).join(',');
     const partes = CHAVES_NEGOCIO.map((k) => `nwr["${k}"]["name"~"${rx}",i];`).join('') + `nwr["cuisine"~"${rx}",i];`;
-    q = `[out:json][timeout:25][bbox:${bbox}];(${partes});out center tags 120;`;
+    q = `[out:json][timeout:12][bbox:${bbox}];(${partes});out center tags 120;`;
   }
   const d = await overpass(q);
   return (d.elements || []).map((e) => {
@@ -699,17 +797,33 @@ async function varrer(url) {
   const pais = PAIS_OK.has(p.get('pais')) ? p.get('pais') : 'br';
   const lingua = linguaDe(pais);
   const nicho = NICHOS.find((n) => n.id === p.get('nicho')) || null;
-  const termoLivre = String(p.get('termo') || '').trim().slice(0, 60);
+  const termoLivre = String(p.get('termo') || '').trim().slice(0, 120);
   if (!nicho && !termoLivre) return { erro: 'Escolha um nicho ou escreva um.' };
-  const termo = nicho ? (nicho[lingua] || nicho.en) : termoLivre;
+  const termos = termosDe(nicho, lingua, termoLivre);
+  if (!termos.length) return { erro: 'Escolha um nicho ou escreva um.' };
+  const termo = termos.join(', ');
   const raio = Math.min(30000, Math.max(2000, Number(p.get('raio')) || 12000));
   const modo = p.get('modo') || 'cidade';
   const usaGoogle = Boolean(chaveGoogle());
   const fonte = usaGoogle ? 'google' : 'osm';
 
-  const buscarEm = (lat, lon, r, paginas) => usaGoogle
-    ? buscarGoogle({ termo, lat, lon, raio: r, pais, paginas })
-    : buscarOsm({ nicho: nicho || null, termo, lat, lon, raio: r });
+  /* Orçamento de tempo da varredura inteira. Pacote de quatro termos
+     com o Google podia passar de um minuto, e a tela só girando. */
+  const ate = Date.now() + 42000;
+  const buscarEm = async (lat, lon, r, paginas) => {
+    // Sem chave, o OpenStreetMap resolve todos os termos numa consulta só.
+    if (!usaGoogle) return buscarOsm({ nicho: nicho || null, termo: termos.join('/'), lat, lon, raio: r });
+    const porTermo = termos.length > 1 ? Math.min(2, paginas) : paginas;
+    const tudo = [];
+    let falha = null;
+    for (const t of termos) {
+      if (tudo.length && Date.now() > ate) break;
+      try { tudo.push(...await buscarGoogle({ termo: t, lat, lon, raio: r, pais, paginas: porTermo })); }
+      catch (e) { falha = e; }   // um termo que falha não derruba o pacote
+    }
+    if (!tudo.length && falha) throw falha;
+    return tudo;
+  };
 
   if (modo === 'brasil') {
     const partes = [];
@@ -741,8 +855,24 @@ async function varrer(url) {
 }
 
 /* O nicho escolhido viaja junto com o resultado: é dele que saem os
-   blocos do "o que recriar" e o texto da mensagem. */
-const doNicho = (nicho) => nicho ? { nichoId: nicho.id, grupo: nicho.g, nichoNome: nicho.pt } : {};
+   blocos do "o que recriar" e o texto da mensagem. Pacote não tem
+   grupo de conteúdo próprio, então empresta o do primeiro nicho. */
+const doNicho = (nicho) => nicho ? { nichoId: nicho.id, grupo: nicho.g === 'pacotes' ? (GRUPO_DO_PACOTE[nicho.id] || '') : nicho.g, nichoNome: nicho.pt.replace(/\s*\(.*\)$/, '') } : {};
+
+const GRUPO_DO_PACOTE = {
+  'obra-geral': 'obra', 'obra-acabamento': 'obra', 'obra-instalacoes': 'obra', 'obra-externa': 'obra', 'obra-manutencao': 'obra',
+  'saude-geral': 'saude', 'beleza-geral': 'beleza', 'comida-geral': 'alimentacao', 'auto-geral': 'auto',
+  'servicos-geral': 'servicos', 'imovel-geral': 'imovel', 'fitness-geral': 'fitness', 'pet-geral': 'pet', 'eventos-geral': 'eventos',
+};
+
+/* Um nicho comum tem um termo; um pacote tem até quatro. Nicho
+   escrito à mão aceita vírgula: "encanador, eletricista" vira duas
+   buscas na mesma varredura. */
+function termosDe(nicho, lingua, termoLivre) {
+  if (!nicho) return [...new Set(termoLivre.split(',').map((t) => t.trim()).filter(Boolean))].slice(0, 4);
+  if (nicho.termos) return (nicho.termos[lingua] || nicho.termos.en || []).slice(0, 4);
+  return [nicho[lingua] || nicho.en];
+}
 
 /* ---------- mensagem com Claude ---------- */
 
