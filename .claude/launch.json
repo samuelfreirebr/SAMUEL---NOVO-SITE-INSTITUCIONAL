@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "samuel-site",
-      "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "exec env PORTA=\"$PORT\" PASTA_DADOS=./dados-local SENHA_PAINEL=local NODE_OPTIONS=--experimental-detect-module node servidor/servidor.js"],
+      "runtimeExecutable": "node",
+      "runtimeArgs": [".claude/dev.mjs"],
       "autoPort": true
     }
   ]
