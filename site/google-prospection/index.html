@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="/styles/tokens.css?v=20260909h">
 <link rel="stylesheet" href="/styles/base.css?v=20260911a">
 <link rel="stylesheet" href="/admin/painel.css?v=1">
-<link rel="stylesheet" href="/google-prospection/app.css?v=1">
+<link rel="stylesheet" href="/google-prospection/app.css?v=2">
 </head>
 <body>
 
@@ -98,7 +98,8 @@
         <div class="kpi"><b id="k-total">0</b><span>negócios</span></div>
         <div class="kpi kpi--fogo"><b id="k-sem">0</b><span>sem site</span></div>
         <div class="kpi"><b id="k-quentes">0</b><span>mais quentes</span></div>
-        <div class="kpi"><b id="k-fone">0</b><span>com telefone</span></div>
+        <div class="kpi"><b id="k-fone">0</b><span>dá pra falar</span></div>
+        <div class="kpi"><b id="k-perfil">0</b><span>perfil capenga</span></div>
       </div>
 
       <div class="barra-lista">
@@ -107,9 +108,11 @@
           <button type="button" data-filtro="sem">Sem site</button>
           <button type="button" data-filtro="com">Site pra refazer</button>
           <button type="button" data-filtro="quente">Mais quentes</button>
-          <button type="button" data-filtro="fone">Com telefone</button>
+          <button type="button" data-filtro="fone">Com contato</button>
+          <button type="button" data-filtro="perfil">Perfil capenga</button>
         </div>
         <div class="barra-lista__acoes">
+          <button class="mini" type="button" id="conferir-web" title="Procura na web os dez primeiros sem site, pra confirmar quem realmente não tem">Conferir na web</button>
           <button class="mini" type="button" id="copiar-lista">Copiar lista</button>
           <button class="mini" type="button" id="baixar-csv">Baixar CSV</button>
         </div>
@@ -273,6 +276,6 @@
   </form>
 </dialog>
 
-<script type="module" src="/google-prospection/app.js?v=1"></script>
+<script type="module" src="/google-prospection/app.js?v=2"></script>
 </body>
 </html>

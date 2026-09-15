@@ -1,5 +1,5 @@
 /* ============================================================
-   Prospecção — "encontre quem precisa de você antes de mandar
+   Prospecção: "encontre quem precisa de você antes de mandar
    mensagem". A versão do MIRA que cabe neste servidor: sem
    Supabase, sem créditos, sem cadastro. Quem usa é quem tem a
    senha do painel; leads e perfil ficam no volume, em JSON.
@@ -9,6 +9,9 @@
      GET  /api/prospeccao/cidades?pais&q      autocomplete de cidade (Nominatim)
      GET  /api/prospeccao/buscar?…            varredura de negócios
      GET  /api/prospeccao/site?url            diagnóstico rápido do site
+     GET  /api/prospeccao/verificar?nome&cidade  procura o site na web (DuckDuckGo, sem chave)
+     POST /api/prospeccao/traduzir            português para inglês, sem chave
+     POST /api/prospeccao/pontuar             recalcula nota, motivos, perfil do Google e plano
      POST /api/prospeccao/mensagem            mensagem escrita pelo Claude
      GET  /api/prospeccao/instagram?termo&cidade  perfis via Serper
      GET  /api/prospeccao/vagas?termo         vagas remotas de design
@@ -18,7 +21,7 @@
 
    Chaves, todas opcionais, na stack:
      GOOGLE_PLACES_KEY   sem ela a busca cai no OpenStreetMap
-                         (Overpass) — funciona, mas sem nota nem
+                         (Overpass), funciona, mas sem nota nem
                          avaliações
      ANTHROPIC_API_KEY   sem ela só os templates locais escrevem
      SERPER_API_KEY      sem ela a busca de perfis fica desligada
@@ -30,6 +33,8 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { RAIZ_DADOS } from './dados.js';
 import { diagnosticar, normalizarUrl } from './prospeccao-site.js';
+import { verificarSite, traduzir, ehDiretorio } from './prospeccao-web.js';
+import { plano } from './prospeccao-plano.js';
 
 const PASTA = path.join(RAIZ_DADOS, 'prospeccao');
 const ARQ_LEADS = path.join(PASTA, 'leads.json');
@@ -71,26 +76,208 @@ async function buscar(url, opcoes = {}, ms = 15000) {
 
 /* ---------- nichos e países ---------- */
 
-/* Cada nicho carrega o termo que vai pro Google (na língua do país)
-   e a tag do OpenStreetMap (para quando não há chave do Google). */
+/* Cada nicho carrega o termo que vai pro Google (na língua do país),
+   o grupo (senão o menu vira uma lista de cem linhas soltas) e a tag
+   do OpenStreetMap (para quando não há chave do Google). Quando o
+   OpenStreetMap não tem tag pro serviço, vai `osmNome`: palavras
+   procuradas no nome do negócio, separadas por barra. */
+export const GRUPOS = [
+  ['obra', 'Casa, obra e reforma'],
+  ['imovel', 'Imóveis'],
+  ['auto', 'Carro e moto'],
+  ['saude', 'Saúde'],
+  ['beleza', 'Beleza e estética'],
+  ['fitness', 'Esporte e movimento'],
+  ['alimentacao', 'Comida e bebida'],
+  ['pet', 'Pets'],
+  ['servicos', 'Serviços para empresas'],
+  ['educacao', 'Educação'],
+  ['eventos', 'Eventos e festas'],
+  ['varejo', 'Lojas'],
+  ['turismo', 'Hospedagem e viagem'],
+];
+
 export const NICHOS = [
-  { id: 'dentista',      pt: 'Dentista',            en: 'Dentist',              es: 'Dentista',            osm: ['amenity', 'dentist'] },
-  { id: 'nutricionista', pt: 'Nutricionista',       en: 'Nutritionist',         es: 'Nutricionista',       osm: ['healthcare', 'nutrition_counselling'] },
-  { id: 'estetica',      pt: 'Estética e beleza',   en: 'Beauty clinic',        es: 'Clínica de estética', osm: ['shop', 'beauty'] },
-  { id: 'fisioterapia',  pt: 'Fisioterapia',        en: 'Physiotherapist',      es: 'Fisioterapeuta',      osm: ['healthcare', 'physiotherapist'] },
-  { id: 'psicologia',    pt: 'Psicologia',          en: 'Psychologist',         es: 'Psicólogo',           osm: ['healthcare', 'psychotherapist'] },
-  { id: 'veterinaria',   pt: 'Veterinária',         en: 'Veterinarian',         es: 'Veterinario',         osm: ['amenity', 'veterinary'] },
-  { id: 'advocacia',     pt: 'Advocacia',           en: 'Law firm',             es: 'Abogado',             osm: ['office', 'lawyer'] },
-  { id: 'contabilidade', pt: 'Contabilidade',       en: 'Accountant',           es: 'Contador',            osm: ['office', 'accountant'] },
-  { id: 'imobiliaria',   pt: 'Imobiliária',         en: 'Real estate agency',   es: 'Inmobiliaria',        osm: ['office', 'estate_agent'] },
-  { id: 'academia',      pt: 'Academia',            en: 'Gym',                  es: 'Gimnasio',            osm: ['leisure', 'fitness_centre'] },
-  { id: 'salao',         pt: 'Salão e barbearia',   en: 'Hair salon',           es: 'Peluquería',          osm: ['shop', 'hairdresser'] },
-  { id: 'restaurante',   pt: 'Restaurante',         en: 'Restaurant',           es: 'Restaurante',         osm: ['amenity', 'restaurant'] },
-  { id: 'clinica',       pt: 'Clínica médica',      en: 'Medical clinic',       es: 'Clínica médica',      osm: ['amenity', 'clinic'] },
-  { id: 'petshop',       pt: 'Pet shop',            en: 'Pet shop',             es: 'Tienda de mascotas',  osm: ['shop', 'pet'] },
-  { id: 'concessionaria',pt: 'Concessionária',      en: 'Car dealership',       es: 'Concesionario',       osm: ['shop', 'car'] },
-  { id: 'oficina',       pt: 'Oficina mecânica',    en: 'Auto repair shop',     es: 'Taller mecánico',     osm: ['shop', 'car_repair'] },
-  { id: 'hamburgueria',  pt: 'Hamburgueria',        en: 'Burger restaurant',    es: 'Hamburguesería',      osm: ['amenity', 'fast_food'] },
+  /* ---- casa, obra e reforma: o alvo principal lá fora ---- */
+  { id: 'construtora',      g: 'obra', pt: 'Construtora',                 en: 'General contractor',         es: 'Constructora',               osm: ['office', 'construction_company'] },
+  { id: 'reforma',          g: 'obra', pt: 'Reforma de casas',            en: 'Home remodeling contractor', es: 'Reformas de viviendas',      osm: ['craft', 'builder'] },
+  { id: 'reforma-cozinha',  g: 'obra', pt: 'Reforma de cozinha',          en: 'Kitchen remodeling',         es: 'Reforma de cocinas',         osm: ['shop', 'kitchen'] },
+  { id: 'reforma-banheiro', g: 'obra', pt: 'Reforma de banheiro',         en: 'Bathroom remodeling',        es: 'Reforma de baños',           osm: ['shop', 'bathroom_furnishing'] },
+  { id: 'telhado',          g: 'obra', pt: 'Telhados',                    en: 'Roofing contractor',         es: 'Tejados',                    osm: ['craft', 'roofer'] },
+  { id: 'encanador',        g: 'obra', pt: 'Encanador e hidráulica',      en: 'Plumber',                    es: 'Fontanero',                  osm: ['craft', 'plumber'] },
+  { id: 'eletricista',      g: 'obra', pt: 'Eletricista',                 en: 'Electrician',                es: 'Electricista',               osm: ['craft', 'electrician'] },
+  { id: 'climatizacao',     g: 'obra', pt: 'Ar-condicionado e aquecimento', en: 'HVAC contractor',          es: 'Climatización',              osm: ['craft', 'hvac'] },
+  { id: 'pintor',           g: 'obra', pt: 'Pintura',                     en: 'Painting contractor',        es: 'Pintor',                     osm: ['craft', 'painter'] },
+  { id: 'piso',             g: 'obra', pt: 'Colocação de piso',           en: 'Flooring contractor',        es: 'Suelos',                     osm: ['craft', 'floorer'] },
+  { id: 'azulejista',       g: 'obra', pt: 'Azulejo e revestimento',      en: 'Tile contractor',            es: 'Alicatador',                 osm: ['craft', 'tiler'] },
+  { id: 'carpinteiro',      g: 'obra', pt: 'Carpintaria',                 en: 'Carpenter',                  es: 'Carpintero',                 osm: ['craft', 'carpenter'] },
+  { id: 'marcenaria',       g: 'obra', pt: 'Marcenaria e armários',       en: 'Cabinet maker',              es: 'Ebanistería',                osm: ['craft', 'cabinet_maker'] },
+  { id: 'janelas',          g: 'obra', pt: 'Janelas',                     en: 'Window installation',        es: 'Ventanas',                   osm: ['craft', 'window_construction'] },
+  { id: 'portas',           g: 'obra', pt: 'Portas',                      en: 'Door installation',          es: 'Puertas',                    osm: ['craft', 'door_construction'] },
+  { id: 'portao',           g: 'obra', pt: 'Portões e automação',         en: 'Garage door service',        es: 'Puertas de garaje',          osmNome: 'portao/portoes/garage door/porton' },
+  { id: 'cerca',            g: 'obra', pt: 'Cercas e muros',              en: 'Fence contractor',           es: 'Vallas y cercas',            osm: ['craft', 'fence_maker'] },
+  { id: 'deck',             g: 'obra', pt: 'Deck e pergolado',            en: 'Deck builder',               es: 'Terrazas de madera',         osmNome: 'deck/pergola/pergolado/patio' },
+  { id: 'concreto',         g: 'obra', pt: 'Concreto',                    en: 'Concrete contractor',        es: 'Hormigón',                   osmNome: 'concreto/concrete/hormigon' },
+  { id: 'alvenaria',        g: 'obra', pt: 'Alvenaria e pedra',           en: 'Masonry contractor',         es: 'Albañilería',                osm: ['craft', 'stonemason'] },
+  { id: 'marmoraria',       g: 'obra', pt: 'Mármore e granito',           en: 'Countertop installer',       es: 'Mármoles y granitos',        osmNome: 'marmoraria/granito/marmore/countertop/marble' },
+  { id: 'vidracaria',       g: 'obra', pt: 'Vidraçaria',                  en: 'Glass and glazing company',  es: 'Vidriería',                  osm: ['craft', 'glaziery'] },
+  { id: 'serralheria',      g: 'obra', pt: 'Serralheria e solda',         en: 'Welding and metal work',     es: 'Herrería',                   osm: ['craft', 'metal_construction'] },
+  { id: 'drywall',          g: 'obra', pt: 'Drywall e gesso',             en: 'Drywall contractor',         es: 'Pladur y yeso',              osm: ['craft', 'plasterer'] },
+  { id: 'isolamento',       g: 'obra', pt: 'Isolamento térmico',          en: 'Insulation contractor',      es: 'Aislamiento',                osm: ['craft', 'insulation'] },
+  { id: 'impermeabilizacao',g: 'obra', pt: 'Impermeabilização',           en: 'Waterproofing contractor',   es: 'Impermeabilización',         osmNome: 'impermeabiliz/waterproof' },
+  { id: 'calhas',           g: 'obra', pt: 'Calhas e rufos',              en: 'Gutter installation',        es: 'Canalones',                  osmNome: 'calha/gutter/canalon' },
+  { id: 'chamine',          g: 'obra', pt: 'Lareira e chaminé',           en: 'Chimney sweep',              es: 'Deshollinador',              osm: ['craft', 'chimney_sweeper'] },
+  { id: 'toldos',           g: 'obra', pt: 'Toldos e persianas',          en: 'Awning and shade company',   es: 'Toldos',                     osm: ['craft', 'sun_protection'] },
+  { id: 'solar',            g: 'obra', pt: 'Energia solar',               en: 'Solar panel installer',      es: 'Energía solar',              osmNome: 'solar' },
+  { id: 'pavimentacao',     g: 'obra', pt: 'Pavimentação e asfalto',      en: 'Paving contractor',          es: 'Pavimentación',              osm: ['craft', 'paver'] },
+  { id: 'terraplanagem',    g: 'obra', pt: 'Terraplanagem e escavação',   en: 'Excavation contractor',      es: 'Excavación',                 osmNome: 'terraplan/escavacao/excavat/movimiento de tierras' },
+  { id: 'demolicao',        g: 'obra', pt: 'Demolição',                   en: 'Demolition contractor',      es: 'Demolición',                 osmNome: 'demoli' },
+  { id: 'poco',             g: 'obra', pt: 'Poço artesiano',              en: 'Well drilling company',      es: 'Perforación de pozos',       osm: ['craft', 'water_well_drilling'] },
+  { id: 'fossa',            g: 'obra', pt: 'Fossa e saneamento',          en: 'Septic tank service',        es: 'Fosas sépticas',             osmNome: 'fossa/septic/saneamento' },
+  { id: 'piscina',          g: 'obra', pt: 'Piscinas',                    en: 'Pool builder and service',   es: 'Piscinas',                   osm: ['shop', 'swimming_pool'] },
+  { id: 'paisagismo',       g: 'obra', pt: 'Paisagismo',                  en: 'Landscaping company',        es: 'Paisajismo',                 osm: ['craft', 'gardener'] },
+  { id: 'jardinagem',       g: 'obra', pt: 'Jardinagem e gramado',        en: 'Lawn care service',          es: 'Jardinería',                 osmNome: 'jardinagem/jardineria/lawn/gramado/landscap' },
+  { id: 'arborizacao',      g: 'obra', pt: 'Poda e corte de árvore',      en: 'Tree service',               es: 'Poda de árboles',            osmNome: 'arborista/poda/tree service/tree care' },
+  { id: 'irrigacao',        g: 'obra', pt: 'Irrigação',                   en: 'Irrigation contractor',      es: 'Riego',                      osmNome: 'irriga/sprinkler/riego' },
+  { id: 'lavagem-fachada',  g: 'obra', pt: 'Lavagem de fachada',          en: 'Pressure washing service',   es: 'Limpieza a presión',         osmNome: 'lava jato/pressure wash/power wash/hidrojato' },
+  { id: 'limpeza',          g: 'obra', pt: 'Limpeza e faxina',            en: 'Cleaning service',           es: 'Servicio de limpieza',       osmNome: 'limpeza/faxina/cleaning/maid/limpieza' },
+  { id: 'dedetizacao',      g: 'obra', pt: 'Dedetização',                 en: 'Pest control company',       es: 'Control de plagas',          osm: ['craft', 'pest_control'] },
+  { id: 'entulho',          g: 'obra', pt: 'Caçamba e entulho',           en: 'Junk removal service',       es: 'Retirada de escombros',      osmNome: 'cacamba/entulho/junk removal/dumpster' },
+  { id: 'mudancas',         g: 'obra', pt: 'Mudanças e carreto',          en: 'Moving company',             es: 'Mudanzas',                   osm: ['office', 'moving_company'] },
+  { id: 'chaveiro',         g: 'obra', pt: 'Chaveiro',                    en: 'Locksmith',                  es: 'Cerrajero',                  osm: ['craft', 'locksmith'] },
+  { id: 'marido-aluguel',   g: 'obra', pt: 'Marido de aluguel',           en: 'Handyman service',           es: 'Manitas',                    osmNome: 'marido de aluguel/handyman/manitas' },
+  { id: 'sinistro',         g: 'obra', pt: 'Recuperação de sinistro',     en: 'Water and fire restoration', es: 'Restauración de daños',      osmNome: 'restoration/sinistro/water damage/restaura' },
+  { id: 'eletrodomesticos', g: 'obra', pt: 'Conserto de eletrodoméstico', en: 'Appliance repair service',   es: 'Reparación de electrodomésticos', osm: ['shop', 'appliance'] },
+  { id: 'seguranca-casa',   g: 'obra', pt: 'Alarme e câmera',             en: 'Security system installer',  es: 'Alarmas y cámaras',          osmNome: 'alarme/camera/seguranca eletronica/security system' },
+  { id: 'vistoria',         g: 'obra', pt: 'Vistoria de imóvel',          en: 'Home inspector',             es: 'Inspección de viviendas',    osmNome: 'vistoria/inspecao/home inspection/inspeccion' },
+  { id: 'arquitetura',      g: 'obra', pt: 'Arquitetura',                 en: 'Architect',                  es: 'Arquitecto',                 osm: ['office', 'architect'] },
+  { id: 'interiores',       g: 'obra', pt: 'Design de interiores',        en: 'Interior designer',          es: 'Diseño de interiores',       osm: ['shop', 'interior_decoration'] },
+  { id: 'engenharia',       g: 'obra', pt: 'Engenharia',                  en: 'Engineering firm',           es: 'Ingeniería',                 osm: ['office', 'engineer'] },
+  { id: 'material-obra',    g: 'obra', pt: 'Material de construção',      en: 'Building supply store',      es: 'Materiales de construcción', osm: ['shop', 'doityourself'] },
+  { id: 'moveis-planejados',g: 'obra', pt: 'Móveis planejados',           en: 'Custom furniture maker',     es: 'Muebles a medida',           osm: ['shop', 'furniture'] },
+  { id: 'estofaria',        g: 'obra', pt: 'Estofaria e tapeçaria',       en: 'Upholstery shop',            es: 'Tapicería',                  osm: ['craft', 'upholsterer'] },
+
+  /* ---- imóveis ---- */
+  { id: 'imobiliaria',      g: 'imovel', pt: 'Imobiliária',               en: 'Real estate agency',         es: 'Inmobiliaria',               osm: ['office', 'estate_agent'] },
+  { id: 'condominio',       g: 'imovel', pt: 'Administradora de condomínio', en: 'Property management company', es: 'Administración de fincas', osm: ['office', 'property_management'] },
+  { id: 'temporada',        g: 'imovel', pt: 'Aluguel por temporada',     en: 'Vacation rental manager',    es: 'Alquiler vacacional',        osmNome: 'temporada/vacation rental/aluguel' },
+
+  /* ---- carro e moto ---- */
+  { id: 'oficina',          g: 'auto', pt: 'Oficina mecânica',            en: 'Auto repair shop',           es: 'Taller mecánico',            osm: ['shop', 'car_repair'] },
+  { id: 'concessionaria',   g: 'auto', pt: 'Concessionária',              en: 'Car dealership',             es: 'Concesionario',              osm: ['shop', 'car'] },
+  { id: 'funilaria',        g: 'auto', pt: 'Funilaria e pintura',         en: 'Auto body shop',             es: 'Taller de chapa y pintura',  osm: ['craft', 'car_painter'] },
+  { id: 'lava-rapido',      g: 'auto', pt: 'Lava-rápido e estética',      en: 'Car wash and detailing',     es: 'Lavado de coches',           osm: ['amenity', 'car_wash'] },
+  { id: 'auto-pecas',       g: 'auto', pt: 'Auto peças',                  en: 'Auto parts store',           es: 'Tienda de repuestos',        osm: ['shop', 'car_parts'] },
+  { id: 'pneus',            g: 'auto', pt: 'Pneus e alinhamento',         en: 'Tire shop',                  es: 'Neumáticos',                 osm: ['shop', 'tyres'] },
+  { id: 'moto',             g: 'auto', pt: 'Motos',                       en: 'Motorcycle shop',            es: 'Tienda de motos',            osm: ['shop', 'motorcycle'] },
+  { id: 'guincho',          g: 'auto', pt: 'Guincho',                     en: 'Towing service',             es: 'Grúa',                       osmNome: 'guincho/towing/grua' },
+  { id: 'insulfilm',        g: 'auto', pt: 'Insulfilm e envelopamento',   en: 'Window tint and wrap shop',  es: 'Polarizado y rotulación',    osmNome: 'insulfilm/window tint/envelopamento/polarizado' },
+  { id: 'locadora',         g: 'auto', pt: 'Locadora de veículos',        en: 'Car rental',                 es: 'Alquiler de coches',         osm: ['amenity', 'car_rental'] },
+
+  /* ---- saúde ---- */
+  { id: 'dentista',         g: 'saude', pt: 'Dentista',                   en: 'Dentist',                    es: 'Dentista',                   osm: ['amenity', 'dentist'] },
+  { id: 'clinica',          g: 'saude', pt: 'Clínica médica',             en: 'Medical clinic',             es: 'Clínica médica',             osm: ['amenity', 'clinic'] },
+  { id: 'fisioterapia',     g: 'saude', pt: 'Fisioterapia',               en: 'Physical therapy clinic',    es: 'Fisioterapeuta',             osm: ['healthcare', 'physiotherapist'] },
+  { id: 'psicologia',       g: 'saude', pt: 'Psicologia',                 en: 'Therapist',                  es: 'Psicólogo',                  osm: ['healthcare', 'psychotherapist'] },
+  { id: 'nutricionista',    g: 'saude', pt: 'Nutricionista',              en: 'Nutritionist',               es: 'Nutricionista',              osm: ['healthcare', 'nutrition_counselling'] },
+  { id: 'quiropraxia',      g: 'saude', pt: 'Quiropraxia',                en: 'Chiropractor',               es: 'Quiropráctico',              osm: ['healthcare', 'chiropractor'] },
+  { id: 'oftalmologia',     g: 'saude', pt: 'Ótica e oftalmologia',       en: 'Optometrist',                es: 'Óptica',                     osm: ['shop', 'optician'] },
+  { id: 'dermatologia',     g: 'saude', pt: 'Dermatologia',               en: 'Dermatology clinic',         es: 'Dermatología',               osmNome: 'dermatolog' },
+  { id: 'pediatria',        g: 'saude', pt: 'Pediatria',                  en: 'Pediatric clinic',           es: 'Pediatría',                  osmNome: 'pediatr' },
+  { id: 'fonoaudiologia',   g: 'saude', pt: 'Fonoaudiologia',             en: 'Speech therapy clinic',      es: 'Logopedia',                  osm: ['healthcare', 'speech_therapist'] },
+  { id: 'podologia',        g: 'saude', pt: 'Podologia',                  en: 'Podiatrist',                 es: 'Podología',                  osm: ['healthcare', 'podiatrist'] },
+  { id: 'laboratorio',      g: 'saude', pt: 'Laboratório de exames',      en: 'Medical laboratory',         es: 'Laboratorio clínico',        osm: ['healthcare', 'laboratory'] },
+  { id: 'farmacia',         g: 'saude', pt: 'Farmácia',                   en: 'Pharmacy',                   es: 'Farmacia',                   osm: ['amenity', 'pharmacy'] },
+  { id: 'home-care',        g: 'saude', pt: 'Home care e cuidador',       en: 'Home care agency',           es: 'Cuidado a domicilio',        osmNome: 'home care/cuidador/enfermagem/asistencia domiciliaria' },
+  { id: 'acupuntura',       g: 'saude', pt: 'Acupuntura e terapias',      en: 'Acupuncture clinic',         es: 'Acupuntura',                 osm: ['healthcare', 'alternative'] },
+  { id: 'veterinaria',      g: 'saude', pt: 'Veterinária',                en: 'Veterinarian',               es: 'Veterinario',                osm: ['amenity', 'veterinary'] },
+
+  /* ---- beleza ---- */
+  { id: 'salao',            g: 'beleza', pt: 'Salão de cabelo',           en: 'Hair salon',                 es: 'Peluquería',                 osm: ['shop', 'hairdresser'] },
+  { id: 'barbearia',        g: 'beleza', pt: 'Barbearia',                 en: 'Barber shop',                es: 'Barbería',                   osmNome: 'barbearia/barber/barberia' },
+  { id: 'estetica',         g: 'beleza', pt: 'Estética e beleza',         en: 'Beauty clinic',              es: 'Clínica de estética',        osm: ['shop', 'beauty'] },
+  { id: 'unhas',            g: 'beleza', pt: 'Unhas e manicure',          en: 'Nail salon',                 es: 'Salón de uñas',              osmNome: 'nail/unha/manicure/esmalteria' },
+  { id: 'cilios',           g: 'beleza', pt: 'Cílios e sobrancelha',      en: 'Lash and brow studio',       es: 'Pestañas y cejas',           osmNome: 'cilios/sobrancelha/lash/brow/pestanas' },
+  { id: 'depilacao',        g: 'beleza', pt: 'Depilação',                 en: 'Waxing studio',              es: 'Depilación',                 osmNome: 'depila/waxing' },
+  { id: 'tatuagem',         g: 'beleza', pt: 'Tatuagem e piercing',       en: 'Tattoo studio',              es: 'Estudio de tatuajes',        osm: ['shop', 'tattoo'] },
+  { id: 'spa',              g: 'beleza', pt: 'Spa e massagem',            en: 'Spa and massage',            es: 'Spa y masajes',              osm: ['leisure', 'spa'] },
+
+  /* ---- esporte e movimento ---- */
+  { id: 'academia',         g: 'fitness', pt: 'Academia',                 en: 'Gym',                        es: 'Gimnasio',                   osm: ['leisure', 'fitness_centre'] },
+  { id: 'crossfit',         g: 'fitness', pt: 'Crossfit e funcional',     en: 'Crossfit box',               es: 'Crossfit',                   osmNome: 'crossfit/funcional' },
+  { id: 'pilates',          g: 'fitness', pt: 'Pilates',                  en: 'Pilates studio',             es: 'Pilates',                    osmNome: 'pilates' },
+  { id: 'yoga',             g: 'fitness', pt: 'Yoga',                     en: 'Yoga studio',                es: 'Yoga',                       osmNome: 'yoga' },
+  { id: 'lutas',            g: 'fitness', pt: 'Artes marciais',           en: 'Martial arts school',        es: 'Artes marciales',            osmNome: 'jiu/karate/muay/taekwondo/judo/boxe' },
+  { id: 'danca',            g: 'fitness', pt: 'Escola de dança',          en: 'Dance studio',               es: 'Escuela de baile',           osmNome: 'danca/dance/baile' },
+  { id: 'personal',         g: 'fitness', pt: 'Personal trainer',         en: 'Personal trainer',           es: 'Entrenador personal',        osmNome: 'personal trainer/treinamento' },
+
+  /* ---- comida e bebida ---- */
+  { id: 'restaurante',      g: 'alimentacao', pt: 'Restaurante',          en: 'Restaurant',                 es: 'Restaurante',                osm: ['amenity', 'restaurant'] },
+  { id: 'hamburgueria',     g: 'alimentacao', pt: 'Hamburgueria',         en: 'Burger restaurant',          es: 'Hamburguesería',             osm: ['amenity', 'fast_food'] },
+  { id: 'pizzaria',         g: 'alimentacao', pt: 'Pizzaria',             en: 'Pizzeria',                   es: 'Pizzería',                   osmNome: 'pizza' },
+  { id: 'cafeteria',        g: 'alimentacao', pt: 'Cafeteria',            en: 'Coffee shop',                es: 'Cafetería',                  osm: ['amenity', 'cafe'] },
+  { id: 'padaria',          g: 'alimentacao', pt: 'Padaria',              en: 'Bakery',                     es: 'Panadería',                  osm: ['shop', 'bakery'] },
+  { id: 'confeitaria',      g: 'alimentacao', pt: 'Confeitaria e doces',  en: 'Cake and dessert shop',      es: 'Pastelería',                 osm: ['shop', 'confectionery'] },
+  { id: 'sorveteria',       g: 'alimentacao', pt: 'Sorveteria',           en: 'Ice cream shop',             es: 'Heladería',                  osm: ['amenity', 'ice_cream'] },
+  { id: 'bar',              g: 'alimentacao', pt: 'Bar e pub',            en: 'Bar and pub',                es: 'Bar',                        osm: ['amenity', 'bar'] },
+  { id: 'cervejaria',       g: 'alimentacao', pt: 'Cervejaria artesanal', en: 'Craft brewery',              es: 'Cervecería artesanal',       osm: ['craft', 'brewery'] },
+  { id: 'buffet',           g: 'alimentacao', pt: 'Buffet e catering',    en: 'Catering company',           es: 'Catering',                   osm: ['craft', 'caterer'] },
+  { id: 'acougue',          g: 'alimentacao', pt: 'Açougue',              en: 'Butcher shop',               es: 'Carnicería',                 osm: ['shop', 'butcher'] },
+  { id: 'hortifruti',       g: 'alimentacao', pt: 'Hortifruti',           en: 'Produce market',             es: 'Frutería',                   osm: ['shop', 'greengrocer'] },
+  { id: 'marmitaria',       g: 'alimentacao', pt: 'Marmitaria',           en: 'Meal prep kitchen',          es: 'Comida preparada',           osmNome: 'marmita/meal prep/comida caseira' },
+
+  /* ---- pets ---- */
+  { id: 'petshop',          g: 'pet', pt: 'Pet shop',                     en: 'Pet shop',                   es: 'Tienda de mascotas',         osm: ['shop', 'pet'] },
+  { id: 'banho-tosa',       g: 'pet', pt: 'Banho e tosa',                 en: 'Pet grooming',               es: 'Peluquería canina',          osm: ['shop', 'pet_grooming'] },
+  { id: 'adestrador',       g: 'pet', pt: 'Adestramento',                 en: 'Dog trainer',                es: 'Adiestrador canino',         osmNome: 'adestra/dog train/adiestra' },
+  { id: 'hotel-pet',        g: 'pet', pt: 'Hotel e creche para pet',      en: 'Pet boarding and daycare',   es: 'Guardería canina',           osmNome: 'hotel pet/creche pet/pet boarding/pet daycare' },
+
+  /* ---- serviços para empresas ---- */
+  { id: 'advocacia',        g: 'servicos', pt: 'Advocacia',               en: 'Law firm',                   es: 'Abogado',                    osm: ['office', 'lawyer'] },
+  { id: 'contabilidade',    g: 'servicos', pt: 'Contabilidade',           en: 'Accounting firm',            es: 'Contador',                   osm: ['office', 'accountant'] },
+  { id: 'seguros',          g: 'servicos', pt: 'Corretora de seguros',    en: 'Insurance agency',           es: 'Correduría de seguros',      osm: ['office', 'insurance'] },
+  { id: 'financeiro',       g: 'servicos', pt: 'Consultoria financeira',  en: 'Financial advisor',          es: 'Asesor financiero',          osm: ['office', 'financial'] },
+  { id: 'marketing',        g: 'servicos', pt: 'Agência de marketing',    en: 'Marketing agency',           es: 'Agencia de marketing',       osm: ['office', 'advertising_agency'] },
+  { id: 'ti',               g: 'servicos', pt: 'Empresa de TI',           en: 'IT services company',        es: 'Empresa de informática',     osm: ['office', 'it'] },
+  { id: 'rh',               g: 'servicos', pt: 'Recrutamento e RH',       en: 'Staffing agency',            es: 'Agencia de empleo',          osm: ['office', 'employment_agency'] },
+  { id: 'grafica',          g: 'servicos', pt: 'Gráfica',                 en: 'Print shop',                 es: 'Imprenta',                   osm: ['shop', 'copyshop'] },
+  { id: 'comunicacao-visual', g: 'servicos', pt: 'Comunicação visual',    en: 'Sign company',               es: 'Rotulación',                 osm: ['craft', 'signmaker'] },
+  { id: 'fotografia',       g: 'servicos', pt: 'Fotografia',              en: 'Photographer',               es: 'Fotógrafo',                  osm: ['craft', 'photographer'] },
+  { id: 'coworking',        g: 'servicos', pt: 'Coworking',               en: 'Coworking space',            es: 'Coworking',                  osm: ['office', 'coworking'] },
+  { id: 'logistica',        g: 'servicos', pt: 'Transporte e logística',  en: 'Logistics company',          es: 'Logística',                  osm: ['office', 'logistics'] },
+  { id: 'seguranca',        g: 'servicos', pt: 'Segurança patrimonial',   en: 'Security guard company',     es: 'Empresa de seguridad',       osmNome: 'seguranca/security/vigilancia' },
+
+  /* ---- educação ---- */
+  { id: 'escola',           g: 'educacao', pt: 'Escola particular',       en: 'Private school',             es: 'Colegio privado',            osm: ['amenity', 'school'] },
+  { id: 'creche',           g: 'educacao', pt: 'Creche e infantil',       en: 'Daycare and preschool',      es: 'Guardería',                  osm: ['amenity', 'kindergarten'] },
+  { id: 'idiomas',          g: 'educacao', pt: 'Escola de idiomas',       en: 'Language school',            es: 'Academia de idiomas',        osm: ['amenity', 'language_school'] },
+  { id: 'autoescola',       g: 'educacao', pt: 'Autoescola',              en: 'Driving school',             es: 'Autoescuela',                osm: ['amenity', 'driving_school'] },
+  { id: 'musica',           g: 'educacao', pt: 'Escola de música',        en: 'Music school',               es: 'Escuela de música',          osm: ['amenity', 'music_school'] },
+  { id: 'reforco',          g: 'educacao', pt: 'Reforço e cursinho',      en: 'Tutoring center',            es: 'Clases particulares',        osmNome: 'reforco/tutoring/cursinho/vestibular' },
+
+  /* ---- eventos ---- */
+  { id: 'espaco-eventos',   g: 'eventos', pt: 'Espaço de eventos',        en: 'Event venue',                es: 'Salón de eventos',           osm: ['amenity', 'events_venue'] },
+  { id: 'festas',           g: 'eventos', pt: 'Festas e decoração',       en: 'Event planner',              es: 'Organización de eventos',    osmNome: 'festa/eventos/decoracao/event planner' },
+  { id: 'casamento',        g: 'eventos', pt: 'Casamento e cerimonial',   en: 'Wedding planner',            es: 'Bodas',                      osmNome: 'casamento/wedding/noiva/boda' },
+  { id: 'aluguel-equipamento', g: 'eventos', pt: 'Aluguel de equipamento',en: 'Party equipment rental',     es: 'Alquiler de equipos',        osmNome: 'locacao/rental/alquiler/aluguel' },
+
+  /* ---- lojas ---- */
+  { id: 'roupas',           g: 'varejo', pt: 'Loja de roupas',            en: 'Clothing store',             es: 'Tienda de ropa',             osm: ['shop', 'clothes'] },
+  { id: 'calcados',         g: 'varejo', pt: 'Calçados',                  en: 'Shoe store',                 es: 'Zapatería',                  osm: ['shop', 'shoes'] },
+  { id: 'joalheria',        g: 'varejo', pt: 'Joalheria',                 en: 'Jewelry store',              es: 'Joyería',                    osm: ['shop', 'jewelry'] },
+  { id: 'floricultura',     g: 'varejo', pt: 'Floricultura',              en: 'Florist',                    es: 'Floristería',                osm: ['shop', 'florist'] },
+  { id: 'papelaria',        g: 'varejo', pt: 'Papelaria',                 en: 'Stationery store',           es: 'Papelería',                  osm: ['shop', 'stationery'] },
+  { id: 'celular',          g: 'varejo', pt: 'Celular e assistência',     en: 'Phone repair shop',          es: 'Tienda de móviles',          osm: ['shop', 'mobile_phone'] },
+  { id: 'informatica',      g: 'varejo', pt: 'Informática',               en: 'Computer store',             es: 'Tienda de informática',      osm: ['shop', 'computer'] },
+  { id: 'bicicleta',        g: 'varejo', pt: 'Bicicletaria',              en: 'Bike shop',                  es: 'Tienda de bicicletas',       osm: ['shop', 'bicycle'] },
+  { id: 'esportes',         g: 'varejo', pt: 'Artigos esportivos',        en: 'Sporting goods store',       es: 'Tienda de deportes',         osm: ['shop', 'sports'] },
+  { id: 'colchoes',         g: 'varejo', pt: 'Colchões',                  en: 'Mattress store',             es: 'Tienda de colchones',        osm: ['shop', 'bed'] },
+  { id: 'decoracao',        g: 'varejo', pt: 'Decoração e utilidades',    en: 'Home decor store',           es: 'Tienda de decoración',       osm: ['shop', 'houseware'] },
+
+  /* ---- hospedagem e viagem ---- */
+  { id: 'hotel',            g: 'turismo', pt: 'Hotel',                    en: 'Hotel',                      es: 'Hotel',                      osm: ['tourism', 'hotel'] },
+  { id: 'pousada',          g: 'turismo', pt: 'Pousada',                  en: 'Inn and guest house',        es: 'Hostal',                     osm: ['tourism', 'guest_house'] },
+  { id: 'agencia-viagem',   g: 'turismo', pt: 'Agência de viagens',       en: 'Travel agency',              es: 'Agencia de viajes',          osm: ['shop', 'travel_agency'] },
 ];
 
 export const PAISES = [
@@ -168,39 +355,143 @@ const REDES = /(^|\.)(instagram\.com|facebook\.com|fb\.com|m\.me|linkedin\.com|w
 
 function classificar(n) {
   let site = n.site ? String(n.site).trim() : '';
-  let insta = n.insta || '';
+  let insta = n.insta || n.redes?.instagram || n.redes?.facebook || '';
+  let diretorio = '';
   if (site) {
     try {
       const host = new URL(/^https?:/i.test(site) ? site : 'https://' + site).hostname;
       if (REDES.test(host)) { insta = site; site = ''; }
+      // Ficha de Yelp ou páginas amarelas no campo "site" não é site:
+      // era daí que vinha negócio marcado como atendido sem ser.
+      else if (ehDiretorio(site)) { diretorio = site; site = ''; }
     } catch (e) { site = ''; }
   }
   n.site = site || undefined;
   n.insta = insta || undefined;
+  n.diretorio = diretorio || undefined;
   n.semSite = !site;
-  n.soRede = !site && Boolean(insta);
-  n.semNada = !site && !insta;
+  n.soRede = !site && Boolean(insta || diretorio);
+  n.semNada = !site && !insta && !diretorio;
   return n;
 }
 
-/* Quem não tem site é a venda mais fácil: começa em 70. Quem tem site
-   sobe com o movimento (avaliações) — já atende e fatura, então pode
-   pagar — e o diagnóstico do site, feito depois no navegador, ajusta. */
-function pontuar(n) {
+/* Pontuação com motivo. Cada sinal soma ou tira pontos e deixa
+   registrado o porquê, para o cartão mostrar de onde veio o número.
+   Antes era 70 fixo para quem não tinha site, e todo mundo empatava
+   em 72 quando a fonte não trazia avaliação. */
+export function pontuar(n) {
+  const porque = [];
+  const soma = (pontos, texto) => { porque.push({ pontos, texto }); return pontos; };
   const av = Number(n.avaliacoes) || 0;
   const nota = Number(n.nota) || 0;
-  if (n.semSite) {
-    let s = 70;
-    if (av >= 40) s += 6;
-    if (av >= 150) s += 6;
-    if (n.fone) s += 4;
-    if (nota >= 4.5) s += 3;
-    if (n.semNada) s += 2;
-    return Math.min(100, s);
+  let s = 40;
+
+  /* presença */
+  if (n.semNada) s += soma(26, 'Sem site e sem rede: a venda mais fácil, é criar do zero');
+  else if (n.diretorio) s += soma(22, 'O site do perfil é ficha de diretório (Yelp e parecidos), não é página própria');
+  else if (n.soRede) s += soma(18, 'Só rede social: quem chega pelo Google não tem onde cair');
+  else if (n.site) {
+    const d = n.diag;
+    if (d && d.nota != null) {
+      if (d.nota < 40) s += soma(20, `Site com nota ${d.nota}: mais atrapalha do que ajuda`);
+      else if (d.nota < 60) s += soma(12, `Site com nota ${d.nota}: dá para melhorar bastante`);
+      else if (d.nota < 80) s += soma(5, `Site razoável (nota ${d.nota})`);
+      else s += soma(-8, `Site bom (nota ${d.nota}): pouco a vender aqui`);
+    } else s += soma(4, 'Tem site, ainda não avaliado');
   }
-  let s = 29 + 4 * ((nota || 4.5) - 4.5) + Math.sqrt(av);
-  if (n.fone) s += 2;
-  return Math.max(15, Math.min(64, Math.round(s)));
+  if (n.verificado === 'nada') s += soma(4, 'Procurei na web e não achei site: confirmado');
+
+  /* dá para falar com a pessoa? o site costuma ter o que o mapa não tem */
+  const c = n.diag?.contatos || null;
+  const temZap = Boolean(n.whatsapp || c?.zaps?.length);
+  const temFone = Boolean(n.fone || c?.telefones?.length);
+  const temMail = Boolean(n.email || c?.emails?.length);
+  if (temZap) s += soma(6, 'Tem WhatsApp: abordagem direta');
+  else if (temFone) s += soma(4, 'Tem telefone');
+  else s += soma(-10, 'Sem telefone: difícil de alcançar');
+  if (temMail) s += soma(2, 'Tem e-mail');
+  if (c && (c.emails?.length || c.zaps?.length) && !n.fone) s += soma(3, 'O site tem contato que o mapa não trazia');
+
+  /* demanda comprovada */
+  if (av >= 150) s += soma(14, `${av} avaliações: movimento provado, orçamento existe`);
+  else if (av >= 50) s += soma(10, `${av} avaliações: já atende bem`);
+  else if (av >= 10) s += soma(5, `${av} avaliações`);
+  else if (av > 0) s += soma(1, `Só ${av} avaliações`);
+  if (nota && nota < 4) s += soma(5, `Nota ${nota}: reputação a recuperar, precisa de ajuda`);
+  else if (nota >= 4.7 && av >= 20) s += soma(3, `Nota ${nota}: serviço bom, faltando vitrine`);
+
+  /* perfil incompleto é sinal de abandono digital */
+  if (n.fonte === 'google') {
+    if (!n.horario) s += soma(3, 'Perfil do Google sem horário');
+    if (n.fotos === 0) s += soma(3, 'Perfil do Google sem fotos');
+    if (n.status && n.status !== 'OPERATIONAL') s += soma(-40, 'Consta como fechado no Google');
+  } else if (!n.horario) s += soma(1, 'Sem horário cadastrado');
+
+  /* porte, quando o site foi lido */
+  if (n.diag?.porte === 'grande') s += soma(4, 'Tem equipe: orçamento maior');
+  else if (n.diag?.porte === 'pequeno') s += soma(-3, 'Operação de uma pessoa: orçamento curto');
+
+  n.porque = porque;
+  return Math.max(5, Math.min(98, Math.round(s)));
+}
+
+/* ---------- perfil no Google: o que está bom, ruim ou falta ----------
+   Só afirma o que a fonte sabe. O OpenStreetMap não tem foto nem
+   avaliação, então esses itens ficam como "não dá para ver". */
+export function perfilGoogle(n) {
+  const itens = [];
+  const add = (item, estado, texto) => itens.push({ item, estado, texto });
+  const google = n.fonte === 'google';
+  const nome = String(n.nome || '');
+
+  if (!nome) add('Nome', 'falta', 'Sem nome cadastrado');
+  else if (nome === nome.toUpperCase() && nome.length > 6) add('Nome', 'ruim', 'Nome todo em maiúsculas: o Google penaliza e parece gritado');
+  else if (/[|]|melhor|top|nº ?1|n°1|#1|24h|promo/i.test(nome)) add('Nome', 'ruim', 'Nome com palavras a mais (o Google pode suspender por isso)');
+  else add('Nome', 'bom', 'Nome limpo, do jeito que o cliente procura');
+
+  if (n.tipo) add('Categoria', 'bom', `Categoria: ${n.tipo}`);
+  else add('Categoria', 'falta', 'Sem categoria: não aparece nas buscas do nicho');
+
+  if (n.end) add('Endereço', 'bom', 'Endereço completo');
+  else add('Endereço', 'falta', 'Sem endereço: não aparece no mapa de verdade');
+
+  if (n.whatsapp) add('Telefone', 'bom', 'WhatsApp cadastrado');
+  else if (n.fone) add('Telefone', 'bom', 'Telefone cadastrado');
+  else add('Telefone', 'falta', 'Sem telefone: o cliente não tem como ligar');
+
+  if (n.site && n.diag?.nota != null && n.diag.nota < 50) add('Site', 'ruim', `Site ligado ao perfil, mas ele está em ${n.diag.nota} de 100`);
+  else if (n.site) add('Site', 'bom', 'Site ligado ao perfil');
+  else if (n.diretorio) add('Site', 'ruim', 'O endereço do perfil leva a uma ficha de diretório, não a um site');
+  else if (n.achado?.site) add('Site', 'ruim', 'Existe site na web, mas o perfil não aponta pra ele');
+  else if (n.insta) add('Site', 'ruim', 'No lugar do site, uma rede social');
+  else add('Site', 'falta', 'Sem site: o botão "site" do Google fica vazio');
+
+  if (n.horario) add('Horário', 'bom', 'Horário de funcionamento preenchido');
+  else add('Horário', 'falta', google ? 'Sem horário: o Google mostra "horário não informado"' : 'Sem horário cadastrado');
+
+  if (google) {
+    const av = Number(n.avaliacoes) || 0, nota = Number(n.nota) || 0;
+    if (!av) add('Avaliações', 'falta', 'Nenhuma avaliação: sem prova social');
+    else if (av < 10) add('Avaliações', 'ruim', `Só ${av} avaliações`);
+    else if (nota < 4) add('Avaliações', 'ruim', `${av} avaliações com nota ${nota}: reputação a cuidar`);
+    else add('Avaliações', 'bom', `${av} avaliações, nota ${nota}`);
+
+    if (n.fotos === 0) add('Fotos', 'falta', 'Sem fotos: perfil parece abandonado');
+    else if (n.fotos < 5) add('Fotos', 'ruim', `Só ${n.fotos} fotos`);
+    else add('Fotos', 'bom', `${n.fotos} fotos`);
+
+    if (n.resumo) add('Descrição', 'bom', 'Tem descrição');
+    else add('Descrição', 'falta', 'Sem descrição do negócio');
+
+    if (n.status && n.status !== 'OPERATIONAL') add('Situação', 'ruim', 'Consta como fechado');
+  } else {
+    add('Avaliações', 'desconhecido', 'Avaliações e fotos não aparecem pelo OpenStreetMap; abra o Google para ver');
+  }
+
+  const faltas = itens.filter((i) => i.estado === 'falta').length;
+  const ruins = itens.filter((i) => i.estado === 'ruim').length;
+  const bons = itens.filter((i) => i.estado === 'bom').length;
+  return { itens, faltas, ruins, bons };
 }
 
 const chaveDe = (n) => (String(n.nome || '') + '|' + String(n.end || '')).toLowerCase().slice(0, 180);
@@ -208,6 +499,7 @@ const chaveDe = (n) => (String(n.nome || '') + '|' + String(n.end || '')).toLowe
 function fechar(lista, lugar, extra = {}) {
   const vistos = new Set();
   const limpa = [];
+  const ctx = { nicho: extra.nichoId || '', grupo: extra.grupo || '', nichoNome: extra.nichoNome || extra.termo || '', cidade: lugar };
   for (const n of lista) {
     if (!n.nome) continue;
     const k = chaveDe(n);
@@ -215,6 +507,8 @@ function fechar(lista, lugar, extra = {}) {
     vistos.add(k);
     classificar(n);
     n.score = pontuar(n);
+    n.perfil = perfilGoogle(n);
+    n.plano = plano(n, ctx);
     limpa.push(n);
   }
   limpa.sort((a, b) => b.score - a.score || (b.avaliacoes || 0) - (a.avaliacoes || 0));
@@ -234,7 +528,8 @@ const MASCARA = [
   'nextPageToken', 'places.id', 'places.displayName', 'places.formattedAddress',
   'places.nationalPhoneNumber', 'places.internationalPhoneNumber', 'places.websiteUri',
   'places.rating', 'places.userRatingCount', 'places.reviews', 'places.primaryTypeDisplayName',
-  'places.googleMapsUri',
+  'places.googleMapsUri', 'places.regularOpeningHours', 'places.businessStatus', 'places.photos',
+  'places.editorialSummary', 'places.types',
 ].join(',');
 
 // Caixa em graus a partir do raio em metros (1° de latitude ≈ 111 km).
@@ -278,6 +573,13 @@ async function buscarGoogle({ termo, lat, lon, raio, pais, paginas = 3 }) {
         avaliacoes: p.userRatingCount || undefined,
         opinioes: (p.reviews || []).map((r) => r.text?.text || r.originalText?.text || '').filter(Boolean).map((t) => t.slice(0, 280)).slice(0, 4),
         tipo: p.primaryTypeDisplayName?.text || undefined,
+        tipos: p.types || [],
+        horario: p.regularOpeningHours?.weekdayDescriptions?.length ? p.regularOpeningHours.weekdayDescriptions.join('; ') : undefined,
+        fotos: Array.isArray(p.photos) ? p.photos.length : 0,
+        status: p.businessStatus || undefined,
+        resumo: p.editorialSummary?.text || undefined,
+        redes: {},
+        fonte: 'google',
         maps: p.googleMapsUri || undefined,
       });
     }
@@ -287,9 +589,9 @@ async function buscarGoogle({ termo, lat, lon, raio, pais, paginas = 3 }) {
   return saida;
 }
 
-/* ---------- OpenStreetMap (Overpass) — sem chave ---------- */
+/* ---------- OpenStreetMap (Overpass), sem chave ---------- */
 
-/* O Overpass público limita por IP e devolve 429 quando está cheio —
+/* O Overpass público limita por IP e devolve 429 quando está cheio,
    o que acontece fácil com nicho escrito à mão, que vira busca por
    nome (bem mais pesada que a tag). Tenta o principal e, se ele
    recusar ou cair, os espelhos. Erro de consulta (400) não adianta
@@ -322,24 +624,29 @@ async function overpass(q) {
 
 /* Nicho escrito à mão vira busca por nome. Procurar em tudo que tem
    nome no raio (ruas, bairros, prédios) estoura o tempo do Overpass
-   em qualquer servidor — e cada estouro conta contra a cota, que é
+   em qualquer servidor, e cada estouro conta contra a cota, que é
    de onde vinha o 429. Então: só entre o que já é comércio ou serviço,
    numa caixa em vez de círculo, com o acento opcional ("estetica"
    acha "Estética"). */
 const ACENTOS = { a: 'aáàâã', e: 'eéê', i: 'ií', o: 'oóôõ', u: 'uúü', c: 'cç' };
 function regexNome(termo) {
-  return String(termo).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+  const uma = (t) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
     .replace(/[^a-z0-9 &'-]/g, '').trim()
     .replace(/[aeiouc]/g, (l) => '[' + ACENTOS[l] + ']');
+  // A barra separa sin\u00f4nimos: "calha/gutter" acha os dois.
+  return String(termo).split('/').map(uma).filter(Boolean).join('|');
 }
 const CHAVES_NEGOCIO = ['shop', 'office', 'amenity', 'craft', 'healthcare', 'leisure'];
 
 async function buscarOsm({ nicho, termo, lat, lon, raio }) {
   let q;
-  if (nicho?.osm) {
-    q = `[out:json][timeout:25];nwr["${nicho.osm[0]}"="${nicho.osm[1]}"](around:${Math.round(raio)},${lat},${lon});out center tags 120;`;
+  // O nicho pode trazer uma tag (['craft','roofer']) ou várias.
+  const tags = nicho?.osm ? (Array.isArray(nicho.osm[0]) ? nicho.osm : [nicho.osm]) : null;
+  if (tags) {
+    const dentro = tags.map(([k, v]) => `nwr["${k}"="${v}"](around:${Math.round(raio)},${lat},${lon});`).join('');
+    q = `[out:json][timeout:25];(${dentro});out center tags 120;`;
   } else {
-    const rx = regexNome(termo);
+    const rx = regexNome(nicho?.osmNome || termo);
     if (!rx) return [];
     const { low, high } = caixa(lat, lon, raio);
     const bbox = [low.latitude, low.longitude, high.latitude, high.longitude].map((n) => n.toFixed(4)).join(',');
@@ -353,18 +660,33 @@ async function buscarOsm({ nicho, termo, lat, lon, raio }) {
     const bairro = t['addr:suburb'] || t['addr:neighbourhood'] || t['addr:district'] || '';
     const cidade = t['addr:city'] || '';
     const end = [rua, bairro, cidade].filter(Boolean).join(' - ') || (t['addr:full'] || '');
-    const fone = t.phone || t['contact:phone'] || t['contact:whatsapp'] || t['contact:mobile'] || undefined;
+    const fone = t.phone || t['contact:phone'] || t['contact:mobile'] || undefined;
+    const whatsapp = t['contact:whatsapp'] || undefined;
     // O OSM guarda a rede ora como link, ora como arroba: vira link sempre.
     const rede = (v, base) => v ? (/^https?:/i.test(v) ? v : base + String(v).replace(/^@/, '').replace(/\/+$/, '') + '/') : undefined;
-    const insta = rede(t['contact:instagram'], 'https://www.instagram.com/') || rede(t['contact:facebook'], 'https://www.facebook.com/');
+    const redes = {
+      instagram: rede(t['contact:instagram'], 'https://www.instagram.com/'),
+      facebook: rede(t['contact:facebook'], 'https://www.facebook.com/'),
+      linkedin: rede(t['contact:linkedin'], 'https://www.linkedin.com/company/'),
+      youtube: rede(t['contact:youtube'], 'https://www.youtube.com/'),
+      tiktok: rede(t['contact:tiktok'], 'https://www.tiktok.com/@'),
+      x: rede(t['contact:twitter'] || t['contact:x'], 'https://x.com/'),
+    };
+    for (const k of Object.keys(redes)) if (!redes[k]) delete redes[k];
     return {
       nome: t.name || '',
       end,
       fone,
       foneIntl: fone ? fone.replace(/\D/g, '') : undefined,
-      site: t.website || t['contact:website'] || undefined,
-      insta,
-      tipo: t.cuisine || t.healthcare || t.shop || t.amenity || undefined,
+      whatsapp,
+      email: t.email || t['contact:email'] || undefined,
+      site: t.website || t['contact:website'] || t.url || undefined,
+      insta: redes.instagram || redes.facebook,
+      redes,
+      horario: t.opening_hours || undefined,
+      tipo: t.cuisine || t.healthcare || t.craft || t.shop || t.amenity || t.office || undefined,
+      // o que a fonte sabe dizer: serve pro diagnóstico do perfil não inventar
+      fonte: 'osm',
       maps: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((t.name || '') + ' ' + end)}`,
     };
   });
@@ -397,10 +719,13 @@ async function varrer(url) {
       const res = await Promise.allSettled(fatia.map(([nome, lat, lon]) => buscarEm(lat, lon, 12000, 1).then((l) => l.map((x) => ({ ...x, praca: nome })))));
       for (const r of res) if (r.status === 'fulfilled') partes.push(...r.value);
     }
-    return fechar(partes, 'Brasil · 10 capitais', { pracas: CAPITAIS.length, fonte, termo });
+    return fechar(partes, 'Brasil · 10 capitais', { pracas: CAPITAIS.length, fonte, termo, ...doNicho(nicho) });
   }
 
-  let lat = Number(p.get('lat')), lon = Number(p.get('lon'));
+  // Number(null) é zero, não NaN: sem esse cuidado, cidade digitada
+  // sem escolher da lista ia varrer o meio do Atlântico e voltar vazia.
+  const numero = (v) => (v == null || v === '' ? NaN : Number(v));
+  let lat = numero(p.get('lat')), lon = numero(p.get('lon'));
   let lugar = String(p.get('cidade') || '').trim();
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
     if (!lugar) return { erro: 'Informe a cidade.' };
@@ -412,8 +737,12 @@ async function varrer(url) {
   }
 
   const lista = await buscarEm(lat, lon, raio, 3);
-  return fechar(lista, lugar, { fonte, termo, lat, lon, raio });
+  return fechar(lista, lugar, { fonte, termo, lat, lon, raio, ...doNicho(nicho) });
 }
+
+/* O nicho escolhido viaja junto com o resultado: é dele que saem os
+   blocos do "o que recriar" e o texto da mensagem. */
+const doNicho = (nicho) => nicho ? { nichoId: nicho.id, grupo: nicho.g, nichoNome: nicho.pt } : {};
 
 /* ---------- mensagem com Claude ---------- */
 
@@ -675,9 +1004,10 @@ function limparLead(l) {
   return {
     chave: s(l.chave, 180), nome: s(l.nome, 120), endereco: s(l.endereco, 200), fone: s(l.fone, 40), foneIntl: s(l.foneIntl, 20),
     site: s(l.site, 300), insta: s(l.insta, 300), maps: s(l.maps, 400),
+    email: s(l.email, 120), whatsapp: s(l.whatsapp, 60),
     nota: Number(l.nota) || null, avaliacoes: Number(l.avaliacoes) || null, score: Number(l.score) || null,
     cidade: s(l.cidade, 80), pais: s(l.pais, 2) || 'br', origem: s(l.origem, 20) || 'mapa',
-    situacao: s(l.situacao, 60),
+    situacao: s(l.situacao, 60), entrega: s(l.entrega, 60),
   };
 }
 
@@ -729,7 +1059,8 @@ export function configuracao() {
     ia: Boolean(chaveClaude()),
     instagram: Boolean(chaveSerper()),
     pagespeedKey: chavePageSpeed(),
-    nichos: NICHOS.map(({ id, pt, en }) => ({ id, pt, en })),
+    nichos: NICHOS.map(({ id, g, pt, en }) => ({ id, g, pt, en })),
+    grupos: GRUPOS,
     paises: PAISES,
   };
 }
@@ -749,6 +1080,29 @@ export async function apiProspeccao(req, res, url, rota) {
     if (rota === 'buscar' && m === 'GET') {
       const d = await varrer(url);
       return json(res, d, d.erro ? 400 : 200);
+    }
+
+    if (rota === 'verificar' && m === 'GET') {
+      const nome = String(url.searchParams.get('nome') || '').trim().slice(0, 120);
+      if (nome.length < 3) return json(res, { erro: 'Informe o nome.' }, 400);
+      return json(res, await verificarSite({ nome, cidade: url.searchParams.get('cidade') || '', pais: url.searchParams.get('pais') || '' }));
+    }
+
+    if (rota === 'traduzir' && m === 'POST') {
+      const dado = await lerCorpoJson(req);
+      const d = await traduzir(dado.texto, dado.de || 'pt', dado.para || 'en');
+      return json(res, d, d.erro ? 502 : 200);
+    }
+
+    if (rota === 'pontuar' && m === 'POST') {
+      // o navegador reenvia o negócio com o diagnóstico do site e a
+      // verificação, e recebe a nota, os motivos, o perfil do Google
+      // e o plano do que recriar, tudo recalculado com o que já sabe
+      const dado = await lerCorpoJson(req);
+      const n = dado.negocio || dado;
+      const s = pontuar(n);
+      const p = perfilGoogle(n);
+      return json(res, { score: s, porque: n.porque || [], perfil: p, plano: plano({ ...n, perfil: p }, dado.ctx || {}) });
     }
 
     if (rota === 'site' && m === 'GET') {

@@ -1,8 +1,8 @@
 /* ============================================================
-   Prospecção — o comportamento da tela.
+   Prospecção: o comportamento da tela.
 
    Quatro abas, sem roteador: a aba ativa é um atributo no
-   <main>. O estado mora em variáveis soltas aqui em cima — é
+   <main>. O estado mora em variáveis soltas aqui em cima, é
    uma tela só, para uma pessoa só, e isso basta.
 
    Tudo que vem de fora (nome de negócio, endereço, bio, título
@@ -43,7 +43,7 @@ async function copiar(texto, msg = 'Copiado.') {
 }
 
 /* ---------- estado ---------- */
-let CONFIG = { mapas: 'osm', ia: false, instagram: false, pagespeedKey: '', nichos: [], paises: [] };
+let CONFIG = { mapas: 'osm', ia: false, instagram: false, pagespeedKey: '', nichos: [], grupos: [], paises: [] };
 let PERFIL = { nome: 'Samuel Freire', faz: 'sites', cidade: '', zap: '' };
 let RESULTADOS = [];          // negócios da última varredura
 let CTX = {};                 // { termo, nicho, cidade, pais, fonte }
@@ -52,7 +52,8 @@ let MODO = 'cidade';          // perto | cidade | brasil
 let CIDADE_SEL = null;        // { rotulo, lat, lon }
 let LEADS = [];
 const DIAG = {};              // índice → diagnóstico do site
-const MSG = {};               // índice → { texto, versao, ia }
+const MSG = {};               // índice → { texto, versao, ia, pt }
+const VERIF = {};             // índice → o que a busca na web achou
 let INSTA = [];
 let FILTRO_INSTA = 'vale';
 let FILTRO_LEADS = 'ativos';
@@ -78,7 +79,7 @@ $('#sair').onclick = async () => {
 };
 
 /* ============================================================
-   Perfil — quem assina
+   Perfil: quem assina
    ============================================================ */
 const dlgPerfil = $('#perfil');
 $('#perfil-abrir').onclick = () => {
@@ -103,14 +104,24 @@ $('#form-perfil').onsubmit = async (e) => {
 };
 
 /* ============================================================
-   Busca — "Quem está no mapa"
+   Busca: "Quem está no mapa"
    ============================================================ */
 const form = $('#form-busca');
 const inNicho = $('#nicho'), inTermo = $('#termo'), inPais = $('#pais'), inCidade = $('#cidade'), inRaio = $('#raio');
 const sugestoes = $('#sugestoes');
 
 function montarSelects() {
-  inNicho.innerHTML = CONFIG.nichos.map((n) => `<option value="${esc(n.id)}">${esc(n.pt)}</option>`).join('') + '<option value="outro">Outro nicho, eu escrevo</option>';
+  // Com mais de cem nichos, a lista solta vira rolagem sem fim:
+  // cada grupo vira um bloco com título.
+  const opcao = (n) => `<option value="${esc(n.id)}">${esc(n.pt)}</option>`;
+  const agrupados = new Set();
+  let html = (CONFIG.grupos || []).map(([g, rotulo]) => {
+    const dentro = CONFIG.nichos.filter((n) => n.g === g);
+    dentro.forEach((n) => agrupados.add(n.id));
+    return dentro.length ? `<optgroup label="${esc(rotulo)}">${dentro.map(opcao).join('')}</optgroup>` : '';
+  }).join('');
+  html += CONFIG.nichos.filter((n) => !agrupados.has(n.id)).map(opcao).join('');
+  inNicho.innerHTML = html + '<option value="outro">Outro nicho, eu escrevo</option>';
   inPais.innerHTML = CONFIG.paises.map(([c, n]) => `<option value="${esc(c)}">${esc(n)}</option>`).join('');
   inPais.value = 'br';
   $('#fonte-dados').innerHTML = CONFIG.mapas === 'google'
@@ -209,7 +220,7 @@ form.onsubmit = async (e) => {
   $('#varrer').disabled = true;
   try {
     const d = await api('/api/prospeccao/buscar?' + q.toString());
-    CTX = { termo: rotuloNicho, nicho, cidade: d.lugar?.nome || '', pais: inPais.value, fonte: d.fonte, quando: Date.now() };
+    CTX = { termo: rotuloNicho, nicho, grupo: d.grupo || '', nichoNome: d.nichoNome || rotuloNicho, cidade: d.lugar?.nome || '', pais: inPais.value, fonte: d.fonte, quando: Date.now() };
     receber(d);
     guardarBusca(d);
   } catch (x) {
@@ -223,6 +234,7 @@ function receber(d, rolar = true) {
   RESULTADOS = d.lista || [];
   Object.keys(DIAG).forEach((k) => delete DIAG[k]);
   Object.keys(MSG).forEach((k) => delete MSG[k]);
+  Object.keys(VERIF).forEach((k) => delete VERIF[k]);
   log(`localizado: <b>${esc(d.lugar?.nome || '')}</b>${d.pracas ? ' · ' + d.pracas + ' praças' : ''}`);
   log(`encontrados: <b>${d.total}</b> · <i>${d.semSite} sem site</i> · ${d.comFone} com telefone`);
   varreOn(false, RESULTADOS);
@@ -280,7 +292,7 @@ function digitar(el, texto) {
 }
 
 /* ============================================================
-   Radar — gira enquanto o servidor não responde; ao responder
+   Radar: gira enquanto o servidor não responde; ao responder
    para e desenha os pontos (vermelho = sem site)
    ============================================================ */
 const radar = $('#radar');
@@ -331,23 +343,81 @@ window.addEventListener('resize', debounce(desenharRadar, 120));
 /* ============================================================
    Lista de negócios
    ============================================================ */
-const TAG = (x) => x.semNada ? ['tag--fogo', 'sem site e sem rede'] : x.soRede ? ['tag--fogo', 'só Instagram/Facebook'] : ['tag--ambar', 'site pra avaliar'];
+/* ---------- ícones ----------
+   Desenho no próprio arquivo: sem fonte de ícone, sem pedido de
+   rede. Tudo herda a cor de quem está em volta (currentColor). */
+const ICO = {
+  fone: '<path d="M3 4.5C3 3.7 3.7 3 4.5 3h1.6c.6 0 1.1.4 1.3 1l.6 2c.1.5 0 1-.4 1.3l-1 .8a9 9 0 0 0 4 4l.8-1c.3-.4.8-.5 1.3-.4l2 .6c.6.2 1 .7 1 1.3v1.6c0 .8-.7 1.5-1.5 1.5A11.5 11.5 0 0 1 3 4.5Z"/>',
+  zap: '<path d="M8 13.5c3.3 0 6-2.3 6-5.2S11.3 3 8 3 2 5.3 2 8.3c0 1.2.5 2.3 1.3 3.2L2.6 14l2.8-.8c.8.2 1.7.3 2.6.3Z"/>',
+  email: '<path d="M2.5 4h11v8h-11z"/><path d="m2.8 4.5 5.2 4 5.2-4"/>',
+  site: '<circle cx="8" cy="8" r="5.5"/><path d="M2.5 8h11M8 2.5c1.6 1.7 2.4 3.5 2.4 5.5S9.6 12.3 8 13.5C6.4 12.3 5.6 10 5.6 8S6.4 4.2 8 2.5Z"/>',
+  rede: '<rect x="2.6" y="2.6" width="10.8" height="10.8" rx="3"/><circle cx="8" cy="8" r="2.4"/><circle cx="11.2" cy="4.8" r=".7" fill="currentColor" stroke="none"/>',
+  mapa: '<path d="M8 14s4.5-4.2 4.5-7.1A4.5 4.5 0 0 0 3.5 6.9C3.5 9.8 8 14 8 14Z"/><circle cx="8" cy="6.8" r="1.7"/>',
+  relogio: '<circle cx="8" cy="8" r="5.5"/><path d="M8 4.8v3.4l2.2 1.3"/>',
+  foto: '<rect x="2.5" y="3.5" width="11" height="9" rx="1.5"/><path d="m3.5 11 2.7-2.7 2.2 2.2 2-2 2.6 2.6"/><circle cx="6" cy="6.4" r="1"/>',
+  estrela: '<path d="m8 2.6 1.7 3.5 3.8.6-2.8 2.6.7 3.8L8 11.3l-3.4 1.8.7-3.8-2.8-2.6 3.8-.6Z"/>',
+  prova: '<path d="M6.2 4.6c-1.9 0-3.4 1.4-3.4 3.2s1.3 2.9 2.9 2.9c-.2 1-.9 1.8-2 2.3M13.4 4.6c-1.9 0-3.4 1.4-3.4 3.2s1.3 2.9 2.9 2.9c-.2 1-.9 1.8-2 2.3"/>',
+  alerta: '<path d="M8 2.6 14 13H2Z"/><path d="M8 6.4v3.1"/><circle cx="8" cy="11.3" r=".7" fill="currentColor" stroke="none"/>',
+  ok: '<path d="m3.2 8.4 3.2 3.2L12.8 5"/>',
+  falta: '<circle cx="8" cy="8" r="5.5" stroke-dasharray="2.4 2"/><path d="M5.6 8h4.8"/>',
+  mais: '<path d="M8 13V3.6M4.4 7.2 8 3.6l3.6 3.6"/>',
+  menos: '<path d="M8 3v9.4M4.4 8.8 8 12.4l3.6-3.6"/>',
+  busca: '<circle cx="7.2" cy="7.2" r="4.3"/><path d="m10.4 10.4 3.2 3.2"/>',
+  escudo: '<path d="m8 2.5 5 1.7v3.9c0 3-2.1 4.9-5 5.8-2.9-.9-5-2.8-5-5.8V4.2Z"/>',
+  lista: '<path d="M5.6 4.4h8M5.6 8h8M5.6 11.6h8"/><circle cx="3" cy="4.4" r=".8" fill="currentColor" stroke="none"/><circle cx="3" cy="8" r=".8" fill="currentColor" stroke="none"/><circle cx="3" cy="11.6" r=".8" fill="currentColor" stroke="none"/>',
+  agenda: '<rect x="2.5" y="3.4" width="11" height="10.1" rx="1.5"/><path d="M2.5 6.4h11M5.4 2.3v2.2M10.6 2.3v2.2"/>',
+  preco: '<path d="M7.6 2.6H13v5.4l-5.7 5.7a1.1 1.1 0 0 1-1.5 0L2.3 9.2a1.1 1.1 0 0 1 0-1.5Z"/><circle cx="10.4" cy="5.2" r=".9"/>',
+  orcamento: '<path d="M4 2.6h5l3.1 3.1v8.3H4Z"/><path d="M8.9 2.6v3.2h3.2M6 9h4M6 11.2h2.8"/>',
+  tela: '<rect x="2.4" y="3" width="11.2" height="8" rx="1.4"/><path d="M6 13.4h4M2.4 5.6h11.2"/>',
+  antes: '<rect x="2.5" y="3.5" width="11" height="9" rx="1.4"/><path d="M8 3.5v9"/><path d="M4.4 10.4 6 8.6l1.2 1.2M9 9.8l1.4-1.6 1.4 1.6"/>',
+  raio: '<path d="M9.2 2.4 4 9.1h3.3l-.7 4.5L12 6.9H8.6Z"/>',
+  google: '<circle cx="8" cy="8" r="5.5"/><path d="M8 8h3.7a3.7 3.7 0 1 1-1.1-2.6"/>',
+  conserto: '<path d="M10.6 2.6a3.6 3.6 0 0 0-3.2 5.1l-4.7 4.7 1.8 1.8 4.7-4.7a3.6 3.6 0 1 0 1.4-6.9Z"/>',
+  citacao: '<path d="M6.2 4.6c-1.9 0-3.4 1.4-3.4 3.2s1.3 2.9 2.9 2.9c-.2 1-.9 1.8-2 2.3M13.4 4.6c-1.9 0-3.4 1.4-3.4 3.2s1.3 2.9 2.9 2.9c-.2 1-.9 1.8-2 2.3"/>',
+  etiqueta: '<path d="M7.6 2.6H13v5.4l-5.7 5.7a1.1 1.1 0 0 1-1.5 0L2.3 9.2a1.1 1.1 0 0 1 0-1.5Z"/><circle cx="10.4" cy="5.2" r=".9"/>',
+  cardapio: '<path d="M3 3.2h3.6c.8 0 1.4.6 1.4 1.4v8.2a1.4 1.4 0 0 0-1.4-1.1H3ZM13 3.2H9.4c-.8 0-1.4.6-1.4 1.4v8.2a1.4 1.4 0 0 1 1.4-1.1H13Z"/>',
+  equipe: '<circle cx="6" cy="5.4" r="2.2"/><path d="M2.6 13c0-2 1.5-3.4 3.4-3.4S9.4 11 9.4 13M10.8 4.2a1.9 1.9 0 0 1 0 3.6M11.4 9.8c1.3.3 2 1.3 2 2.6"/>',
+  diretorio: '<rect x="2.5" y="2.6" width="11" height="10.8" rx="1.4"/><path d="M5.2 5.6h5.6M5.2 8h5.6M5.2 10.4h3.2"/>',
+};
+const ico = (nome, cls = '') => `<svg class="ico ${cls}" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">${ICO[nome] || ICO.lista}</svg>`;
+
+const TAG = (x) => x.semNada ? ['tag--fogo', 'sem site e sem rede']
+  : x.diretorio ? ['tag--fogo', 'só ficha de diretório']
+    : x.soRede ? ['tag--fogo', 'só rede social']
+      : ['tag--ambar', 'site pra avaliar'];
 const ROTULO = (x) => x.semSite ? 'criar do zero' : 'refazer o site';
 
-// Depois do diagnóstico, um site ruim vira oportunidade maior.
-function scoreDe(i) {
-  const x = RESULTADOS[i]; const d = DIAG[i];
-  if (x.semSite || !d || d.nota == null) return x.score;
-  return Math.min(100, x.score + (d.nota < 50 ? 18 : d.nota < 75 ? 8 : 0));
-}
+// A nota vem do servidor, com os motivos junto. Depois do
+// diagnóstico do site e da busca na web ela é recalculada lá.
+const scoreDe = (i) => Number(RESULTADOS[i]?.score) || 0;
 const faixaScore = (s) => s >= 70 ? 'alta' : s >= 45 ? 'media' : 'baixa';
+
+/* Manda o negócio de volta com o que o navegador descobriu e recebe
+   nota, motivos, perfil do Google e plano recalculados. */
+async function recalcular(i) {
+  const x = RESULTADOS[i];
+  try {
+    const d = await enviar('/api/prospeccao/pontuar', 'POST', {
+      negocio: { ...x, diag: DIAG[i] || null, achado: VERIF[i] || null, verificado: VERIF[i]?.estado || '' },
+      ctx: { nicho: CTX.nicho, grupo: CTX.grupo, cidade: CTX.cidade, nichoNome: CTX.nichoNome },
+    });
+    x.score = d.score; x.porque = d.porque || []; x.perfil = d.perfil || x.perfil; x.plano = d.plano || x.plano;
+  } catch (e) { /* fica com a nota da varredura */ }
+  atualizarScore(i);
+  pintarPorque(i);
+  pintarPerfil(i);
+  pintarPlano(i);
+}
+
+const capenga = (x) => ((x.perfil?.faltas || 0) + (x.perfil?.ruins || 0)) >= 3;
 
 function passaFiltro(i) {
   const x = RESULTADOS[i];
   if (FILTRO === 'sem') return x.semSite;
   if (FILTRO === 'com') return !x.semSite;
   if (FILTRO === 'quente') return scoreDe(i) >= 70;
-  if (FILTRO === 'fone') return Boolean(x.fone);
+  if (FILTRO === 'fone') return Boolean(x.fone || x.whatsapp || x.email);
+  if (FILTRO === 'perfil') return capenga(x);
   return true;
 }
 
@@ -355,7 +425,9 @@ function pintarKpis() {
   $('#k-total').textContent = num(RESULTADOS.length);
   $('#k-sem').textContent = num(RESULTADOS.filter((x) => x.semSite).length);
   $('#k-quentes').textContent = num(RESULTADOS.filter((_, i) => scoreDe(i) >= 70).length);
-  $('#k-fone').textContent = num(RESULTADOS.filter((x) => x.fone).length);
+  $('#k-fone').textContent = num(RESULTADOS.filter((x) => x.fone || x.whatsapp || x.email).length);
+  const el = $('#k-perfil');
+  if (el) el.textContent = num(RESULTADOS.filter(capenga).length);
 }
 
 $$('.filtros [data-filtro]').forEach((b) => {
@@ -369,6 +441,56 @@ function aplicarFiltro() {
   let visiveis = 0;
   $$('#cards .card').forEach((c) => { const ok = passaFiltro(Number(c.dataset.i)); c.hidden = !ok; if (ok) visiveis++; });
   $('#cards-vazio').hidden = visiveis > 0;
+}
+
+/* ---------- todas as formas de contato ----------
+   Junta o que veio do mapa, o que estava escrito no site e o que a
+   busca na web achou. Cada um diz de onde saiu, porque telefone de
+   site vale mais que telefone de ficha desatualizada. */
+const dominio = (u) => { try { return new URL(/^https?:/i.test(u) ? u : 'https://' + u).hostname.replace(/^www\./, ''); } catch (e) { return String(u || '').slice(0, 30); } };
+const NOME_REDE = { instagram: 'Instagram', facebook: 'Facebook', linkedin: 'LinkedIn', youtube: 'YouTube', tiktok: 'TikTok', x: 'X' };
+const ORIGEM = { mapa: 'do mapa', site: 'lido no site', web: 'achado na web' };
+
+function contatosDe(i) {
+  const x = RESULTADOS[i] || {};
+  const c = DIAG[i]?.contatos || {};
+  const v = VERIF[i] || {};
+  const saida = [];
+  const vistos = new Set();
+  const por = (tipo, rotulo, href, origem) => {
+    const k = tipo + '|' + String(href || rotulo).toLowerCase();
+    if (vistos.has(k) || !rotulo) return;
+    vistos.add(k);
+    saida.push({ tipo, rotulo, href, origem });
+  };
+  if (x.whatsapp) por('zap', x.whatsapp, 'https://wa.me/' + String(x.whatsapp).replace(/\D/g, ''), 'mapa');
+  if (x.fone) por('fone', x.fone, 'tel:' + (x.foneIntl ? '+' + x.foneIntl : x.fone), 'mapa');
+  (c.zaps || []).forEach((z) => por('zap', z, 'https://wa.me/' + z, 'site'));
+  (c.telefones || []).forEach((t) => por('fone', t, 'tel:' + t.replace(/[^\d+]/g, ''), 'site'));
+  if (x.email) por('email', x.email, 'mailto:' + x.email, 'mapa');
+  (c.emails || []).forEach((e) => por('email', e, 'mailto:' + e, 'site'));
+  if (x.site) por('site', dominio(x.site), x.site, 'mapa');
+  if (v.site && v.site !== x.site) por('site', dominio(v.site), v.site, 'web');
+  if (c.paginaContato) por('form', 'página de contato', c.paginaContato, 'site');
+  const redes = { ...(x.redes || {}), ...(c.redes || {}), ...(v.redes || {}) };
+  for (const [nome, url] of Object.entries(redes)) if (url) por('rede', NOME_REDE[nome] || nome, url, (x.redes || {})[nome] ? 'mapa' : (c.redes || {})[nome] ? 'site' : 'web');
+  if (!redes.instagram && !redes.facebook && x.insta) por('rede', dominio(x.insta), x.insta, 'mapa');
+  if (x.maps) por('mapa', 'ficha no Google', x.maps, 'mapa');
+  if (x.diretorio) por('diretorio', dominio(x.diretorio), x.diretorio, 'mapa');
+  (v.diretorios || []).forEach((d) => por('diretorio', d, 'https://' + d, 'web'));
+  (v.talvez || []).forEach((u) => por('talvez', 'pode ser: ' + dominio(u), u, 'web'));
+  return saida;
+}
+
+const ICONE_CANAL = { zap: 'zap', fone: 'fone', email: 'email', site: 'site', rede: 'rede', diretorio: 'diretorio', talvez: 'busca', form: 'orcamento', mapa: 'mapa' };
+
+/* No topo do cartão: só os ícones, pra bater o olho e saber se dá
+   pra falar com a pessoa. */
+function canais(i) {
+  const tipos = [...new Set(contatosDe(i).map((c) => c.tipo))].filter((t) => t !== 'mapa');
+  const rotulo = { zap: 'WhatsApp', fone: 'telefone', email: 'e-mail', site: 'site', rede: 'rede social', diretorio: 'ficha de diretório', form: 'formulário' };
+  if (!tipos.length) return '<span class="canal canal--nada">sem contato ainda</span>';
+  return tipos.map((t) => `<span class="canal" title="${esc(rotulo[t] || t)}">${ico(ICONE_CANAL[t] || 'lista')}${esc(rotulo[t] || t)}</span>`).join('');
 }
 
 function pintarCards() {
@@ -385,16 +507,18 @@ function pintarCards() {
           <div class="tags">
             <span class="tag ${cls}">${tag}</span>
             ${x.avaliacoes >= 150 ? '<span class="tag tag--verde">muito movimento</span>' : ''}
-            ${x.fone ? '<span class="tag">tem telefone</span>' : ''}
+            ${x.nota && x.nota < 4 ? '<span class="tag tag--ambar">nota baixa</span>' : ''}
+            ${capenga(x) ? '<span class="tag">perfil capenga</span>' : ''}
             ${x.praca ? '<span class="tag">' + esc(x.praca) + '</span>' : ''}
           </div>
           <h3 class="card__nome">${esc(x.nome)}</h3>
-          <p class="card__end">${esc(x.end || 'sem endereço')}</p>
+          <p class="card__end">${ico('mapa')}${esc(x.end || 'sem endereço')}</p>
           <p class="card__meta">
-            ${x.nota ? '<span>★ <b>' + esc(x.nota) + '</b> · ' + num(x.avaliacoes) + ' avaliações</span>' : '<span>sem avaliações</span>'}
-            ${x.fone ? '<span>' + esc(x.fone) + '</span>' : ''}
-            ${x.tipo ? '<span>' + esc(x.tipo) + '</span>' : ''}
+            ${x.nota ? '<span>' + ico('estrela') + '<b>' + esc(x.nota) + '</b> · ' + num(x.avaliacoes) + ' avaliações</span>' : '<span>' + ico('estrela') + 'sem avaliações</span>'}
+            ${x.tipo ? '<span>' + ico('lista') + esc(x.tipo) + '</span>' : ''}
+            ${x.horario ? '<span>' + ico('relogio') + 'tem horário</span>' : ''}
           </p>
+          <div class="canais" data-canais="${i}">${canais(i)}</div>
         </div>
         <div class="score" data-faixa="${faixaScore(s)}"><b>${s}</b><span>oportun.</span></div>
       </div>
@@ -420,38 +544,158 @@ function abrirCard(i, art) {
 function montarCorpo(i, art) {
   const x = RESULTADOS[i];
   const corpo = $('.card__corpo', art);
-  const idioma = idiomaDe(CTX.pais);
   corpo.innerHTML = `
-    <div class="diag" data-diag>
-      <p class="eyebrow">Diagnóstico do site</p>
-      <div data-diag-corpo><p class="diag__vazio">${x.site ? '<span class="girando"></span> lendo ' + esc(x.site) : x.soRede ? 'Não tem site, só ' + esc(x.insta) : 'Não tem site nem rede. Aqui é criar do zero.'}</p></div>
+    <div class="analise">
+      <section class="bloco-analise" data-porque></section>
+      <section class="bloco-analise" data-perfil></section>
+      <section class="bloco-analise diag" data-diag>
+        <p class="eyebrow">${ico('site')} O site</p>
+        <div data-diag-corpo><p class="diag__vazio">${x.site ? '<span class="girando"></span> lendo ' + esc(x.site) : x.diretorio ? 'O endereço do perfil é uma ficha em ' + esc(dominio(x.diretorio)) + ', não um site.' : x.soRede ? 'Não tem site, só ' + esc(dominio(x.insta || '')) + '.' : 'Não tem site nem rede no cadastro.'}</p></div>
+      </section>
+      <section class="bloco-analise" data-contatos></section>
       <div class="oque" data-oque></div>
     </div>
     <div class="msg">
-      <div class="msg__topo"><p class="eyebrow">Mensagem</p><span class="msg__versao" data-versao></span></div>
+      <div class="msg__topo"><p class="eyebrow">${ico('zap')} Mensagem</p><span class="msg__versao" data-versao></span></div>
       <textarea class="msg__texto" data-texto spellcheck="false"></textarea>
       <div class="msg__acoes">
         <button class="mini mini--ia" type="button" data-ia title="${CONFIG.ia ? 'Escreve uma mensagem nova com o Claude, usando as opiniões e o diagnóstico' : 'Defina ANTHROPIC_API_KEY na stack pra ligar'}" ${CONFIG.ia ? '' : 'disabled'}>Escrever com IA ✦</button>
         <button class="mini" type="button" data-trocar>Trocar versão ↻</button>
+        <button class="mini" type="button" data-traduzir title="Traduz o texto que está aí do português para o inglês">Traduzir pro inglês</button>
         <button class="mini" type="button" data-copiar>Copiar</button>
         <button class="mini" type="button" data-salvar>Salvar na minha lista</button>
-        ${x.fone ? (idioma === 'pt' ? `<a class="mini" data-zap target="_blank" rel="noopener" href="${esc(linkZap(x, CTX.pais))}">WhatsApp ↗</a>` : `<a class="mini" href="tel:${esc((x.foneIntl ? '+' + x.foneIntl : x.fone))}">Ligar ↗</a>`) : ''}
-        ${x.site ? `<a class="mini" target="_blank" rel="noopener" href="${esc(x.site)}">Abrir o site ↗</a>` : ''}
-        ${x.insta ? `<a class="mini" target="_blank" rel="noopener" href="${esc(x.insta)}">Rede ↗</a>` : ''}
-        <a class="mini" target="_blank" rel="noopener" href="${esc(x.maps || 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(x.nome + ' ' + (x.end || '')))}">Google ↗</a>
+        ${x.fone || x.whatsapp ? `<a class="mini" data-zap target="_blank" rel="noopener" href="${esc(linkZap(x, CTX.pais))}">WhatsApp ↗</a>` : ''}
+        ${x.fone ? `<a class="mini" href="tel:${esc((x.foneIntl ? '+' + x.foneIntl : x.fone))}">Ligar ↗</a>` : ''}
+        <a class="mini" target="_blank" rel="noopener" href="${esc(x.maps || 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(x.nome + ' ' + (x.end || '')))}">Ver no Google ↗</a>
       </div>
     </div>`;
 
   const ta = $('[data-texto]', corpo);
   ta.oninput = () => { if (MSG[i]) MSG[i].texto = ta.value; const a = $('[data-zap]', corpo); if (a) a.href = linkZap(x, CTX.pais, ta.value); };
   $('[data-trocar]', corpo).onclick = () => { gerarMensagem(i, ((MSG[i]?.versao || 0) % 4) + 1); };
+  $('[data-traduzir]', corpo).onclick = (e) => traduzirMensagem(i, e.currentTarget);
   $('[data-copiar]', corpo).onclick = () => copiar(ta.value, 'Mensagem copiada.');
   $('[data-salvar]', corpo).onclick = (e) => salvarLead(leadDe(x, i), e.currentTarget);
   $('[data-ia]', corpo).onclick = (e) => escreverComIa(i, e.currentTarget);
 
   gerarMensagem(i, 1);
+  pintarPorque(i);
+  pintarPerfil(i);
+  pintarContatos(i);
+  pintarPlano(i);
   if (x.site) diagnosticar(i);
-  else pintarOque(i);
+}
+
+/* ---------- de onde vem a nota ---------- */
+function pintarPorque(i) {
+  const x = RESULTADOS[i];
+  const el = $(`#cards .card[data-i="${i}"] [data-porque]`);
+  if (!el) return;
+  const lista = x.porque || [];
+  const s = scoreDe(i);
+  el.innerHTML = `
+    <p class="eyebrow">${ico('mais')} Por que ${s} de oportunidade</p>
+    ${lista.length
+      ? '<ul class="motivos">' + lista.map((p) => `<li class="motivo motivo--${p.pontos >= 0 ? 'soma' : 'tira'}">${ico(p.pontos >= 0 ? 'mais' : 'menos')}<span>${esc(p.texto)}</span><b>${p.pontos >= 0 ? '+' : ''}${p.pontos}</b></li>`).join('') + '</ul>'
+      : '<p class="diag__vazio">Nota da varredura, sem detalhe. Abra o diagnóstico do site pra recalcular.</p>'}`;
+}
+
+/* ---------- perfil no Google ---------- */
+const ICONE_ESTADO = { bom: 'ok', ruim: 'alerta', falta: 'falta', desconhecido: 'busca' };
+function pintarPerfil(i) {
+  const x = RESULTADOS[i];
+  const el = $(`#cards .card[data-i="${i}"] [data-perfil]`);
+  if (!el) return;
+  const p = x.perfil;
+  if (!p?.itens?.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <p class="eyebrow">${ico('google')} Perfil no Google · <b>${p.bons}</b> ok, <b>${p.ruins}</b> a melhorar, <b>${p.faltas}</b> faltando</p>
+    <ul class="perfil">
+      ${p.itens.map((it) => `<li class="perfil__item" data-estado="${esc(it.estado)}">${ico(ICONE_ESTADO[it.estado] || 'falta')}<span><b>${esc(it.item)}</b> ${esc(it.texto)}</span></li>`).join('')}
+    </ul>
+    ${CTX.fonte === 'osm' ? '<p class="nota-fonte">Fonte OpenStreetMap: foto e avaliação não aparecem aqui. Abra a ficha no Google pra conferir esses dois.</p>' : ''}`;
+}
+
+/* ---------- contatos e busca na web ---------- */
+function pintarContatos(i) {
+  const x = RESULTADOS[i];
+  const el = $(`#cards .card[data-i="${i}"] [data-contatos]`);
+  if (!el) return;
+  const lista = contatosDe(i);
+  const v = VERIF[i];
+  el.innerHTML = `
+    <p class="eyebrow">${ico('fone')} Como falar com eles</p>
+    ${lista.length ? `<ul class="contatos">${lista.map((c) => `
+      <li class="contato contato--${esc(c.tipo)}">
+        ${ico(ICONE_CANAL[c.tipo] || 'lista')}
+        ${c.href ? `<a href="${esc(c.href)}" target="_blank" rel="noopener">${esc(c.rotulo)}</a>` : `<span>${esc(c.rotulo)}</span>`}
+        <em>${esc(ORIGEM[c.origem] || '')}</em>
+        <button class="mini mini--nu" type="button" data-copia="${esc(c.rotulo)}" title="Copiar">copiar</button>
+      </li>`).join('')}</ul>` : '<p class="diag__vazio">Nenhum contato no cadastro.</p>'}
+    <div class="diag__acoes">
+      <button class="mini" type="button" data-web>${v ? 'Procurar na web de novo' : 'Procurar site e contatos na web'}</button>
+      ${v ? `<span class="tag ${v.estado === 'site' ? 'tag--verde' : v.estado === 'rede' ? 'tag--ambar' : 'tag--fogo'}">${esc(recadoVerif(v))}</span>` : ''}
+    </div>`;
+  $$('[data-copia]', el).forEach((b) => { b.onclick = () => copiar(b.dataset.copia, 'Copiado.'); });
+  $('[data-web]', el).onclick = (e) => verificarNaWeb(i, e.currentTarget);
+}
+
+function recadoVerif(v) {
+  if (v.estado === 'site') return `site achado (confiança ${v.confianca === 'alta' ? 'alta' : 'média'})`;
+  if (v.estado === 'rede') return 'só redes sociais na web';
+  if (v.estado === 'bloqueado') return 'a busca barrou agora';
+  if (v.estado === 'erro') return 'a busca não respondeu';
+  if (v.talvez?.length) return `nenhum site próprio; ${v.talvez.length} página(s) a conferir na mão`;
+  return 'confirmado: nenhum site';
+}
+
+/* A lista inteira é redesenhada quando um negócio muda de situação;
+   este aqui volta aberto, senão some debaixo do dedo de quem clicou. */
+function reabrirCartao(i) {
+  pintarCards();
+  const art = $(`#cards .card[data-i="${i}"]`);
+  if (!art) return;
+  art.classList.add('aberto');
+  const corpo = $('.card__corpo', art);
+  corpo.hidden = false; corpo.dataset.pronto = '1';
+  $('.card__topo', art).setAttribute('aria-expanded', 'true');
+  montarCorpo(i, art);
+  // Com site, quem recalcula é o diagnóstico que montarCorpo dispara.
+  if (!RESULTADOS[i].site) recalcular(i);
+}
+
+/* Procura o negócio na web pra confirmar o "sem site" e pescar
+   contato que o mapa não tinha. */
+async function verificarNaWeb(i, btn) {
+  const x = RESULTADOS[i];
+  const antes = btn.textContent;
+  btn.disabled = true; btn.innerHTML = '<span class="girando"></span> procurando…';
+  try {
+    const q = new URLSearchParams({ nome: x.nome, cidade: x.praca || CTX.cidade || '', pais: CTX.pais || '' });
+    const v = await api('/api/prospeccao/verificar?' + q.toString());
+    VERIF[i] = v;
+    if (v.erro) throw new Error(v.erro);
+    if (v.estado === 'site' && v.site && !x.site) {
+      // Achou site: o negócio deixa de ser "sem site" e passa pelo
+      // diagnóstico, igualzinho a quem já veio com site.
+      x.site = v.site; x.semSite = false; x.soRede = false; x.semNada = false;
+      avisar(`${x.nome}: achei ${dominio(v.site)}.`);
+      return reabrirCartao(i);
+    }
+    const rede = v.redes?.instagram || v.redes?.facebook || '';
+    if (rede && !x.insta) {
+      // Não tem site, mas tem rede: sai do "sem nada" e a abordagem muda.
+      x.insta = rede; x.semNada = false; x.soRede = true;
+      avisar(`${x.nome}: sem site, mas achei ${dominio(rede)}.`);
+      return reabrirCartao(i);
+    }
+    if (v.estado === 'bloqueado' || v.estado === 'erro') avisar(v.motivo || 'A busca não respondeu.', 'erro');
+    pintarContatos(i);
+    recalcular(i);
+  } catch (e) {
+    avisar('Não consegui procurar: ' + e.message, 'erro');
+    btn.disabled = false; btn.textContent = antes;
+  }
 }
 
 /* ---------- diagnóstico rápido + análise profunda ---------- */
@@ -465,23 +709,33 @@ async function diagnosticar(i) {
     DIAG[i] = { nota: null, problemas: [{ chave: 'erro', peso: 0, texto: 'Não consegui ler: ' + e.message }], bons: [] };
   }
   pintarDiag(i);
-  atualizarScore(i);
+  pintarContatos(i);
+  await recalcular(i);
   if (MSG[i] && !MSG[i].ia) gerarMensagem(i, MSG[i].versao);
 }
+
+/* O que a página tem, pra não prometer o que já existe. */
+const RECURSOS = [
+  ['depoimentos', 'depoimentos'], ['galeria', 'galeria de trabalhos'], ['precos', 'preço na página'],
+  ['formulario', 'formulário'], ['whatsapp', 'WhatsApp'], ['agendamento', 'agendamento'],
+  ['mapa', 'mapa'], ['faq', 'perguntas frequentes'],
+];
 
 function pintarDiag(i) {
   const d = DIAG[i]; const el = elDiag(i); if (!el || !d) return;
   const faixa = d.nota == null ? '' : d.nota >= 75 ? 'bom' : d.nota >= 50 ? 'medio' : 'ruim';
   const porte = { pequeno: 'operação enxuta', medio: 'porte médio', grande: 'tem equipe' }[d.porte] || '';
   const sinais = (d.porte === 'grande' ? d.sinaisGrande : d.sinaisPequeno) || [];
+  const r = d.recursos;
   el.innerHTML = `
     <div class="diag__topo">
       <span class="diag__nota" data-faixa="${faixa}">${d.nota == null ? '-' : d.nota}</span>
       <span class="diag__meta">${d.nota == null ? '' : 'de 100'}${d.ms ? ' · abriu em ' + (d.ms / 1000).toFixed(1) + ' s' : ''}${d.kb ? ' · ' + d.kb + ' KB' : ''}${d.titulo ? ' · “' + esc(d.titulo.slice(0, 50)) + '”' : ''}</span>
     </div>
-    ${d.problemas?.length ? '<ul>' + d.problemas.map((p) => '<li>' + esc(p.texto) + '</li>').join('') + '</ul>' : '<p class="diag__vazio">Nenhum problema grosseiro no primeiro olhar.</p>'}
-    ${d.bons?.length ? '<ul>' + d.bons.map((b) => '<li class="bom">' + esc(b) + '</li>').join('') + '</ul>' : ''}
-    ${porte ? '<p class="diag__porte">Porte: <b>' + porte + '</b>' + (sinais.length ? ' <span class="diag__sinais">· ' + esc(sinais.join(' · ')) + '</span>' : '') + '</p>' : ''}
+    ${d.problemas?.length ? '<ul>' + d.problemas.map((p) => '<li class="com-ico">' + ico('alerta') + esc(p.texto) + '</li>').join('') + '</ul>' : '<p class="diag__vazio">Nenhum problema grosseiro no primeiro olhar.</p>'}
+    ${d.bons?.length ? '<ul>' + d.bons.map((b) => '<li class="bom com-ico">' + ico('ok') + esc(b) + '</li>').join('') + '</ul>' : ''}
+    ${r ? '<div class="recursos">' + RECURSOS.map(([k, rot]) => `<span class="recurso" data-tem="${r[k] ? '1' : '0'}">${ico(r[k] ? 'ok' : 'falta')}${esc(rot)}</span>`).join('') + '</div>' : ''}
+    ${porte ? '<p class="diag__porte">' + ico('equipe') + 'Porte: <b>' + porte + '</b>' + (sinais.length ? ' <span class="diag__sinais">· ' + esc(sinais.join(' · ')) + '</span>' : '') + '</p>' : ''}
     <div class="diag__acoes">
       ${d.profunda ? '<span class="tag tag--verde">análise profunda feita</span>' : '<button class="mini" type="button" data-profunda>Análise profunda com o Google ↗</button>'}
     </div>
@@ -499,7 +753,7 @@ function atualizarScore(i) {
   aplicarFiltro();
 }
 
-/* PageSpeed sai direto do navegador: o Google leva 20–40 s e não
+/* PageSpeed sai direto do navegador: o Google leva de 20 a 40 s e não
    vale segurar o servidor esse tempo. Regras viram problemas com peso. */
 async function analiseProfunda(i) {
   const x = RESULTADOS[i]; const el = elDiag(i); if (!el) return;
@@ -548,8 +802,7 @@ async function analiseProfunda(i) {
     if (seo >= 80) bons.push(`Nota ${seo} de 100 pro Google`);
     DIAG[i] = { ...antigo, problemas, bons, nota: Math.max(0, Math.min(100, 100 - problemas.reduce((s, p) => s + p.peso, 0))), profunda: true, perf, seo };
     pintarDiag(i);
-    atualizarScore(i);
-    pintarOque(i);
+    await recalcular(i);
     if (MSG[i] && !MSG[i].ia) gerarMensagem(i, MSG[i].versao);
     avisar('Análise profunda concluída.');
   } catch (e) {
@@ -559,11 +812,10 @@ async function analiseProfunda(i) {
 }
 
 /* ============================================================
-   Mensagens — templates locais (sem custo)
+   Mensagens: templates locais (sem custo)
    Estrutura: o que eu vi → o que isso custa → o que eu já fiz
    → fecho sem pedir permissão.
    ============================================================ */
-const idiomaDe = (pais) => (!pais || pais === 'br' || pais === 'pt') ? 'pt' : 'en';
 const primeiroNome = () => (PERFIL.nome || 'Samuel').trim().split(/\s+/)[0];
 
 function sc() {
@@ -593,12 +845,6 @@ function rep(x) {
   if (av >= 40) return `${num(av)} avaliações`;
   return '';
 }
-function repEn(x) {
-  const av = Number(x.avaliacoes) || 0, n = Number(x.nota) || 0;
-  if (n >= 4.5 && av >= 100) return `${av} reviews averaging ${n}`;
-  if (av >= 40) return `${av} reviews`;
-  return '';
-}
 const humano = (p) => p.texto.charAt(0).toLowerCase() + p.texto.slice(1).replace(/\s*(?:[—–]|\.\s).*$/, '').replace(/\s*\([^)]*\)/g, '');
 function defeitos(i, n) {
   const d = DIAG[i];
@@ -607,72 +853,128 @@ function defeitos(i, n) {
   return lista.join(', e ');
 }
 const solto = () => ['Sem compromisso nenhum.', 'Se não fizer sentido, é só ignorar.', 'Você vê e me diz o que achou.'][Math.floor(Math.random() * 3)];
-const soltoEn = () => ['No strings attached.', "If it's not useful, just ignore it.", 'Have a look and tell me what you think.'][Math.floor(Math.random() * 3)];
 const assina = () => `\n\n${primeiroNome()}`;
-const fazEn = () => ({ sites: 'websites', 'páginas': 'landing pages', 'sites e sistemas': 'websites and web apps', 'identidade visual': 'brand identity', design: 'design' }[PERFIL.faz] || 'websites');
 const euCid = () => PERFIL.cidade ? ` aqui de ${PERFIL.cidade}` : '';
 
+/* Personalização: o que sai do plano e do perfil entra na mensagem,
+   senão o negócio recebe o mesmo texto que o vizinho. */
+const citado = (i) => (RESULTADOS[i]?.plano?.destaques?.termos || []).slice(0, 2).join(' e ');
+const elogioDe = (i) => {
+  const e = RESULTADOS[i]?.plano?.destaques?.elogio || '';
+  return e && e.length <= 120 ? e : '';
+};
+function faltaNoPerfil(i) {
+  const itens = RESULTADOS[i]?.perfil?.itens || [];
+  const f = itens.filter((x) => x.estado === 'falta').map((x) => x.item.toLowerCase());
+  return f.slice(0, 2).join(' e ');
+}
+function entrega(i) {
+  const itens = RESULTADOS[i]?.plano?.itens || [];
+  const bom = itens.find((x) => !['tela', 'busca', 'google', 'conserto', 'alerta'].includes(x.icone));
+  return bom ? bom.titulo.toLowerCase() : '';
+}
+
+/* Os modelos são todos em português, inclusive para lead de fora.
+   A gente escreve e ajusta na nossa língua e, na hora de mandar,
+   o botão traduz pro inglês. */
 const T = {
   SEM_NADA: [
     (x, i) => `${sc()} Sou ${primeiroNome()}, faço ${PERFIL.faz}${euCid()}. Procurei ${curto(x.nome)} no Google${noBairro(x)} e só achei a ficha do Maps${rep(x) ? ' (' + rep(x) + ')' : ''}, nenhum site, nenhuma rede. Quem chega por indicação tenta confirmar antes de ligar e não tem pra onde ir; boa parte fecha a aba e liga pro que tem página. Montei uma página de uma dobra com o essencial de vocês pra você ver como ficaria. Te mando o link ainda hoje. ${solto()}${assina()}`,
-    (x, i) => `${sc()} Aqui é ${primeiroNome()}, ${PERFIL.faz}${euCid()}. Vi que ${curto(x.nome)}${noBairro(x)} vive de indicação${rep(x) ? ', e as ' + rep(x) + ' mostram que funciona' : ''}. Só que indicação tem teto: ela chega até onde a memória dos clientes alcança. Quem procura no Google não encontra vocês, encontra o concorrente. Já deixei pronta uma página simples, com as avaliações em destaque e botão de WhatsApp. Te mando pra você olhar. ${solto()}${assina()}`,
-    (x, i) => `${sc()} Sou ${primeiroNome()}, faço ${PERFIL.faz}. Pesquisei ${curto(x.nome)}${noBairro(x)} e reparei que não há site nem rede, só o endereço. Quando o cliente não vê nada, ele não tem como comparar qualidade; sobra o preço, e aí quem cobra menos leva. Fiz uma primeira tela mostrando o que diferencia vocês${rep(x) ? ' (as ' + rep(x) + ' já contam metade da história)' : ''}. Te envio hoje. ${solto()}${assina()}`,
-    (x, i) => `${sc()} ${primeiroNome()} aqui, ${PERFIL.faz}${euCid()}. Achei ${curto(x.nome)} no Maps${noBairro(x)}, sem site. Quem pesquisa no celular decide em menos de um minuto: abre dois ou três, escolhe o que passa mais confiança e chama. Sem página, vocês nem entram na comparação. Preparei uma versão de uma dobra pra vocês entrarem nela. Te mando o link ainda hoje. ${solto()}${assina()}`,
+    (x, i) => `${sc()} Aqui é ${primeiroNome()}, ${PERFIL.faz}${euCid()}. Vi que ${curto(x.nome)}${noBairro(x)} vive de indicação${rep(x) ? ', e as ' + rep(x) + ' mostram que funciona' : ''}.${citado(i) ? ` Nas opiniões, o que mais aparece é ${citado(i)}.` : ''} Só que indicação tem teto: ela chega até onde a memória dos clientes alcança. Quem procura no Google não encontra vocês, encontra o concorrente. Já deixei pronta uma página simples, com as avaliações em destaque e botão de WhatsApp. Te mando pra você olhar. ${solto()}${assina()}`,
+    (x, i) => `${sc()} Sou ${primeiroNome()}, faço ${PERFIL.faz}. Pesquisei ${curto(x.nome)}${noBairro(x)} e reparei que não há site nem rede, só o endereço${faltaNoPerfil(i) ? `, e a ficha do Google está sem ${faltaNoPerfil(i)}` : ''}. Quando o cliente não vê nada, ele não tem como comparar qualidade; sobra o preço, e aí quem cobra menos leva. Fiz uma primeira tela mostrando o que diferencia vocês${rep(x) ? ' (as ' + rep(x) + ' já contam metade da história)' : ''}. Te envio hoje. ${solto()}${assina()}`,
+    (x, i) => `${sc()} ${primeiroNome()} aqui, ${PERFIL.faz}${euCid()}.${elogioDe(i) ? ` Li as opiniões de ${curto(x.nome)} no Google e uma delas diz: "${elogioDe(i)}".` : ` Achei ${curto(x.nome)} no Maps${noBairro(x)}, sem site.`} Isso está preso dentro do Google, e quem pesquisa no celular decide em menos de um minuto: abre dois ou três, escolhe o que passa mais confiança e chama. Preparei uma página de uma dobra${entrega(i) ? ' com ' + entrega(i) : ''} pra vocês entrarem nessa comparação. Te mando o link ainda hoje. ${solto()}${assina()}`,
   ],
   SO_REDE: [
-    (x, i) => `${sc()} Sou ${primeiroNome()}, faço ${PERFIL.faz}${euCid()}. Vi que ${curto(x.nome)}${noBairro(x)} atende pelo Instagram, e o perfil está bem cuidado${rep(x) ? ', ' + rep(x) + ' no Google' : ''}. O problema é que o direct fecha quando o expediente fecha: quem chama à noite espera até o dia seguinte e, nesse meio-tempo, fala com outro. Montei uma página de uma dobra que responde as três perguntas de sempre e manda pro WhatsApp. Te envio hoje. ${solto()}${assina()}`,
-    (x, i) => `${sc()} Aqui é ${primeiroNome()}, ${PERFIL.faz}. Achei ${curto(x.nome)} no Google${noBairro(x)} e o único endereço é o Instagram. Post some do feed em dois dias; página fica. Quem chega pelo Google hoje cai num perfil e precisa adivinhar o que vocês fazem, quanto custa e como chamar. Deixei pronta uma página que resolve isso numa tela. Te mando o link. ${solto()}${assina()}`,
-    (x, i) => `${sc()} Sou ${primeiroNome()}, ${PERFIL.faz}${euCid()}. Vi ${curto(x.nome)}${noBairro(x)} pelo Instagram${rep(x) ? ', ' + rep(x) + ' no Google, então o movimento é real' : ''}. Aposto que o direct repete a mesma conversa dez vezes por dia: horário, endereço, valor, "como funciona". Uma página responde isso antes de o cliente chamar, e o direct fica só pra quem já quer marcar. Já fiz uma primeira versão. Te mando hoje. ${solto()}${assina()}`,
+    (x, i) => `${sc()} Sou ${primeiroNome()}, faço ${PERFIL.faz}${euCid()}. Vi que ${curto(x.nome)}${noBairro(x)} atende pela rede social, e o perfil está bem cuidado${rep(x) ? ', ' + rep(x) + ' no Google' : ''}. O problema é que o direct fecha quando o expediente fecha: quem chama à noite espera até o dia seguinte e, nesse meio-tempo, fala com outro. Montei uma página de uma dobra que responde as três perguntas de sempre e manda pro WhatsApp. Te envio hoje. ${solto()}${assina()}`,
+    (x, i) => `${sc()} Aqui é ${primeiroNome()}, ${PERFIL.faz}. Achei ${curto(x.nome)} no Google${noBairro(x)} e o único endereço é a rede social. Post some do feed em dois dias; página fica. Quem chega pelo Google hoje cai num perfil e precisa adivinhar o que vocês fazem, quanto custa e como chamar. Deixei pronta uma página que resolve isso numa tela${entrega(i) ? ', com ' + entrega(i) : ''}. Te mando o link. ${solto()}${assina()}`,
+    (x, i) => `${sc()} Sou ${primeiroNome()}, ${PERFIL.faz}${euCid()}. Vi ${curto(x.nome)}${noBairro(x)} pelo perfil${rep(x) ? ', ' + rep(x) + ' no Google, então o movimento é real' : ''}.${citado(i) ? ` As opiniões citam ${citado(i)}, que é justamente o que não dá pra ver num feed.` : ''} Aposto que o direct repete a mesma conversa dez vezes por dia: horário, endereço, valor, "como funciona". Uma página responde isso antes de o cliente chamar, e o direct fica só pra quem já quer marcar. Já fiz uma primeira versão. Te mando hoje. ${solto()}${assina()}`,
     (x, i) => `${sc()} ${primeiroNome()} aqui, faço ${PERFIL.faz}. Passei pelo perfil de ${curto(x.nome)}${noBairro(x)}: pra entender o que vocês fazem e pra quem, precisei rolar uns quinze posts. Cliente novo não rola quinze posts: fecha e vai pro próximo. Montei uma página de captura pra bio: o que faz, pra quem, prova e botão. Te envio o link ainda hoje. ${solto()}${assina()}`,
+  ],
+  DIRETORIO: [
+    (x, i) => `${sc()} Sou ${primeiroNome()}, faço ${PERFIL.faz}${euCid()}. Cliquei no site de ${curto(x.nome)}${noBairro(x)} pelo Google e ele não leva a uma página de vocês: leva a uma ficha de diretório, com anúncio de concorrente do lado. Quem chegou procurando vocês sai comparando com outros três. Montei uma página própria, com as avaliações em destaque e contato direto. Te mando o link hoje. ${solto()}${assina()}`,
+    (x, i) => `${sc()} Aqui é ${primeiroNome()}, ${PERFIL.faz}. O endereço que aparece como site de ${curto(x.nome)} é um perfil de listagem, não uma página de vocês${rep(x) ? `, e vocês têm ${rep(x)} pra mostrar` : ''}. Ali você não escolhe a foto, não escreve a chamada e divide a tela com quem paga mais. Fiz uma primeira tela só de vocês pra você comparar. Te envio ainda hoje. ${solto()}${assina()}`,
+    (x, i) => `${sc()} Sou ${primeiroNome()}, ${PERFIL.faz}${euCid()}. Procurei ${curto(x.nome)}${noBairro(x)} e caí num diretório.${citado(i) ? ` As opiniões falam de ${citado(i)}, e nada disso aparece por lá.` : ''} Uma página própria custa menos que um mês de anúncio nesses sites e não some se eles mudarem a regra. Já preparei a primeira versão${entrega(i) ? ', com ' + entrega(i) : ''}. Te mando pra você olhar. ${solto()}${assina()}`,
   ],
   COM_SITE: [
     (x, i) => `${sc()} Sou ${primeiroNome()}, faço ${PERFIL.faz}${euCid()}. Abri o site de ${curto(x.nome)}${noBairro(x)} pelo celular e ele trabalha contra vocês: ${defeitos(i, 2) || 'demora pra abrir e não tem um botão de contato claro'}. Cada cliente que chega por indicação passa por ele antes de chamar, e alguns desistem ali. Refiz a primeira tela resolvendo isso. Te mando o link hoje pra você comparar lado a lado. ${solto()}${assina()}`,
-    (x, i) => `${sc()} Aqui é ${primeiroNome()}, ${PERFIL.faz}. ${rep(x) ? 'Vocês têm ' + rep(x) + ' no Google' : 'Vocês têm avaliações no Google'}, e o site de ${curto(x.nome)} não mostra nenhuma. É a prova mais forte que vocês têm, escondida do lugar onde o cliente decide. Montei uma primeira tela com as avaliações em destaque e o WhatsApp a um toque. Te envio ainda hoje. ${solto()}${assina()}`,
-    (x, i) => `${sc()} Sou ${primeiroNome()}, faço ${PERFIL.faz}${euCid()}. Passei pelo site de ${curto(x.nome)}${noBairro(x)} e tem um detalhe que provavelmente ninguém comentou: ${defeitos(i, 1) || 'ele não se adapta ao celular'}. Quem vê não avisa, só não chama. Já preparei uma versão corrigida da primeira tela pra você ver a diferença. Te mando o link hoje. ${solto()}${assina()}`,
+    (x, i) => `${sc()} Aqui é ${primeiroNome()}, ${PERFIL.faz}. ${rep(x) ? 'Vocês têm ' + rep(x) + ' no Google' : 'Vocês têm avaliações no Google'}, e o site de ${curto(x.nome)} não mostra nenhuma.${elogioDe(i) ? ` Uma delas diz: "${elogioDe(i)}".` : ''} É a prova mais forte que vocês têm, escondida do lugar onde o cliente decide. Montei uma primeira tela com as avaliações em destaque e o WhatsApp a um toque. Te envio ainda hoje. ${solto()}${assina()}`,
+    (x, i) => `${sc()} Sou ${primeiroNome()}, faço ${PERFIL.faz}${euCid()}. Passei pelo site de ${curto(x.nome)}${noBairro(x)} e tem um detalhe que provavelmente ninguém comentou: ${defeitos(i, 1) || 'ele não se adapta ao celular'}. Quem vê não avisa, só não chama. Já preparei uma versão corrigida da primeira tela${entrega(i) ? ', com ' + entrega(i) : ''} pra você ver a diferença. Te mando o link hoje. ${solto()}${assina()}`,
     (x, i) => `${sc()} ${primeiroNome()} aqui, ${PERFIL.faz}${euCid()}. O site de ${curto(x.nome)}${noBairro(x)} parou no tempo${defeitos(i, 1) ? ' (' + defeitos(i, 1) + ')' : ''}, e o negócio não parou${rep(x) ? ' (' + rep(x) + ' dizem isso)' : ''}. Quando o site é de uma época e o serviço é de outra, o cliente desconfia do serviço, não do site. Refiz a primeira tela no padrão de hoje. Te mando pra comparar. ${solto()}${assina()}`,
-  ],
-  SEM_NADA_EN: [
-    (x, i) => `Subject: ${curto(x.nome)} on Google Maps\n\nHi,\n\nI'm ${primeiroNome()}, I build ${fazEn()} for local businesses. I looked up ${curto(x.nome)} and found only the Maps listing${repEn(x) ? ' (' + repEn(x) + ')' : ''}, no website. People who get referred to you try to check you out first and have nowhere to go; many just call whoever has a page. I've already put together a one-screen page with your essentials. I'll send the link today. ${soltoEn()}\n\n${primeiroNome()}`,
-    (x, i) => `Subject: quick one about ${curto(x.nome)}\n\nHi,\n\nI'm ${primeiroNome()}, a web designer. ${repEn(x) ? 'You have ' + repEn(x) + ' on Google' : 'You show up on Google'} but no site, so when someone searches, they land on a competitor's page instead of yours. I've drafted a simple page with your reviews up front and a contact button. Sending it over today so you can see it. ${soltoEn()}\n\n${primeiroNome()}`,
-  ],
-  SO_REDE_EN: [
-    (x, i) => `Subject: your DMs close at 6\n\nHi,\n\nI'm ${primeiroNome()}, I build ${fazEn()}. ${curto(x.nome)} runs on Instagram${repEn(x) ? ', and ' + repEn(x) + ' on Google say it works' : ''}. The catch: DMs close when the day closes. Whoever messages at night waits until tomorrow and, in the meantime, talks to someone else. I made a one-screen page that answers the usual three questions and sends people straight to you. I'll send it today. ${soltoEn()}\n\n${primeiroNome()}`,
-    (x, i) => `Subject: fifteen posts\n\nHi,\n\nI'm ${primeiroNome()}, a web designer. I went through ${curto(x.nome)}'s profile and needed to scroll about fifteen posts to understand what you do and for whom. New customers don't scroll fifteen posts: they close and move on. I built a link-in-bio page: what you do, who it's for, proof, one button. Link coming today. ${soltoEn()}\n\n${primeiroNome()}`,
-  ],
-  COM_SITE_EN: [
-    (x, i) => `Subject: your site, on a phone\n\nHi,\n\nI'm ${primeiroNome()}, I build ${fazEn()}. I opened ${curto(x.nome)}'s website on my phone and it's working against you: ${defeitos(i, 2) || "it's slow and there's no clear way to get in touch"}. Every referral checks it before calling, and some give up right there. I redid the first screen to fix that. I'll send the link today so you can compare side by side. ${soltoEn()}\n\n${primeiroNome()}`,
-    (x, i) => `Subject: the proof is hidden\n\nHi,\n\nI'm ${primeiroNome()}, a web designer. ${repEn(x) ? 'You have ' + repEn(x) + ' on Google' : 'You have Google reviews'}, and ${curto(x.nome)}'s site shows none of them. That's your strongest proof, hidden from the place where people decide. I built a first screen with the reviews up front and a contact button one tap away. Sending it today. ${soltoEn()}\n\n${primeiroNome()}`,
   ],
 };
 
-function banco(x, idioma) {
-  const k = x.semNada ? 'SEM_NADA' : x.soRede ? 'SO_REDE' : 'COM_SITE';
-  return T[idioma === 'en' ? k + '_EN' : k];
+function banco(x) {
+  if (x.semNada) return T.SEM_NADA;
+  if (x.diretorio) return T.DIRETORIO;
+  if (x.soRede) return T.SO_REDE;
+  return T.COM_SITE;
 }
 
 function gerarMensagem(i, versao) {
   const x = RESULTADOS[i];
-  const b = banco(x, idiomaDe(CTX.pais));
+  const b = banco(x);
   const v = ((versao - 1) % b.length) + 1;
-  MSG[i] = { texto: b[v - 1](x, i), versao: v, ia: false };
+  const rotulo = `modelo · versão ${v} de ${b.length}`;
+  MSG[i] = { texto: b[v - 1](x, i), versao: v, ia: false, rotulo, emIngles: false };
   const corpo = $(`#cards .card[data-i="${i}"] .card__corpo`);
   if (!corpo) return;
   $('[data-texto]', corpo).value = MSG[i].texto;
-  $('[data-versao]', corpo).textContent = `modelo · versão ${v} de ${b.length}`;
+  $('[data-versao]', corpo).textContent = rotulo;
+  const bt = $('[data-traduzir]', corpo); if (bt) bt.textContent = 'Traduzir pro inglês';
   const a = $('[data-zap]', corpo); if (a) a.href = linkZap(x, CTX.pais, MSG[i].texto);
-  pintarOque(i);
+  pintarPlano(i);
 }
 
-function oque(i) {
-  const x = RESULTADOS[i];
-  if (x.semNada) return 'Página de uma dobra: o que fazem, pra quem, prova (as avaliações do Google) e botão de WhatsApp. Vira o destino da indicação e do Maps.';
-  if (x.soRede) return 'Página de captura pra bio: o que faz, pra quem, prova e botão de WhatsApp. O direct deixa de ser o único caminho.';
-  const d = defeitos(i, 3);
-  return d ? `Primeira tela refeita resolvendo: ${d}.` : 'Primeira tela refeita: promessa clara, prova em destaque e contato a um toque.';
-}
-function pintarOque(i) {
+/* ---------- o que recriar ---------- */
+function pintarPlano(i) {
   const el = $(`#cards .card[data-i="${i}"] [data-oque]`);
-  if (el) el.innerHTML = '<b>O que recriar</b>' + esc(oque(i));
+  if (!el) return;
+  const p = RESULTADOS[i]?.plano;
+  if (!p?.itens?.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div class="oque__topo">
+      <b>${ico('tela')} O que recriar</b>
+      <span class="oque__tag">${esc(p.titulo)} · ${esc(p.prazo)}</span>
+    </div>
+    <p class="oque__resumo">${esc(p.resumo)}</p>
+    <ul class="oque__itens">${p.itens.map((it) => `<li>${ico(it.icone)}<span><b>${esc(it.titulo)}.</b> ${esc(it.texto)}</span></li>`).join('')}</ul>
+    <div class="diag__acoes"><button class="mini" type="button" data-copiar-plano>Copiar o plano</button></div>`;
+  $('[data-copiar-plano]', el).onclick = () => copiar(textoPlano(i), 'Plano copiado.');
+}
+
+function textoPlano(i) {
+  const x = RESULTADOS[i]; const p = x?.plano;
+  if (!p) return '';
+  return [`${x.nome} · ${p.titulo} (${p.prazo})`, p.resumo, '', ...p.itens.map((it) => `- ${it.titulo}: ${it.texto}`)].join('\n');
+}
+
+/* ---------- tradução, só na hora de mandar ---------- */
+async function traduzirMensagem(i, btn) {
+  const corpo = btn.closest('.card__corpo');
+  const ta = $('[data-texto]', corpo);
+  const m = MSG[i] || (MSG[i] = { texto: ta.value, versao: 1, ia: false, rotulo: 'modelo' });
+  if (m.emIngles && m.pt != null) {
+    ta.value = m.pt; m.texto = m.pt; m.emIngles = false;
+    $('[data-versao]', corpo).textContent = m.rotulo || '';
+    btn.textContent = 'Traduzir pro inglês';
+    const a1 = $('[data-zap]', corpo); if (a1) a1.href = linkZap(RESULTADOS[i], CTX.pais, m.texto);
+    return;
+  }
+  const original = ta.value.trim();
+  if (!original) return avisar('Não há texto pra traduzir.', 'erro');
+  btn.disabled = true; btn.innerHTML = '<span class="girando"></span> traduzindo…';
+  try {
+    const d = await enviar('/api/prospeccao/traduzir', 'POST', { texto: original, de: 'pt', para: 'en' });
+    if (d.erro) throw new Error(d.erro);
+    m.pt = original; m.texto = d.texto; m.emIngles = true;
+    ta.value = d.texto;
+    $('[data-versao]', corpo).textContent = 'em inglês · tradução automática, leia antes de mandar';
+    const a = $('[data-zap]', corpo); if (a) a.href = linkZap(RESULTADOS[i], CTX.pais, d.texto);
+    btn.textContent = 'Voltar pro português';
+  } catch (e) {
+    avisar('Não traduzi: ' + e.message, 'erro');
+    btn.textContent = 'Traduzir pro inglês';
+  } finally { btn.disabled = false; }
 }
 
 /* ---------- mensagem com Claude ---------- */
@@ -688,7 +990,7 @@ async function escreverComIa(i, btn) {
       nota: x.nota, avaliacoes: x.avaliacoes, site: x.site, rede: Boolean(x.insta),
       problemas: (DIAG[i]?.problemas || []).map((p) => p.texto), opinioes: x.opinioes || [],
       euNome: PERFIL.nome, euFaz: PERFIL.faz, euCidade: PERFIL.cidade,
-      variacao, idioma: idiomaDe(CTX.pais),
+      variacao, idioma: 'pt',
     });
     if (d.semChave) { avisar('Sem chave da Anthropic na stack. Usando os modelos locais.', 'erro'); return; }
     MSG[i] = { texto: d.texto, versao: MSG[i]?.versao || 1, ia: true, variacaoIa: variacao };
@@ -715,14 +1017,55 @@ function linkZap(x, pais, texto) {
 
 /* ---------- lista inteira: copiar e CSV ---------- */
 const visiveis = () => RESULTADOS.map((x, i) => [x, i]).filter(([, i]) => passaFiltro(i));
+const doTipo = (i, tipo) => contatosDe(i).filter((c) => c.tipo === tipo).map((c) => c.rotulo).join(' / ');
+
+/* Confere na web quem está marcado como sem site. É de dez em dez
+   porque a busca pública corta o acesso de quem pede rápido demais. */
+$('#conferir-web').onclick = async (e) => {
+  const btn = e.currentTarget;
+  const fila = visiveis().filter(([x, i]) => x.semSite && !VERIF[i]).slice(0, 10);
+  if (!fila.length) return avisar('Nada novo pra conferir nesta lista.');
+  btn.disabled = true;
+  let achados = 0, feitos = 0;
+  for (const [x, i] of fila) {
+    feitos++;
+    btn.innerHTML = `<span class="girando"></span> ${feitos} de ${fila.length}`;
+    let v = null;
+    try {
+      const q = new URLSearchParams({ nome: x.nome, cidade: x.praca || CTX.cidade || '', pais: CTX.pais || '' });
+      v = await api('/api/prospeccao/verificar?' + q.toString());
+      VERIF[i] = v;
+      if (v.estado === 'site' && v.site) { x.site = v.site; x.semSite = false; x.soRede = false; x.semNada = false; achados++; }
+      else {
+        const rede = v.redes?.instagram || v.redes?.facebook || '';
+        if (rede && !x.insta) { x.insta = rede; x.semNada = false; x.soRede = true; }
+      }
+      await recalcular(i);
+    } catch (err) { /* um que falhou não para a fila */ }
+    if (v?.estado === 'bloqueado') { avisar('A busca pública barrou agora. Espere uns minutos e tente o resto.', 'erro'); break; }
+    if (feitos < fila.length && !v?.doCache) await new Promise((ok) => setTimeout(ok, 1200));
+  }
+  pintarCards();
+  pintarKpis();
+  avisar(achados ? `${achados} tinham site escondido; entraram como "site pra refazer".` : 'Confirmado: nenhum deles tem site.');
+  btn.disabled = false; btn.textContent = 'Conferir na web';
+};
+
 $('#copiar-lista').onclick = () => {
-  const linhas = visiveis().map(([x, i]) => [x.nome, x.end, x.fone || '', x.site || x.insta || '', ROTULO(x), scoreDe(i), x.nota || '', x.avaliacoes || ''].join(' · '));
+  const linhas = visiveis().map(([x, i]) => [x.nome, x.end, doTipo(i, 'fone') || doTipo(i, 'zap') || '', doTipo(i, 'email') || '', x.site || x.insta || x.diretorio || '', ROTULO(x), scoreDe(i), x.nota || '', x.avaliacoes || ''].join(' · '));
   copiar(linhas.join('\n'), `${linhas.length} linhas copiadas.`);
 };
 $('#baixar-csv').onclick = () => {
   const cel = (v) => '"' + String(v ?? '').replace(/"/g, '""') + '"';
-  const linhas = [['nome', 'endereco', 'telefone', 'site', 'o_que_fazer', 'oportunidade', 'nota', 'avaliacoes'].join(';')];
-  for (const [x, i] of visiveis()) linhas.push([x.nome, x.end, x.fone, x.site || x.insta, ROTULO(x), scoreDe(i), x.nota, x.avaliacoes].map(cel).join(';'));
+  const linhas = [['nome', 'endereco', 'telefone', 'whatsapp', 'email', 'site', 'redes', 'o_que_fazer', 'entrega', 'oportunidade', 'nota', 'avaliacoes', 'perfil_google'].join(';')];
+  for (const [x, i] of visiveis()) {
+    linhas.push([
+      x.nome, x.end, doTipo(i, 'fone'), doTipo(i, 'zap'), doTipo(i, 'email'),
+      x.site || x.diretorio || '', contatosDe(i).filter((c) => c.tipo === 'rede').map((c) => c.href).join(' '),
+      ROTULO(x), x.plano?.titulo || '', scoreDe(i), x.nota, x.avaliacoes,
+      x.perfil ? `${x.perfil.bons} ok, ${x.perfil.ruins} ruins, ${x.perfil.faltas} faltando` : '',
+    ].map(cel).join(';'));
+  }
   const blob = new Blob(['﻿' + linhas.join('\r\n')], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -732,14 +1075,16 @@ $('#baixar-csv').onclick = () => {
 };
 
 /* ============================================================
-   Leads — "Minha lista"
+   Leads: "Minha lista"
    ============================================================ */
 function leadDe(x, i) {
   return {
     chave: (x.nome + '|' + (x.end || '')).toLowerCase().slice(0, 180),
-    nome: x.nome, endereco: x.end, fone: x.fone, foneIntl: x.foneIntl, site: x.site, insta: x.insta, maps: x.maps,
+    nome: x.nome, endereco: x.end, fone: x.fone || doTipo(i, 'fone'), foneIntl: x.foneIntl, site: x.site, insta: x.insta, maps: x.maps,
+    email: x.email || doTipo(i, 'email'), whatsapp: x.whatsapp || doTipo(i, 'zap'),
     nota: x.nota, avaliacoes: x.avaliacoes, score: scoreDe(i), cidade: CTX.cidade, pais: CTX.pais || 'br', origem: 'mapa',
-    situacao: x.semNada ? 'sem site e sem rede' : x.soRede ? 'só rede social' : 'site pra refazer',
+    entrega: x.plano?.titulo || '',
+    situacao: x.semNada ? 'sem site e sem rede' : x.diretorio ? 'só ficha de diretório' : x.soRede ? 'só rede social' : 'site pra refazer',
   };
 }
 async function salvarLead(lead, btn) {
@@ -817,6 +1162,8 @@ function pintarLeads() {
           ${l.score ? '<span>oportunidade <b>' + esc(l.score) + '</b></span>' : ''}
           ${l.nota ? '<span>★ ' + esc(l.nota) + ' · ' + num(l.avaliacoes) + (l.origem === 'instagram' ? ' seguidores' : ' avaliações') + '</span>' : (l.avaliacoes && l.origem === 'instagram' ? '<span>' + num(l.avaliacoes) + ' seguidores</span>' : '')}
           ${l.situacao ? '<span>' + esc(l.situacao) + '</span>' : ''}
+          ${l.entrega ? '<span>' + ico('tela') + esc(l.entrega) + '</span>' : ''}
+          ${l.email ? '<span>' + ico('email') + esc(l.email) + '</span>' : ''}
           ${l.cidade ? '<span>' + esc(l.cidade) + '</span>' : ''}
           ${l.ultimo_toque ? '<span>toque ' + new Date(l.ultimo_toque).toLocaleDateString('pt-BR') + '</span>' : ''}
         </div>
@@ -825,6 +1172,7 @@ function pintarLeads() {
       <textarea data-anot placeholder="Anotação (salva sozinha)">${esc(l.anotacao || '')}</textarea>
       <div class="lead-card__acoes">
         ${l.fone ? `<a class="mini" target="_blank" rel="noopener" href="${esc(linkZap(x, l.pais))}">WhatsApp ↗</a>` : ''}
+        ${l.email ? `<a class="mini" href="mailto:${esc(l.email)}">E-mail ↗</a>` : ''}
         ${l.site ? `<a class="mini" target="_blank" rel="noopener" href="${esc(l.site)}">Site ↗</a>` : ''}
         ${l.insta ? `<a class="mini" target="_blank" rel="noopener" href="${esc(l.insta)}">Perfil ↗</a>` : ''}
         ${l.maps ? `<a class="mini" target="_blank" rel="noopener" href="${esc(l.maps)}">Google ↗</a>` : ''}
@@ -853,7 +1201,7 @@ function pintarLeads() {
 /* ============================================================
    Quem vende na internet
    ============================================================ */
-/* (a) anunciantes: só o link da Biblioteca — a Meta não abre API fora da Europa */
+/* (a) anunciantes: só o link da Biblioteca, a Meta não abre API fora da Europa */
 const inAnNicho = $('#anuncio-nicho'), aAbrir = $('#anuncio-abrir');
 function linkBiblioteca() {
   const q = inAnNicho.value.trim();

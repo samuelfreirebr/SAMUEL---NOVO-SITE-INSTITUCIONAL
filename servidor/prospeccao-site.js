@@ -1,18 +1,25 @@
 /* ============================================================
    Diagnóstico rápido de um site.
 
-   Um fetch cru do HTML — sem navegador — e um punhado de
+   Um fetch cru do HTML, sem navegador, e um punhado de
    heurísticas com peso. A nota é 100 menos a soma dos pesos.
    Não substitui o PageSpeed (que o navegador chama depois,
-   porque o Google leva 20–40 s); é o primeiro olhar, o que dá
+   porque o Google leva de 20 a 40 s); é o primeiro olhar, o que dá
    pra dizer em dois segundos ao abrir o card.
 
    Sai daqui:
      { url, titulo, nota, ms, kb, problemas[{chave,peso,texto}],
-       bons[], porte, sinaisPequeno[], sinaisGrande[] }
+       bons[], porte, sinaisPequeno[], sinaisGrande[],
+       contatos{emails,telefones,zaps,redes,paginaContato},
+       recursos{galeria,depoimentos,precos,formulario,...} }
+
+   Os contatos são o caminho curto pra falar com a pessoa: o que
+   está escrito no site costuma ser melhor que o telefone da ficha.
+   Os recursos dizem o que a página já tem, pra proposta não
+   prometer galeria pra quem já montou uma.
 
    Sites bloqueiam robô às vezes (403). Aí a chave vira 'fora'
-   ou 'erro' — e o PageSpeed, se abrir o site, apaga essas duas.
+   ou 'erro', e o PageSpeed, se abrir o site, apaga essas duas.
    ============================================================ */
 
 const TEMPO_MAX = 12000;          // ms para desistir do site
@@ -104,7 +111,7 @@ function analisar(html, urlFinal, ms, bytes) {
   if (/^http:/i.test(urlFinal)) p('https', 14, 'Abre sem cadeado (sem HTTPS). O navegador avisa "não seguro"');
   else bons.push('Tem HTTPS');
 
-  /* velocidade e peso — crus, sem navegador; o PageSpeed refina */
+  /* velocidade e peso, crus, sem navegador; o PageSpeed refina */
   if (ms > 3000) p('lento', 12, `Demorou ${(ms / 1000).toFixed(1)} s só pra responder`);
   else if (ms > 1500) p('lento', 6, `Levou ${(ms / 1000).toFixed(1)} s pra responder`);
   else bons.push('Responde rápido');
@@ -161,7 +168,74 @@ function analisar(html, urlFinal, ms, bytes) {
   const soma = problemas.reduce((s, x) => s + x.peso, 0);
   const nota = Math.max(0, Math.min(100, 100 - soma));
 
-  return { titulo, descricao, nota, kb, problemas, bons, ...porte(html, textoMin) };
+  return {
+    titulo, descricao, nota, kb, problemas, bons,
+    contatos: contatos(html, urlFinal),
+    recursos: recursos(html, textoMin),
+    ...porte(html, textoMin),
+  };
+}
+
+/* ---------- contatos: como falar com essa pessoa ----------
+   O telefone do Maps às vezes é de recepção; o e-mail e o WhatsApp
+   que estão no site são o caminho curto. Tudo o que der pra achar
+   no HTML vem pra cá, sem inventar. */
+
+const LIXO_EMAIL = /(sentry|wixpress|example|yourdomain|domain\.com|email\.com|no-?reply|noreply|godaddy|squarespace|jquery|\.png|\.jpg|\.jpeg|\.gif|\.webp|\.svg)/i;
+
+const REDES_SITE = [
+  ['instagram', /https?:\/\/(?:www\.)?instagram\.com\/[A-Za-z0-9._%+-]{2,40}/i],
+  ['facebook', /https?:\/\/(?:www\.|m\.)?facebook\.com\/[A-Za-z0-9._%+-]{2,60}/i],
+  ['linkedin', /https?:\/\/(?:www\.)?linkedin\.com\/(?:company|in)\/[A-Za-z0-9._%+-]{2,60}/i],
+  ['youtube', /https?:\/\/(?:www\.)?youtube\.com\/(?:@|c\/|channel\/|user\/)[A-Za-z0-9._%+-]{2,60}/i],
+  ['tiktok', /https?:\/\/(?:www\.)?tiktok\.com\/@[A-Za-z0-9._%+-]{2,40}/i],
+  ['x', /https?:\/\/(?:www\.)?(?:twitter|x)\.com\/[A-Za-z0-9._%+-]{2,40}/i],
+];
+
+function contatos(html, urlFinal) {
+  const emails = [...new Set((html.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g) || [])
+    .map((e) => e.toLowerCase()).filter((e) => !LIXO_EMAIL.test(e)))].slice(0, 4);
+
+  const telefones = [...new Set([...html.matchAll(/href=["']tel:([^"']+)["']/gi)]
+    .map((m) => decodeURIComponent(m[1]).replace(/\s+/g, ' ').trim()).filter((t) => t.replace(/\D/g, '').length >= 8))].slice(0, 4);
+
+  const zaps = [...new Set([...html.matchAll(/(?:wa\.me\/|api\.whatsapp\.com\/send\?phone=|web\.whatsapp\.com\/send\?phone=)(\+?\d{8,15})/gi)]
+    .map((m) => m[1].replace(/\D/g, '')))].slice(0, 3);
+
+  const redes = {};
+  for (const [nome, re] of REDES_SITE) {
+    const m = html.match(re);
+    if (m && !/\/(share|sharer|intent|plugins|embed)/i.test(m[0])) redes[nome] = m[0];
+  }
+
+  // Página de contato: serve pra abrir direto na hora da abordagem.
+  let paginaContato = '';
+  const mc = html.match(/href=["']([^"']*(?:contato|contact|fale-conosco|orcamento|orçamento|quote|estimate)[^"']*)["']/i);
+  if (mc) { try { paginaContato = new URL(mc[1], urlFinal).toString(); } catch (e) { /* link torto, ignora */ } }
+
+  return { emails, telefones, zaps, redes, paginaContato };
+}
+
+/* ---------- o que a página tem e o que não tem ----------
+   Alimenta o "o que recriar": não adianta prometer galeria pra
+   quem já tem uma. */
+function recursos(html, textoMin) {
+  const tem = (re) => re.test(html) || re.test(textoMin);
+  return {
+    formulario: /<form[\s>]/i.test(html),
+    whatsapp: /wa\.me|api\.whatsapp\.com|web\.whatsapp\.com/i.test(html),
+    telefone: /href=["']tel:/i.test(html),
+    email: /href=["']mailto:/i.test(html),
+    depoimentos: tem(/depoiment|testimonial|o que dizem|clientes dizem|avalia(ç|c)(õ|o)es|reviews?\b|opini(õ|o)es/i),
+    galeria: tem(/galeria|gallery|portf(ó|o)lio|portfolio|nossos trabalhos|our work|projetos|projects|antes e depois|before and after|lightbox/i),
+    precos: tem(/R\$ ?\d|\$ ?\d{2,}|a partir de|tabela de pre(ç|c)o|pricing|planos|or(ç|c)amento a partir/i),
+    agendamento: tem(/agendar|agende|marque sua|marcar hor(á|a)rio|schedule|book now|booking|calendly|agendamento/i),
+    mapa: tem(/google\.[a-z.]+\/maps|maps\.google|openstreetmap|mapbox|waze\.com/i),
+    faq: tem(/perguntas frequentes|d(ú|u)vidas frequentes|\bfaq\b/i),
+    blog: tem(/\/blog|\/noticias|\/artigos|\/news\b/i),
+    sobre: tem(/sobre n(ó|o)s|quem somos|about us|nossa hist(ó|o)ria/i),
+    fotos: (html.match(/<img[\s>]/gi) || []).length,
+  };
 }
 
 /* Porte: operação de uma pessoa só, ou tem time? Serve pra escolher
@@ -201,18 +275,18 @@ export async function diagnosticar(urlBruta) {
     return {
       url, titulo: '', nota: 0, ms: r.ms, kb: 0, bons: [],
       problemas: [{ chave: 'fora', peso: 100, texto: r.erro === 'tempo' ? 'O site não respondeu em 12 segundos' : 'O site não abriu' }],
-      porte: 'medio', sinaisPequeno: [], sinaisGrande: [],
+      porte: 'medio', sinaisPequeno: [], sinaisGrande: [], contatos: null, recursos: null,
     };
   }
   if (r.status >= 400) {
     return {
       url, titulo: '', nota: 0, ms: r.ms, kb: 0, bons: [],
       problemas: [{ chave: 'erro', peso: 100, texto: r.status === 403 || r.status === 429 ? 'O site barrou a leitura automática (pode ser bloqueio de robô, não site fora)' : `O site respondeu com erro ${r.status}` }],
-      porte: 'medio', sinaisPequeno: [], sinaisGrande: [],
+      porte: 'medio', sinaisPequeno: [], sinaisGrande: [], contatos: null, recursos: null,
     };
   }
   if (!/html|xml|text/i.test(r.tipo) && r.html.length < 200) {
-    return { url, titulo: '', nota: 20, ms: r.ms, kb: 0, bons: [], problemas: [{ chave: 'erro', peso: 80, texto: 'O endereço não devolve uma página' }], porte: 'medio', sinaisPequeno: [], sinaisGrande: [] };
+    return { url, titulo: '', nota: 20, ms: r.ms, kb: 0, bons: [], problemas: [{ chave: 'erro', peso: 80, texto: 'O endereço não devolve uma página' }], porte: 'medio', sinaisPequeno: [], sinaisGrande: [], contatos: null, recursos: null };
   }
   return { url: r.urlFinal, ms: r.ms, ...analisar(r.html, r.urlFinal, r.ms, r.bytes) };
 }
