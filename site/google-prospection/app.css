@@ -190,6 +190,9 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .
 /* ---------- ícones e blocos de análise ---------- */
 .ico { width: 1em; height: 1em; flex: none; vertical-align: -.14em; opacity: .85; }
 .analise { display: grid; gap: var(--sp-md); align-content: start; min-width: 0; }
+/* foto do perfil no Google: mostra de cara se o lugar tem cara de
+   abandonado ou de cuidado, que é metade do diagnóstico */
+.foto-perfil { width: 100%; max-height: 170px; object-fit: cover; border-radius: var(--radius-img); display: block; }
 .bloco-analise:empty { display: none; }
 /* O .eyebrow do painel é flex: o rótulo vai dentro de um span só,
    senão cada pedaço vira item solto e o título quebra torto. */

@@ -9,6 +9,8 @@
      GET  /api/prospeccao/cidades?pais&q      autocomplete de cidade (Nominatim)
      GET  /api/prospeccao/buscar?…            varredura de negócios
      GET  /api/prospeccao/site?url            diagnóstico rápido do site
+     GET  /api/prospeccao/checar-google       testa a chave do Google e diz o que falta
+     GET  /api/prospeccao/foto?nome           foto do perfil, servida sem expor a chave
      GET  /api/prospeccao/verificar?nome&cidade  procura o site na web (DuckDuckGo, sem chave)
      POST /api/prospeccao/traduzir            português para inglês, sem chave
      POST /api/prospeccao/pontuar             recalcula nota, motivos, perfil do Google e plano
@@ -23,6 +25,9 @@
      GOOGLE_PLACES_KEY   sem ela a busca cai no OpenStreetMap
                          (Overpass), funciona, mas sem nota nem
                          avaliações
+     GOOGLE_SEM_OPINIOES sem ela o Google manda as opiniões (campo mais
+                         caro). Ponha 1 pra cortar custo, perdendo a
+                         citação real do cliente na proposta
      ANTHROPIC_API_KEY   sem ela só os templates locais escrevem
      SERPER_API_KEY      sem ela a busca de perfis fica desligada
      PAGESPEED_KEY       o navegador chama o PageSpeed direto; a
@@ -595,13 +600,37 @@ function fechar(lista, lugar, extra = {}) {
 
 /* ---------- Google Places (New) ---------- */
 
-const MASCARA = [
+/* Tudo o que o perfil do Google sabe dizer e que a gente usa: contato,
+   reputação, horário, foto, situação e o endereço destrinchado (é dele
+   que sai o bairro, que fora do Brasil não dá pra adivinhar do texto). */
+const CAMPOS = [
   'nextPageToken', 'places.id', 'places.displayName', 'places.formattedAddress',
+  'places.shortFormattedAddress', 'places.addressComponents', 'places.location',
   'places.nationalPhoneNumber', 'places.internationalPhoneNumber', 'places.websiteUri',
-  'places.rating', 'places.userRatingCount', 'places.reviews', 'places.primaryTypeDisplayName',
-  'places.googleMapsUri', 'places.regularOpeningHours', 'places.businessStatus', 'places.photos',
-  'places.editorialSummary', 'places.types',
-].join(',');
+  'places.rating', 'places.userRatingCount', 'places.primaryTypeDisplayName',
+  'places.googleMapsUri', 'places.regularOpeningHours', 'places.currentOpeningHours',
+  'places.businessStatus', 'places.photos', 'places.types',
+  'places.primaryType', 'places.priceLevel',
+];
+
+/* Opinião e resumo são os campos mais caros da Places API (o Google
+   cobra por faixa, e esses dois sobem pra faixa de cima). Valem a pena,
+   porque é deles que sai a citação real do cliente na proposta. Quem
+   quiser cortar o custo põe GOOGLE_SEM_OPINIOES=1 na stack. */
+const semOpinioes = () => /^(1|sim|true)$/i.test(process.env.GOOGLE_SEM_OPINIOES || '');
+const mascara = () => (semOpinioes() ? CAMPOS : [...CAMPOS, 'places.reviews', 'places.editorialSummary']).join(',');
+
+/* O Google erra em inglês e por código. Aqui vira recado em português
+   dizendo o que fazer, que é o que importa na hora de ligar a chave. */
+export function recadoGoogle(msg = '') {
+  const m = String(msg);
+  if (/API_KEY_INVALID|API key not valid|keyInvalid/i.test(m)) return 'A chave do Google não foi aceita. Confira se copiou inteira em GOOGLE_PLACES_KEY, sem espaço sobrando.';
+  if (/SERVICE_DISABLED|has not been used in project|is disabled/i.test(m)) return 'A chave existe, mas a Places API (New) não está ligada nesse projeto do Google Cloud. Ative "Places API (New)" e espere um minuto.';
+  if (/PERMISSION_DENIED|referer|referrer|IP address|restriction/i.test(m)) return 'A chave está restrita e barrou este servidor. No Google Cloud, deixe a chave sem restrição de site (ela é usada pelo servidor, não pelo navegador) ou libere o IP da sua stack.';
+  if (/billing|BILLING_DISABLED/i.test(m)) return 'O projeto do Google está sem faturamento ativo. A Places API (New) exige conta de faturamento, mesmo dentro da cota gratuita.';
+  if (/RESOURCE_EXHAUSTED|quota|Quota exceeded/i.test(m)) return 'A cota do Google acabou por agora. Confira os limites do projeto no Google Cloud.';
+  return m || 'O Google recusou a busca.';
+}
 
 // Caixa em graus a partir do raio em metros (1° de latitude ≈ 111 km).
 function caixa(lat, lon, raio) {
@@ -613,12 +642,29 @@ function caixa(lat, lon, raio) {
 async function paginaGoogle(corpo) {
   const r = await buscar('https://places.googleapis.com/v1/places:searchText', {
     method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-goog-api-key': chaveGoogle(), 'x-goog-fieldmask': MASCARA },
+    headers: { 'content-type': 'application/json', 'x-goog-api-key': chaveGoogle(), 'x-goog-fieldmask': mascara() },
     body: JSON.stringify(corpo),
   }, 20000);
   const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(d?.error?.message || ('Google respondeu ' + r.status));
+  if (!r.ok) throw new Error(recadoGoogle(d?.error?.message || ('Google respondeu ' + r.status)));
   return d;
+}
+
+/* O Google entrega o endereço em pedaços com etiqueta. É daí que sai
+   o bairro certo: no Brasil vem como "sublocality", nos Estados Unidos
+   como "neighborhood", e ler isso do texto do endereço dava errado. */
+function pedacosDoEndereco(componentes) {
+  const achar = (...tipos) => (componentes || []).find((c) => (c.types || []).some((t) => tipos.includes(t)));
+  const bairro = achar('sublocality_level_1', 'sublocality', 'neighborhood');
+  const cidade = achar('locality', 'administrative_area_level_2', 'postal_town');
+  const estado = achar('administrative_area_level_1');
+  const cep = achar('postal_code');
+  return {
+    bairro: bairro?.longText || undefined,
+    cidade: cidade?.longText || undefined,
+    estado: estado?.shortText || estado?.longText || undefined,
+    cep: cep?.longText || undefined,
+  };
 }
 
 async function buscarGoogle({ termo, lat, lon, raio, pais, paginas = 3 }) {
@@ -634,9 +680,17 @@ async function buscarGoogle({ termo, lat, lon, raio, pais, paginas = 3 }) {
   for (let i = 0; i < paginas; i++) {
     const d = await paginaGoogle(token ? { ...corpo, pageToken: token } : corpo);
     for (const p of d.places || []) {
+      const partes = pedacosDoEndereco(p.addressComponents);
       saida.push({
         nome: p.displayName?.text || '',
         end: p.formattedAddress || '',
+        endCurto: p.shortFormattedAddress || undefined,
+        bairro: partes.bairro,
+        cidadeDo: partes.cidade,
+        estado: partes.estado,
+        cep: partes.cep,
+        lat: p.location?.latitude,
+        lon: p.location?.longitude,
         fone: p.nationalPhoneNumber || undefined,
         foneIntl: p.internationalPhoneNumber ? p.internationalPhoneNumber.replace(/\D/g, '') : undefined,
         site: p.websiteUri || undefined,
@@ -644,9 +698,15 @@ async function buscarGoogle({ termo, lat, lon, raio, pais, paginas = 3 }) {
         avaliacoes: p.userRatingCount || undefined,
         opinioes: (p.reviews || []).map((r) => r.text?.text || r.originalText?.text || '').filter(Boolean).map((t) => t.slice(0, 280)).slice(0, 4),
         tipo: p.primaryTypeDisplayName?.text || undefined,
+        tipoCru: p.primaryType || undefined,
         tipos: p.types || [],
         horario: p.regularOpeningHours?.weekdayDescriptions?.length ? p.regularOpeningHours.weekdayDescriptions.join('; ') : undefined,
+        abertoAgora: p.currentOpeningHours?.openNow ?? p.regularOpeningHours?.openNow,
+        preco: p.priceLevel || undefined,
         fotos: Array.isArray(p.photos) ? p.photos.length : 0,
+        // O nome da foto é o endereço dela na API; a imagem sai pelo
+        // servidor, em /api/prospeccao/foto, pra chave não ir pro navegador.
+        fotoNome: p.photos?.[0]?.name || undefined,
         status: p.businessStatus || undefined,
         resumo: p.editorialSummary?.text || undefined,
         redes: {},
@@ -1223,6 +1283,39 @@ export async function apiProspeccao(req, res, url, rota) {
     if (rota === 'buscar' && m === 'GET') {
       const d = await varrer(url);
       return json(res, d, d.erro ? 400 : 200);
+    }
+
+    if (rota === 'checar-google' && m === 'GET') {
+      // Botão "testar a chave": uma busca mínima, só pra ver se o
+      // Google aceita. Serve de resposta na hora de ligar a chave.
+      if (!chaveGoogle()) return json(res, { ok: false, detalhe: 'Não há GOOGLE_PLACES_KEY na stack. Defina a variável e suba o serviço de novo, senão o processo continua com a de antes (nenhuma).' });
+      try {
+        const d = await paginaGoogle({
+          textQuery: 'dentist', pageSize: 1, languageCode: 'pt-BR', regionCode: 'BR',
+          locationRestriction: { rectangle: caixa(-25.4284, -49.2733, 5000) },
+        });
+        const n = (d.places || []).length;
+        return json(res, { ok: true, detalhe: n ? 'A chave está valendo: o Google respondeu com dados.' : 'A chave foi aceita, mas a busca de teste voltou vazia. Tente uma varredura de verdade.' });
+      } catch (e) {
+        return json(res, { ok: false, detalhe: recadoGoogle(e.message) });
+      }
+    }
+
+    if (rota === 'foto' && m === 'GET') {
+      // A imagem passa pelo servidor pra chave não aparecer no navegador.
+      const nome = String(url.searchParams.get('nome') || '');
+      if (!/^places\/[A-Za-z0-9_-]{5,120}\/photos\/[A-Za-z0-9_-]{10,600}$/.test(nome)) return json(res, { erro: 'Foto inválida.' }, 400);
+      if (!chaveGoogle()) return json(res, { erro: 'Sem chave do Google.' }, 400);
+      const alvo = `https://places.googleapis.com/v1/${nome}/media?maxHeightPx=400&maxWidthPx=640&key=${encodeURIComponent(chaveGoogle())}`;
+      const r = await buscar(alvo, { redirect: 'follow' }, 12000);
+      if (!r.ok) return json(res, { erro: 'O Google não devolveu a foto.' }, 502);
+      const imagem = Buffer.from(await r.arrayBuffer());
+      res.writeHead(200, {
+        'content-type': r.headers.get('content-type') || 'image/jpeg',
+        'content-length': imagem.length,
+        'cache-control': 'private, max-age=86400',
+      });
+      return res.end(imagem);
     }
 
     if (rota === 'verificar' && m === 'GET') {

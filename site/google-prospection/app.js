@@ -152,6 +152,22 @@ function pintarFonte() {
 
 inNicho.onchange = () => { $('#l-termo').hidden = inNicho.value !== 'outro'; if (inNicho.value === 'outro') inTermo.focus(); };
 
+/* Ligou a chave na stack e quer saber se pegou? Um clique responde,
+   e quando não pegou o recado diz o que falta fazer no Google Cloud. */
+$('#checar-google').onclick = async (e) => {
+  const btn = e.currentTarget;
+  btn.disabled = true; btn.innerHTML = '<span class="girando"></span> testando…';
+  try {
+    const d = await api('/api/prospeccao/checar-google', {}, 25000);
+    avisar(d.detalhe, d.ok ? 'ok' : 'erro');
+    if (d.ok && CONFIG.mapas !== 'google') {
+      CONFIG.mapas = 'google';
+      pintarFonte();
+    }
+  } catch (x) { avisar('Não consegui testar: ' + x.message, 'erro'); }
+  finally { btn.disabled = false; btn.textContent = 'Testar a chave do Google'; }
+};
+
 inPais.onchange = () => {
   // Trocar o país limpa a cidade: a lista de sugestões é por país.
   inCidade.value = ''; CIDADE_SEL = null; inCidade.dataset.ok = '';
@@ -576,6 +592,7 @@ function pintarCards() {
           <p class="card__meta">
             ${x.nota ? '<span>' + ico('estrela') + '<b>' + esc(x.nota) + '</b> · ' + num(x.avaliacoes) + ' avaliações</span>' : '<span>' + ico('estrela') + 'sem avaliações</span>'}
             ${x.tipo ? '<span>' + ico('lista') + esc(x.tipo) + '</span>' : ''}
+            ${x.fonte === 'google' ? '<span>' + ico('foto') + (x.fotos || 0) + (x.fotos === 1 ? ' foto' : ' fotos') + '</span>' : ''}
             ${x.horario ? '<span>' + ico('relogio') + 'tem horário</span>' : ''}
           </p>
           <div class="canais" data-canais="${i}">${canais(i)}</div>
@@ -606,6 +623,7 @@ function montarCorpo(i, art) {
   const corpo = $('.card__corpo', art);
   corpo.innerHTML = `
     <div class="analise">
+      ${x.fotoNome ? `<img class="foto-perfil" loading="lazy" alt="Foto do perfil de ${esc(x.nome)} no Google" src="/api/prospeccao/foto?nome=${encodeURIComponent(x.fotoNome)}" onerror="this.remove()">` : ''}
       <section class="bloco-analise" data-porque></section>
       <section class="bloco-analise" data-perfil></section>
       <section class="bloco-analise diag" data-diag>
@@ -898,7 +916,10 @@ function bairro(end, cidade) {
   if (cid && b.toLowerCase() === cid) return '';
   return b;
 }
-const noBairro = (x) => { const b = bairro(x.end, CTX.cidade); return b ? ` ${/^(vila|praia|cidade|chácara|chacara|fazenda|barra|ilha|lagoa|várzea|varzea|granja|zona)\b/i.test(b) ? 'na' : 'no'} ${b}` : ''; };
+/* Com a chave do Google o bairro vem destrinchado do endereço; sem
+   ela, é preciso adivinhar do texto, que só acerta no padrão brasileiro. */
+const bairroDe = (x) => x.bairro || bairro(x.end, CTX.cidade);
+const noBairro = (x) => { const b = bairroDe(x); return b ? ` ${/^(vila|praia|cidade|chácara|chacara|fazenda|barra|ilha|lagoa|várzea|varzea|granja|zona)\b/i.test(b) ? 'na' : 'no'} ${b}` : ''; };
 function rep(x) {
   const av = Number(x.avaliacoes) || 0, n = Number(x.nota) || 0;
   if (n >= 4.5 && av >= 100) return `${num(av)} avaliações com média ${String(n).replace('.', ',')}`;
@@ -1046,7 +1067,7 @@ async function escreverComIa(i, btn) {
   btn.disabled = true; btn.innerHTML = '<span class="girando"></span> escrevendo…';
   try {
     const d = await enviar('/api/prospeccao/mensagem', 'POST', {
-      nome: x.nome, tipo: x.tipo, nicho: CTX.termo, bairro: bairro(x.end, CTX.cidade), cidade: CTX.cidade,
+      nome: x.nome, tipo: x.tipo, nicho: CTX.termo, bairro: bairroDe(x), cidade: CTX.cidade,
       nota: x.nota, avaliacoes: x.avaliacoes, site: x.site, rede: Boolean(x.insta),
       problemas: (DIAG[i]?.problemas || []).map((p) => p.texto), opinioes: x.opinioes || [],
       euNome: PERFIL.nome, euFaz: PERFIL.faz, euCidade: PERFIL.cidade,
