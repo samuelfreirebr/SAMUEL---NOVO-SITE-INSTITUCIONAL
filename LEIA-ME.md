@@ -281,6 +281,33 @@ Painel → **Criar proposta**.
 que vai para a página — `3× R$ 1.500 · total R$ 4.500` — e a forma de
 pagamento acompanha.
 
+### Preencher com IA
+
+No topo do editor de uma proposta há o botão **Preencher com IA**. Cole
+a conversa com o cliente, a transcrição da reunião ou o que combinaram,
+e anexe prints, PDF, Word, texto ou um ZIP com tudo isso dentro (um
+print pode ser colado direto na janela com Ctrl+V). A IA lê e preenche
+**só** estes campos:
+
+- nome do cliente (e o endereço da página, se estiver vazio)
+- frase de impacto da capa e a linha de apoio
+- data (se o material não diz, vai a de hoje)
+- valor e parcelas
+- os entregáveis, estruturados um a um
+- o prazo em dias, só na condição do prazo
+- a condição de ferramentas e hospedagem, só se o material fala de quem paga
+- as perguntas do fim, com as dúvidas que o cliente ainda parece ter
+
+Processo, Sobre mim, Ecossistema, O que inclui, pagamento, encerramento
+e as outras condições não entram no pedido à IA: ela não tem como mexer
+neles. Nada é salvo sozinho; a proposta fica alterada no editor para
+você revisar etapa por etapa e salvar.
+
+Precisa de `OPENAI_API_KEY` na stack. `OPENAI_MODELO` troca o modelo
+(padrão `gpt-4.1`). Sem chave, o botão explica o que falta. O código
+está em `servidor/proposta-ia.js`; a leitura de ZIP e DOCX é feita ali
+mesmo, sem dependência.
+
 ### O modelo
 
 O botão **Modelo**, no topo, abre o que toda proposta nova traz

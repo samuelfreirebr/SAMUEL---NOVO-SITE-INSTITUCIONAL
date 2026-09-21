@@ -41,6 +41,35 @@
   </div>
 </dialog>
 
+<dialog id="ia" class="ia">
+  <div class="modal__topo">
+    <b>Preencher com IA</b>
+    <button class="mini" type="button" id="ia-fechar">Fechar</button>
+  </div>
+  <div class="modal__corpo">
+    <p class="ia__dica">
+      Cole a conversa com o cliente, a transcrição da reunião ou o que combinaram, e anexe prints, PDF, Word ou um ZIP com tudo.
+      A IA preenche <b>só</b>: nome do cliente, frase de impacto, data, valor e parcelas, entregáveis, prazo, a condição de hospedagem (se o material falar disso) e as perguntas do fim.
+      Processo, Sobre mim, Ecossistema e as outras condições não mudam.
+    </p>
+    <label class="ia__campo">
+      <span>Texto</span>
+      <textarea id="ia-texto" rows="8" placeholder="Cole aqui a conversa, a transcrição ou o resumo do que foi combinado."></textarea>
+    </label>
+    <div class="solta" id="ia-solta">
+      <b>Arraste os arquivos aqui</b>
+      <span>ou clique para escolher. Prints (PNG, JPG), PDF, Word, texto ou ZIP. Até 30 MB no total.</span>
+    </div>
+    <input type="file" id="ia-arquivos" multiple accept="image/*,.pdf,.docx,.txt,.md,.csv,.json,.html,.htm,.zip,.srt,.vtt" hidden>
+    <ul class="ia__lista" id="ia-lista"></ul>
+    <p class="ia__aviso" id="ia-aviso" hidden></p>
+    <div class="ia__acoes">
+      <button class="btn btn--brand" type="button" id="ia-enviar">Preencher a proposta</button>
+      <span class="ia__meta" id="ia-meta"></span>
+    </div>
+  </div>
+</dialog>
+
 <script type="module" src="./editor.js"></script>
 </body>
 </html>

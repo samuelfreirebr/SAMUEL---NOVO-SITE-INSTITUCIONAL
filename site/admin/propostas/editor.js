@@ -74,6 +74,8 @@ function pintarTopo() {
       est.modo === 'proposta' && est.proposta.id && !est.novo
         && h('a', { class: 'mini', href: '/propostas/' + est.proposta.id, target: '_blank', rel: 'noopener' }, 'Abrir página'),
       h('button', { type: 'button', class: 'mini ed-so-estreito', onclick: alternarPrevia }, 'Prévia'),
+      est.modo === 'proposta'
+        && h('button', { type: 'button', class: 'mini mini--ia', id: 'btn-ia', onclick: abrirIa, title: 'Cole a conversa ou anexe arquivos e a IA preenche o escopo, o valor e o resto' }, 'Preencher com IA'),
       h('button', { type: 'button', class: 'mini mini--ativo', id: 'salvar', onclick: salvar }, est.modo === 'modelo' ? 'Salvar modelo' : 'Salvar'),
     ].filter(Boolean));
     pintarEstado();
@@ -529,6 +531,102 @@ async function salvarComoModelo() {
 }
 
 /* ---------- imagens ---------- */
+/* ---------- Preencher com IA ---------- */
+let iaArquivos = [];
+let iaLigada = null;   // null = ainda não perguntou ao servidor
+
+async function abrirIa() {
+  const dlg = $('#ia');
+  if (iaLigada === null) {
+    try { iaLigada = (await api('/api/proposta-ia')).ligada; } catch (e) { iaLigada = false; }
+  }
+  const aviso = $('#ia-aviso');
+  aviso.hidden = true;
+  $('#ia-meta').textContent = '';
+  if (!iaLigada) {
+    aviso.hidden = false; aviso.dataset.tipo = 'erro';
+    aviso.textContent = 'A IA está desligada: defina OPENAI_API_KEY nas variáveis da stack no Portainer e atualize a stack. O botão volta a funcionar sozinho.';
+  }
+  pintarListaIa();
+  dlg.showModal();
+}
+
+function pintarListaIa() {
+  const ul = $('#ia-lista');
+  ul.innerHTML = '';
+  iaArquivos.forEach((f, i) => {
+    const li = h('li', {},
+      h('span', {}, f.name),
+      h('small', {}, (f.size / 1024).toFixed(0) + ' KB'),
+      h('button', { type: 'button', class: 'mini mini--perigo', title: 'Tirar', html: '&times;', onclick: () => { iaArquivos.splice(i, 1); pintarListaIa(); } }));
+    ul.append(li);
+  });
+}
+
+function juntarArquivos(lista) {
+  for (const f of lista) {
+    if (iaArquivos.some((x) => x.name === f.name && x.size === f.size)) continue;
+    iaArquivos.push(f);
+  }
+  pintarListaIa();
+}
+
+async function preencherComIa() {
+  const btn = $('#ia-enviar');
+  const aviso = $('#ia-aviso');
+  const texto = $('#ia-texto').value.trim();
+  if (!texto && !iaArquivos.length) {
+    aviso.hidden = false; aviso.dataset.tipo = 'erro'; aviso.textContent = 'Cole o texto da conversa ou anexe pelo menos um arquivo.';
+    return;
+  }
+  const fd = new FormData();
+  fd.append('proposta', JSON.stringify(est.proposta));
+  fd.append('texto', texto);
+  for (const f of iaArquivos) fd.append('arquivos', f, f.name);
+
+  btn.disabled = true; btn.innerHTML = '<span class="girando"></span> Lendo e preenchendo…';
+  aviso.hidden = false; aviso.dataset.tipo = ''; aviso.textContent = 'A IA está lendo o material. Costuma levar de 20 a 60 segundos.';
+  try {
+    const d = await api('/api/proposta-ia', { method: 'POST', body: fd });
+    // Só o que veio de volta muda; o resto do estado continua o mesmo objeto.
+    for (const k of ['cliente', 'id', 'preparadaPara', 'titulo', 'subtitulo', 'data', 'investimento', 'escopo', 'condicoes', 'faq']) {
+      if (d.proposta[k] !== undefined) est.proposta[k] = d.proposta[k];
+    }
+    for (const ps of PASSOS) ps.montar(est.proposta, { novo: est.novo });
+    est.visitados = new Set(passos().map((_, i) => i));
+    pintarTopo(); pintarNav(); pintarPasso(); mudou();
+    const lidos = (d.lidos || []).map((l) => l.nome + ' (' + l.como + ')').join(', ');
+    aviso.dataset.tipo = 'ok';
+    aviso.textContent = 'Preenchi: ' + (d.mudancas || []).join(', ') + '.'
+      + (d.observacoes ? ' ' + d.observacoes : '')
+      + ' Confira etapa por etapa antes de salvar.';
+    $('#ia-meta').textContent = (lidos ? 'Lido: ' + lidos + '. ' : '') + 'Modelo: ' + (d.modelo || '');
+    avisar('Proposta preenchida pela IA. Revise e salve.');
+  } catch (e) {
+    aviso.dataset.tipo = 'erro';
+    aviso.textContent = e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Preencher a proposta';
+  }
+}
+
+function ligarIa() {
+  const solta = $('#ia-solta'), input = $('#ia-arquivos');
+  if (!solta) return;
+  $('#ia-fechar').onclick = () => $('#ia').close();
+  $('#ia-enviar').onclick = preencherComIa;
+  solta.onclick = () => input.click();
+  input.onchange = () => { juntarArquivos([...input.files]); input.value = ''; };
+  solta.ondragover = (e) => { e.preventDefault(); solta.classList.add('ativa'); };
+  solta.ondragleave = () => solta.classList.remove('ativa');
+  solta.ondrop = (e) => { e.preventDefault(); solta.classList.remove('ativa'); juntarArquivos([...e.dataTransfer.files]); };
+  // colar print direto na janela (Ctrl+V com imagem na área de transferência)
+  $('#ia').addEventListener('paste', (e) => {
+    const imgs = [...(e.clipboardData?.files || [])].filter((f) => f.type.startsWith('image/'));
+    if (imgs.length) { e.preventDefault(); juntarArquivos(imgs.map((f, i) => new File([f], 'print-' + (iaArquivos.length + i + 1) + '.png', { type: f.type }))); }
+  });
+}
+
 let resolver = null;
 function escolherImagem() {
   pintarGaleria();
@@ -582,6 +680,7 @@ addEventListener('keydown', (e) => {
 });
 
 ligarDialogo();
+ligarIa();
 await carregar();
 const inicial = decodeURIComponent(location.hash.slice(1));
 if (inicial && est.propostas.some((p) => p.id === inicial)) abrir(inicial);

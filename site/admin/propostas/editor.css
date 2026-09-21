@@ -262,3 +262,28 @@ body.ed { height: 100%; overflow: hidden; }
   .ed-form__pe .btn { flex: 1; justify-content: center; }
   .ed-previa { width: 100vw; }
 }
+
+
+/* ---------- Preencher com IA ---------- */
+.ia { width: min(94vw, 760px); }
+.ia__dica { font-size: var(--t-small); color: var(--muted); line-height: 1.5; margin-bottom: var(--sp-md); }
+.ia__dica b { color: var(--ink); }
+.ia__campo { display: block; margin-bottom: var(--sp-md); }
+.ia__campo > span { display: block; font-size: var(--t-small); font-weight: var(--w-semi); margin-bottom: var(--sp-2xs); }
+.ia__campo textarea { width: 100%; min-height: 9em; resize: vertical; font-family: inherit; font-size: var(--t-body); padding: .7em .85em; border: var(--hair) solid var(--line-2); border-radius: var(--radius-img); background: var(--bg); color: var(--ink); }
+.ia .solta { margin-bottom: var(--sp-sm); }
+.ia__lista { list-style: none; display: grid; gap: 4px; margin-bottom: var(--sp-md); }
+.ia__lista li { display: flex; align-items: center; gap: var(--sp-sm); font-size: var(--t-small); padding: .45em .7em; background: var(--bg-2); border-radius: var(--radius-img); }
+.ia__lista li span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ia__lista li small { color: var(--muted); }
+.ia__lista li.lido { background: var(--bg); box-shadow: inset 0 0 0 var(--hair) var(--line); }
+.ia__aviso { font-size: var(--t-small); padding: var(--sp-sm) var(--sp-md); border-radius: var(--radius-img); margin-bottom: var(--sp-md); background: var(--bg-2); color: var(--ink); }
+.ia__aviso[data-tipo="erro"] { background: var(--brand); color: #fff; }
+.ia__aviso[data-tipo="ok"] { background: var(--ink); color: #fff; }
+.ia__acoes { display: flex; align-items: center; gap: var(--sp-md); flex-wrap: wrap; }
+.ia__meta { font-size: var(--t-eyebrow); color: var(--muted); }
+.mini--ia { background: var(--brand); color: #fff; box-shadow: none; }
+.mini--ia:hover { background: var(--ink); }
+.mini--ia[disabled] { opacity: .5; pointer-events: none; }
+.girando { display: inline-block; width: .9em; height: .9em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: ia-gira .8s linear infinite; vertical-align: -.15em; margin-right: .3em; }
+@keyframes ia-gira { to { transform: rotate(360deg); } }

@@ -3,7 +3,7 @@
 
    O envio de imagem do painel manda um arquivo e um campo de
    texto. Node não traz leitor de multipart, e não vale puxar
-   dependência para trinta linhas de trabalho — o site inteiro
+   dependência para trinta linhas de trabalho: o site inteiro
    foi feito sem npm, o servidor segue a mesma regra.
    ============================================================ */
 
@@ -29,6 +29,7 @@ export function lerMultipart(corpo, tipoConteudo) {
   const marca = Buffer.from('--' + (m[1] || m[2]).trim());
   const campos = {};
   const arquivos = {};
+  const lista = [];   // todos os arquivos, na ordem, mesmo com o mesmo nome de campo
 
   let pos = corpo.indexOf(marca);
   while (pos >= 0) {
@@ -51,11 +52,15 @@ export function lerMultipart(corpo, tipoConteudo) {
     const tipo = /content-type:\s*([^\r\n;]+)/i.exec(cab)?.[1]?.trim();
 
     if (nome) {
-      if (arquivo !== undefined) arquivos[nome] = { nome: arquivo, tipo, bytes: dado };
+      if (arquivo !== undefined) {
+        const item = { campo: nome, nome: arquivo, tipo, bytes: dado };
+        arquivos[nome] = item;
+        lista.push(item);
+      }
       else campos[nome] = dado.toString('utf8');
     }
     pos = prox;
   }
 
-  return { campos, arquivos };
+  return { campos, arquivos, lista };
 }

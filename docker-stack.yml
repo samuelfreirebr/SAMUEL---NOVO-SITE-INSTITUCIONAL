@@ -5,16 +5,18 @@
 #  arquivo → Environment variables → Deploy.
 #
 #  Variáveis a preencher:
-#    SENHA_PAINEL       obrigatória — a senha do /admin
+#    SENHA_PAINEL       obrigatória: a senha do /admin
 #
 #  Opcionais, da prospecção (/google-prospection). Sem elas o
 #  app sobe do mesmo jeito, com menos:
-#    GOOGLE_PLACES_KEY  Places API (New) — nota, avaliações,
+#    GOOGLE_PLACES_KEY  Places API (New): nota, avaliações,
 #                       opiniões. Sem ela: OpenStreetMap.
 #    ANTHROPIC_API_KEY  mensagem escrita pela IA. Sem ela: só os
 #                       modelos locais.
 #    SERPER_API_KEY     busca de perfis do Instagram. Sem ela: a
 #                       busca fica desligada.
+#    OPENAI_API_KEY     Preencher com IA nas propostas. Sem ela: o
+#                       botão explica o que falta.
 #    PAGESPEED_KEY      só aumenta a cota do PageSpeed.
 #
 #  A imagem vem do ghcr.io, montada pela Action a cada push na
@@ -23,7 +25,7 @@
 #
 #  Traefik cuida do domínio e do certificado. Na Cloudflare o
 #  registro A de links.samuelfreire.com.br precisa estar com a
-#  nuvem CINZA (DNS only) — laranja quebra o Let's Encrypt.
+#  nuvem CINZA (DNS only). Laranja quebra o Let's Encrypt.
 # ============================================================
 
 services:
@@ -47,6 +49,8 @@ services:
       - GOOGLE_PLACES_KEY=${GOOGLE_PLACES_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - SERPER_API_KEY=${SERPER_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODELO=${OPENAI_MODELO:-gpt-4.1}
       - PAGESPEED_KEY=${PAGESPEED_KEY:-}
     volumes:
       # Textos, imagens enviadas, propostas e os leads da

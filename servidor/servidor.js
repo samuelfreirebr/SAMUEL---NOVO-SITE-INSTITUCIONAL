@@ -33,6 +33,7 @@ import {
 } from './seguranca.js';
 import { lerCorpo, lerMultipart } from './multipart.js';
 import { renderizarProposta, catalogoIcones } from './proposta-html.js';
+import { preencherComIa, temChaveIa } from './proposta-ia.js';
 import { apiProspeccao, configuracao as configProspeccao } from './prospeccao.js';
 import * as dados from './dados.js';
 
@@ -257,6 +258,24 @@ async function api(req, res, url) {
     return res.end(html);
   }
   if (rota === 'proposta-icones' && req.method === 'GET') return json(res, catalogoIcones());
+
+  // Preencher com IA: multipart com a proposta atual (campo "proposta",
+  // JSON), o texto colado (campo "texto") e os anexos (campo "arquivos",
+  // quantos forem). Devolve a proposta com só os campos permitidos
+  // alterados e a lista do que mudou.
+  if (rota === 'proposta-ia') {
+    if (req.method === 'GET') return json(res, { ligada: temChaveIa(), modelo: process.env.OPENAI_MODELO || 'gpt-4.1' });
+    if (req.method !== 'POST') return json(res, { erro: 'Método não aceito.' }, 405);
+    let corpo;
+    try { corpo = await lerCorpo(req, 32 * 1024 * 1024); }
+    catch (e) { return json(res, { erro: 'Os anexos passam de 30 MB. Mande menos de uma vez.' }, 413); }
+    const form = lerMultipart(corpo, req.headers['content-type']);
+    if (!form) return json(res, { erro: 'Envio inválido.' }, 400);
+    let proposta = {};
+    try { proposta = JSON.parse(form.campos.proposta || '{}'); } catch (e) { return json(res, { erro: 'Proposta inválida.' }, 400); }
+    const d = await preencherComIa({ proposta, texto: form.campos.texto || '', arquivos: form.lista || [] });
+    return json(res, d, d.erro ? (temChaveIa() ? 502 : 503) : 200);
+  }
 
   /* --- propostas --- */
   if (rota === 'propostas') {
