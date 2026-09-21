@@ -25,7 +25,35 @@ const LIMITE_TEXTO = 60000;               // caracteres de texto que vão para a
 const MAX_ARQUIVOS = 24;
 
 export const temChaveIa = () => Boolean(process.env.OPENAI_API_KEY);
-const modelo = () => process.env.OPENAI_MODELO || 'gpt-4.1';
+
+/* Qual modelo usar: o da stack, se a conta tiver acesso; senão o
+   melhor da lista que a chave alcança. Cada conta da OpenAI libera
+   modelos diferentes por projeto, e "não tem acesso ao gpt-4.1" foi
+   o primeiro erro real. A lista da conta fica em cache por uma hora. */
+const PREFERENCIA = ['gpt-5', 'gpt-5-mini', 'gpt-4.1', 'gpt-4o', 'gpt-4.1-mini', 'gpt-4o-mini', 'gpt-5-nano'];
+let modelosDaConta = null;
+let quandoListou = 0;
+
+async function listarModelos() {
+  if (modelosDaConta && Date.now() - quandoListou < 60 * 60 * 1000) return modelosDaConta;
+  try {
+    const r = await fetch('https://api.openai.com/v1/models', {
+      headers: { authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+      signal: AbortSignal.timeout(15000),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok && Array.isArray(d.data)) { modelosDaConta = new Set(d.data.map((m) => m.id)); quandoListou = Date.now(); }
+  } catch (e) { /* sem lista: tenta na ordem e deixa o erro dizer */ }
+  return modelosDaConta;
+}
+
+export async function escolherModelo() {
+  const pedido = process.env.OPENAI_MODELO;
+  const lista = await listarModelos();
+  if (!lista) return pedido || PREFERENCIA[2];
+  if (pedido && lista.has(pedido)) return pedido;
+  return PREFERENCIA.find((m) => lista.has(m)) || pedido || PREFERENCIA[2];
+}
 
 /* ---------- ZIP mínimo: só o que precisamos ----------
    Lê o diretório central e infla cada entrada. Sem dependência,
@@ -208,12 +236,12 @@ function resumoAtual(p) {
 - perguntas atuais: ${(p.faq?.itens || []).map((f) => f.pergunta).join(' | ') || '(nenhuma)'}`;
 }
 
-async function chamarOpenAi(partes) {
+async function chamarOpenAi(partes, modeloEscolhido) {
   const r = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
     body: JSON.stringify({
-      model: modelo(),
+      model: modeloEscolhido,
       input: [
         { role: 'system', content: [{ type: 'input_text', text: SISTEMA }] },
         { role: 'user', content: partes },
@@ -226,7 +254,9 @@ async function chamarOpenAi(partes) {
   const d = await r.json().catch(() => ({}));
   if (!r.ok) {
     const msg = d?.error?.message || `OpenAI respondeu ${r.status}`;
-    throw new Error(/api key|authentication|incorrect/i.test(msg) ? 'A chave OPENAI_API_KEY não foi aceita. Confira na stack.' : msg);
+    const e = new Error(/api key|authentication|incorrect/i.test(msg) ? 'A chave OPENAI_API_KEY não foi aceita. Confira na stack.' : msg);
+    e.semAcesso = /does not have access|model_not_found|not found/i.test(msg);
+    throw e;
   }
   const texto = d.output_text
     || (d.output || []).flatMap((o) => o.content || []).map((c) => c.text || '').join('');
@@ -302,9 +332,16 @@ export async function preencherComIa({ proposta, texto, arquivos }) {
   partes.push(...anexos.partes);
   if (partes.length === 1) return { erro: 'Nenhum anexo pôde ser lido. Use texto, imagem, PDF, DOCX ou ZIP.', lidos: anexos.lidos };
 
-  let ia;
-  try { ia = await chamarOpenAi(partes); }
-  catch (e) { return { erro: e.message, lidos: anexos.lidos }; }
+  // Tenta o modelo escolhido; se a conta não tiver acesso, desce a
+  // lista de preferência até um que funcione.
+  let ia, usado;
+  const tentar = [await escolherModelo(), ...PREFERENCIA];
+  let ultimoErro;
+  for (const m of [...new Set(tentar)]) {
+    try { ia = await chamarOpenAi(partes, m); usado = m; break; }
+    catch (e) { ultimoErro = e; if (!e.semAcesso) break; }
+  }
+  if (!ia) return { erro: ultimoErro?.message || 'A IA não respondeu.', lidos: anexos.lidos };
 
-  return { ...aplicarNaProposta(proposta || {}, ia), lidos: anexos.lidos, modelo: modelo() };
+  return { ...aplicarNaProposta(proposta || {}, ia), lidos: anexos.lidos, modelo: usado };
 }

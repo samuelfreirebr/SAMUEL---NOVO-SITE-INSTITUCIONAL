@@ -303,8 +303,13 @@ e as outras condições não entram no pedido à IA: ela não tem como mexer
 neles. Nada é salvo sozinho; a proposta fica alterada no editor para
 você revisar etapa por etapa e salvar.
 
-Precisa de `OPENAI_API_KEY` na stack. `OPENAI_MODELO` troca o modelo
-(padrão `gpt-4.1`). Sem chave, o botão explica o que falta. O código
+Precisa de `OPENAI_API_KEY` na stack. O servidor consulta a lista de
+modelos que a chave alcança e escolhe o melhor disponível (gpt-5,
+gpt-5-mini, gpt-4.1, gpt-4o, gpt-4.1-mini, gpt-4o-mini, nessa ordem);
+cada conta da OpenAI libera modelos diferentes por projeto, e o
+"Project does not have access to model" foi o primeiro erro real.
+`OPENAI_MODELO` força um modelo específico, se a conta tiver acesso.
+Sem chave, o botão explica o que falta. O código
 está em `servidor/proposta-ia.js`; a leitura de ZIP e DOCX é feita ali
 mesmo, sem dependência.
 

@@ -33,7 +33,7 @@ import {
 } from './seguranca.js';
 import { lerCorpo, lerMultipart } from './multipart.js';
 import { renderizarProposta, catalogoIcones } from './proposta-html.js';
-import { preencherComIa, temChaveIa } from './proposta-ia.js';
+import { preencherComIa, temChaveIa, escolherModelo } from './proposta-ia.js';
 import { apiProspeccao, configuracao as configProspeccao } from './prospeccao.js';
 import * as dados from './dados.js';
 
@@ -264,7 +264,7 @@ async function api(req, res, url) {
   // quantos forem). Devolve a proposta com só os campos permitidos
   // alterados e a lista do que mudou.
   if (rota === 'proposta-ia') {
-    if (req.method === 'GET') return json(res, { ligada: temChaveIa(), modelo: process.env.OPENAI_MODELO || 'gpt-4.1' });
+    if (req.method === 'GET') return json(res, { ligada: temChaveIa(), modelo: temChaveIa() ? await escolherModelo() : null });
     if (req.method !== 'POST') return json(res, { erro: 'Método não aceito.' }, 405);
     let corpo;
     try { corpo = await lerCorpo(req, 32 * 1024 * 1024); }
