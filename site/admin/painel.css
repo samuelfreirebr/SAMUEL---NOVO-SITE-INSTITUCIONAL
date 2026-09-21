@@ -1,5 +1,5 @@
 /* ============================================================
-   Painel — estilos compartilhados pelas telas de /admin.
+   Painel: estilos compartilhados pelas telas de /admin.
    Entra depois de tokens.css e base.css; usa só as variáveis.
    ============================================================ */
 
@@ -77,7 +77,7 @@ body { background: var(--bg-2); display: flex; flex-direction: column; }
   box-shadow: 0 0 0 1px var(--line);
   transition: width var(--d-base) var(--ease-out);
 }
-/* Prévia de celular: o quadro estreita para 390px — a mesma largura
+/* Prévia de celular: o quadro estreita para 390px, a mesma largura
    em que as quebras e os tamanhos "celular" valem. */
 .quadro-caixa[data-modo="celular"] #quadro { width: 390px; }
 
@@ -138,8 +138,28 @@ input:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-
   background: var(--bg); color: var(--muted); font-size: var(--t-small); cursor: pointer;
 }
 .solta.ativa { border-color: var(--brand); color: var(--ink); }
-dialog { width: min(92vw, 720px); max-height: 84vh; padding: 0; border: 0; border-radius: var(--radius-img); background: var(--bg); }
+/* O reset do site zera a margem de tudo, e é a margem automática que
+   centraliza um <dialog>. Aqui ela volta, e o pop-up fica no meio da
+   tela em qualquer tamanho. Corpo rola por dentro; o topo fica fixo. */
+dialog {
+  position: fixed; inset: 0; margin: auto;
+  width: min(92vw, 720px); max-height: min(84vh, 860px);
+  display: none; flex-direction: column;
+  padding: 0; border: 0; border-radius: var(--radius-img);
+  background: var(--bg); color: var(--ink);
+  overflow: hidden;
+}
+dialog[open] { display: flex; }
 dialog::backdrop { background: rgba(20,21,23,.55); }
+.modal__topo { flex: none; }
+.modal__corpo { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; }
+@media (max-width: 640px) {
+  /* no celular, folha inteira: nada de caixinha encostada num canto.
+     dialog[open] ganha de qualquer classe que a janela tenha (.ia). */
+  dialog[open] { inset: 0; margin: 0; width: 100%; max-width: none; height: 100%; max-height: none; border-radius: 0; }
+  .modal__topo { padding: var(--sp-sm) var(--sp-md); }
+  .modal__corpo { padding: var(--sp-md); padding-bottom: calc(var(--sp-xl) + env(safe-area-inset-bottom)); }
+}
 .modal__topo { display: flex; align-items: center; gap: var(--sp-sm); padding: var(--sp-md); border-bottom: var(--hair) solid var(--line); }
 .modal__topo b { margin-right: auto; font-size: var(--t-small); }
 .modal__corpo { padding: var(--sp-md); overflow: auto; }
@@ -149,16 +169,19 @@ dialog::backdrop { background: rgba(20,21,23,.55); }
   flex: 1; display: grid; place-items: center;
   padding: var(--sp-xl) var(--sp-md);
 }
-.hub__in { width: 100%; max-width: 760px; }
+.hub__in { width: 100%; max-width: 1180px; }
 .hub__quem { display: flex; align-items: center; gap: var(--sp-md); margin-bottom: var(--sp-2xl); }
 .hub__foto { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 2px var(--brand); }
 .hub__nome { font-size: var(--t-lead); font-weight: var(--w-black); letter-spacing: -.035em; line-height: 1; }
 .hub__nome em { font-style: italic; font-weight: var(--w-book); }
 .hub__meta { color: var(--muted); font-size: var(--t-small); margin-top: 4px; }
-.hub__blocos { display: grid; gap: var(--sp-md); grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+/* Três blocos lado a lado no computador; um por linha no celular.
+   auto-fit quebrava em dois em cima e um embaixo. */
+.hub__blocos { display: grid; gap: var(--sp-md); grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 900px) { .hub__blocos { grid-template-columns: minmax(0, 1fr); } }
 .bloco {
   display: flex; flex-direction: column; gap: var(--sp-lg);
-  min-height: 220px; padding: var(--sp-lg);
+  min-height: 260px; padding: var(--sp-lg);
   background: var(--bg); border: var(--hair) solid var(--line); border-radius: var(--radius-img);
   color: var(--ink); transition: border-color var(--d-fast), transform var(--d-base) var(--ease-out);
 }

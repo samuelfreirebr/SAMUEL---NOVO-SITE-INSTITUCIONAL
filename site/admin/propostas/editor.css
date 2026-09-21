@@ -287,3 +287,7 @@ body.ed { height: 100%; overflow: hidden; }
 .mini--ia[disabled] { opacity: .5; pointer-events: none; }
 .girando { display: inline-block; width: .9em; height: .9em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: ia-gira .8s linear infinite; vertical-align: -.15em; margin-right: .3em; }
 @keyframes ia-gira { to { transform: rotate(360deg); } }
+
+/* ---------- posição da seção na página ---------- */
+.ed-ordem { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ed-ordem__rot { font-size: var(--t-eyebrow); color: var(--muted); margin-right: 4px; }

@@ -164,7 +164,7 @@ function prepararAnexos(arquivos) {
 
 const ESQUEMA = {
   type: 'object', additionalProperties: false,
-  required: ['cliente', 'titulo', 'subtitulo', 'data', 'investimento', 'escopo', 'prazoDias', 'hospedagem', 'perguntas', 'observacoes'],
+  required: ['cliente', 'titulo', 'subtitulo', 'data', 'investimento', 'escopo', 'inclui', 'prazoDias', 'hospedagem', 'perguntas', 'observacoes'],
   properties: {
     cliente: { type: 'string', description: 'Nome do cliente ou da empresa. Vazio se não aparecer.' },
     titulo: { type: 'string', description: 'Frase de impacto da capa, curta, no tom de um designer confiante. Vazio se não houver base.' },
@@ -189,6 +189,23 @@ const ESQUEMA = {
           titulo: { type: 'string' },
           descricao: { type: 'string', description: 'Uma ou duas frases concretas do que será feito.' },
           marca: { type: 'string', description: 'Etiqueta curta: Identidade, Web, Impresso, Sistema, Marketing.' },
+        },
+      },
+    },
+    inclui: {
+      type: 'object', additionalProperties: false,
+      required: ['itens', 'grupos'],
+      description: 'O que cada entregável inclui: a lista que mostra o valor do trabalho por trás de cada entrega.',
+      properties: {
+        itens: { type: 'array', items: { type: 'string' }, description: 'De 8 a 16 itens curtos, concretos, em ordem de trabalho.' },
+        grupos: {
+          type: 'array',
+          items: {
+            type: 'object', additionalProperties: false,
+            required: ['titulo', 'itens'],
+            properties: { titulo: { type: 'string' }, itens: { type: 'array', items: { type: 'string' } } },
+          },
+          description: 'De 1 a 3 subgrupos com título, para o que é uma frente própria (ex.: Otimizações de velocidade; Aplicações da identidade).',
         },
       },
     },
@@ -218,6 +235,7 @@ const SISTEMA = `Você preenche propostas comerciais para Samuel Freire, web des
 Regras:
 - Use apenas o que está no material. Não invente valor, prazo, nome ou serviço que não apareça. Campo sem base fica vazio (ou 0 / false).
 - Entregáveis: transforme o que foi combinado em itens claros e bem estruturados, um por entrega, com descrição concreta. Agrupe o que é a mesma coisa; separe o que é entrega diferente. Nada de item genérico como "site" sem dizer o quê.
+- "O que cada entregável inclui": aqui você pode e deve completar com o que um trabalho profissional desse tipo envolve, mesmo que o material não liste. É a parte que mostra valor: o cliente precisa ver o tanto de coisa que vem dentro de cada entrega. Adapte ao que foi combinado (se é site em WordPress, fale de WordPress; se é identidade visual, fale de estudo de marca, paleta, tipografia, aplicações; se é sistema, fale de levantamento, fluxos, testes, treinamento). Itens curtos, concretos, em ordem de trabalho, de 8 a 16. Subgrupos só para o que é uma frente própria, de 1 a 3. Nada de item vago como "qualidade" ou "suporte".
 - Título: uma frase de impacto curta para a capa, ligada ao objetivo do cliente (ex.: "Escala não é acaso. É posicionamento."). Sem travessão, sem ponto e vírgula.
 - Investimento: se o material diz valor e forma (à vista, 2x, 3x), preencha; "encontrado" só é true com valor real.
 - Prazo: só em dias úteis, só se o material diz.
@@ -231,6 +249,7 @@ function resumoAtual(p) {
 - cliente: ${p.cliente || '(vazio)'}
 - título atual: ${p.titulo || '(vazio)'}
 - entregáveis atuais: ${(p.escopo || []).map((e) => e.titulo).join(' | ') || '(nenhum)'}
+- "o que inclui" atual: ${(p.inclui?.itens || []).slice(0, 6).join(' | ') || '(vazio)'}${(p.inclui?.itens || []).length > 6 ? ' ...' : ''}
 - investimento atual: ${p.investimento?.valorParcela ? `${p.investimento.parcelas}x ${p.investimento.moeda} ${p.investimento.valorParcela}` : '(vazio)'}
 - condições (títulos): ${cond}
 - perguntas atuais: ${(p.faq?.itens || []).map((f) => f.pergunta).join(' | ') || '(nenhuma)'}`;
@@ -295,6 +314,14 @@ export function aplicarNaProposta(p, ia) {
 
   const escopo = (ia.escopo || []).filter((e) => limpo(e.titulo)).map((e) => ({ titulo: limpo(e.titulo), descricao: limpo(e.descricao), marca: limpo(e.marca) }));
   if (escopo.length) { saida.escopo = escopo; mudancas.push(`${escopo.length} entregáveis`); }
+
+  const itensInclui = (ia.inclui?.itens || []).map(limpo).filter(Boolean);
+  const gruposInclui = (ia.inclui?.grupos || []).filter((g) => limpo(g.titulo) && (g.itens || []).length)
+    .map((g) => ({ titulo: limpo(g.titulo), itens: g.itens.map(limpo).filter(Boolean) }));
+  if (itensInclui.length) {
+    saida.inclui = { ...(saida.inclui || {}), itens: itensInclui, grupos: gruposInclui };
+    mudancas.push(`o que inclui (${itensInclui.length} itens${gruposInclui.length ? ' + ' + gruposInclui.length + ' subgrupo' + (gruposInclui.length > 1 ? 's' : '') : ''})`);
+  }
 
   if (Array.isArray(saida.condicoes)) {
     if (ia.prazoDias > 0) {

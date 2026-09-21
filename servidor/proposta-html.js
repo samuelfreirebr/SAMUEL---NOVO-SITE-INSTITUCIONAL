@@ -36,6 +36,17 @@ export const PARTES = [
 ];
 const ligada = (p, parte) => p?.visivel?.[parte] !== false;
 
+/* Ordem das seções. p.ordem guarda a sequência escolhida no editor;
+   o que não estiver nela entra depois, na ordem padrão, então uma
+   proposta antiga (sem o campo) e uma seção nova (que a proposta
+   ainda não conhece) saem no lugar de sempre. Capa é sempre a
+   primeira e o rodapé o último: não entram na lista. */
+export const ORDEM_PADRAO = ['escopo', 'inclui', 'processo', 'investimento', 'condicoes', 'sobre', 'ecossistema', 'encerramento', 'faq'];
+export function ordemDe(p) {
+  const pedida = Array.isArray(p?.ordem) ? p.ordem.filter((s) => ORDEM_PADRAO.includes(s)) : [];
+  return [...new Set([...pedida, ...ORDEM_PADRAO])];
+}
+
 function secEscopo(itens) {
   if (!Array.isArray(itens) || !itens.length) return '';
   return `
@@ -542,6 +553,20 @@ function fichaCapa(p) {
 /* Prévia do painel: a mesma página, sem o main.js. Sem ele não há
    revelação, Lenis nem processo preso na rolagem: tudo nasce visível
    e parado, que é o que se quer enquanto se edita. */
+/* Cada seção da página, pela chave da ordem. Ligar/desligar continua
+   sendo de cada uma; a ordem só diz quem vem antes de quem. */
+const SECOES = {
+  escopo: (p) => talvez(ligada(p, 'escopo'), () => secEscopo(p.escopo)),
+  inclui: (p) => talvez(ligada(p, 'inclui'), () => secInclui(p.inclui, ligada(p, 'incluiGrupos'))),
+  processo: (p) => talvez(ligada(p, 'processo'), () => secProcesso(p.processo)),
+  investimento: (p) => secInvestimento(ligada(p, 'investimento') ? p.investimento : null, ligada(p, 'pagamento') ? p.pagamento : null, ligada(p, 'conta')),
+  condicoes: (p) => talvez(ligada(p, 'condicoes'), () => secCondicoes(p.condicoes)),
+  sobre: (p) => talvez(ligada(p, 'sobre'), () => secSobre(p.sobre, p.assinatura, { metricas: ligada(p, 'metricas'), galeria: ligada(p, 'galeria'), assinatura: ligada(p, 'assinatura') })),
+  ecossistema: (p) => talvez(ligada(p, 'ecossistema'), () => secEcossistema(p.ecossistema)),
+  encerramento: (p) => talvez(ligada(p, 'encerramento'), () => secFim(p)),
+  faq: (p) => talvez(ligada(p, 'faq'), () => secFaq(p)),
+};
+
 export function renderizarProposta(p, { previa = false } = {}) {
   const cliente = escapar(p.cliente || '');
   const titulo = escapar(p.titulo || 'Proposta');
@@ -582,16 +607,7 @@ export function renderizarProposta(p, { previa = false } = {}) {
     </div>
   </section>
 
-  ${talvez(ligada(p, 'escopo'), () => secEscopo(p.escopo))}
-  ${talvez(ligada(p, 'inclui'), () => secInclui(p.inclui, ligada(p, 'incluiGrupos')))}
-  ${talvez(ligada(p, 'processo'), () => secProcesso(p.processo))}
-  ${secInvestimento(ligada(p, 'investimento') ? p.investimento : null, ligada(p, 'pagamento') ? p.pagamento : null, ligada(p, 'conta'))}
-  ${talvez(ligada(p, 'condicoes'), () => secCondicoes(p.condicoes))}
-  ${talvez(ligada(p, 'sobre'), () => secSobre(p.sobre, p.assinatura, { metricas: ligada(p, 'metricas'), galeria: ligada(p, 'galeria'), assinatura: ligada(p, 'assinatura') }))}
-  ${talvez(ligada(p, 'ecossistema'), () => secEcossistema(p.ecossistema))}
-
-  ${talvez(ligada(p, 'encerramento'), () => secFim(p))}
-  ${talvez(ligada(p, 'faq'), () => secFaq(p))}
+  ${ordemDe(p).map((s) => SECOES[s](p)).join('\n')}
 
 </main>
 

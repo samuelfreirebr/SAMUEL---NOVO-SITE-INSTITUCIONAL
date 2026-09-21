@@ -16,7 +16,7 @@ const $ = (s, r = document) => r.querySelector(s);
 // O que pertence ao modelo (o que toda proposta nova já traz).
 // Cliente, endereço, datas e situação são de cada proposta.
 const CAMPOS_MODELO = ['titulo', 'subtitulo', 'validade', 'escopo', 'inclui', 'processo', 'investimento', 'pagamento',
-  'condicoes', 'sobre', 'ecossistema', 'assinatura', 'encerramento', 'contato', 'faq', 'visivel'];
+  'condicoes', 'sobre', 'ecossistema', 'assinatura', 'encerramento', 'contato', 'faq', 'visivel', 'ordem'];
 
 const REVISAR = { id: 'revisar', titulo: 'Revisar e salvar', resumo: 'Confira o que falta e publique.' };
 
@@ -33,7 +33,30 @@ const est = {
   previa: 'computador', // 'computador' | 'celular'
 };
 const suja = () => est.modo !== 'lista' && JSON.stringify(est.proposta) !== est.salva;
-const passos = () => [...PASSOS.filter((p) => est.modo !== 'modelo' || !p.soProposta), REVISAR];
+/* Seções que podem trocar de lugar na página (as mesmas do
+   renderizador). As etapas do editor seguem essa ordem, para o que
+   você vê à esquerda ser a sequência da página. */
+const ORDEM_PADRAO = ['escopo', 'inclui', 'processo', 'investimento', 'condicoes', 'sobre', 'ecossistema', 'encerramento', 'faq'];
+const ordemDe = (p) => [...new Set([...(Array.isArray(p?.ordem) ? p.ordem.filter((x) => ORDEM_PADRAO.includes(x)) : []), ...ORDEM_PADRAO])];
+const passos = () => {
+  const base = PASSOS.filter((p) => est.modo !== 'modelo' || !p.soProposta);
+  const ordem = ordemDe(est.proposta);
+  const posicao = (ps) => { const i = ordem.indexOf(ps.id); return i < 0 ? -1 : i; };
+  const fixos = base.filter((ps) => posicao(ps) < 0);
+  const moveis = base.filter((ps) => posicao(ps) >= 0).sort((a, b) => posicao(a) - posicao(b));
+  return [...fixos, ...moveis, REVISAR];
+};
+function moverSecao(id, delta) {
+  const ordem = ordemDe(est.proposta);
+  const i = ordem.indexOf(id), j = i + delta;
+  if (i < 0 || j < 0 || j >= ordem.length) return;
+  [ordem[i], ordem[j]] = [ordem[j], ordem[i]];
+  // guarda só se difere do padrão: proposta que nunca reordenou não ganha o campo
+  if (ordem.join() === ORDEM_PADRAO.join()) delete est.proposta.ordem; else est.proposta.ordem = ordem;
+  est.passo = passos().findIndex((ps) => ps.id === id);
+  mudou(); pintarNav(); pintarPasso();
+}
+
 const faltaEm = (ps, p) => (est.modo === 'modelo' ? '' : ps.falta?.(p) || '');
 
 /* ---------- API ---------- */
@@ -203,7 +226,7 @@ function abrirEditor(p, { modo, novo, passo }) {
     const objeto = (v) => v && typeof v === 'object' && !Array.isArray(v);
     for (const k of CAMPOS_MODELO) {
       const padrao = est.modelo[k];
-      if (padrao === undefined || k === 'visivel') continue;
+      if (padrao === undefined || k === 'visivel' || k === 'ordem') continue;
       if (vazio(p[k])) { p[k] = clonar(padrao); continue; }
       if (objeto(p[k]) && objeto(padrao)) {
         for (const [c, v] of Object.entries(padrao)) if (vazio(p[k][c])) p[k][c] = clonar(v);
@@ -305,6 +328,14 @@ function pintarPasso() {
   }
   if (ps.chaves && est.modo === 'proposta') {
     acoesCab.append(h('button', { type: 'button', class: 'mini', onclick: () => restaurar(ps), title: 'Volta os textos desta etapa para os do modelo' }, 'Restaurar texto padrão'));
+  }
+  if (ORDEM_PADRAO.includes(ps.id)) {
+    const ordem = ordemDe(p);
+    const pos = ordem.indexOf(ps.id);
+    acoesCab.append(h('div', { class: 'ed-ordem', title: 'Posição desta seção na página' },
+      h('span', { class: 'ed-ordem__rot' }, 'Posição na página: ' + (pos + 1) + ' de ' + ordem.length),
+      h('button', { type: 'button', class: 'mini', disabled: pos === 0 ? '' : null, onclick: () => moverSecao(ps.id, -1), title: 'Subir na página' }, '↑ Subir'),
+      h('button', { type: 'button', class: 'mini', disabled: pos === ordem.length - 1 ? '' : null, onclick: () => moverSecao(ps.id, 1), title: 'Descer na página' }, '↓ Descer')));
   }
 
   form.append(h('header', { class: 'ed-form__cab' },
@@ -589,7 +620,7 @@ async function preencherComIa() {
   try {
     const d = await api('/api/proposta-ia', { method: 'POST', body: fd });
     // Só o que veio de volta muda; o resto do estado continua o mesmo objeto.
-    for (const k of ['cliente', 'id', 'preparadaPara', 'titulo', 'subtitulo', 'data', 'investimento', 'escopo', 'condicoes', 'faq']) {
+    for (const k of ['cliente', 'id', 'preparadaPara', 'titulo', 'subtitulo', 'data', 'investimento', 'escopo', 'inclui', 'condicoes', 'faq']) {
       if (d.proposta[k] !== undefined) est.proposta[k] = d.proposta[k];
     }
     for (const ps of PASSOS) ps.montar(est.proposta, { novo: est.novo });

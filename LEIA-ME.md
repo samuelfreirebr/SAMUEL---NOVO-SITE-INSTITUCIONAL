@@ -281,6 +281,17 @@ Painel → **Criar proposta**.
 que vai para a página — `3× R$ 1.500 · total R$ 4.500` — e a forma de
 pagamento acompanha.
 
+### Ordem das seções
+
+Em qualquer etapa que corresponda a uma seção da página (Escopo, O que
+inclui, Processo, Investimento, Condições, Sobre mim, Ecossistema,
+Encerramento, Perguntas), o cabeçalho mostra "Posição na página: 3 de 9"
+com os botões **Subir** e **Descer**. As etapas do editor seguem a mesma
+ordem, e a prévia acompanha. Capa é sempre a primeira e o rodapé o
+último. A ordem fica em `p.ordem`; proposta que nunca reordenou não
+ganha o campo e sai na ordem padrão. Seção nova que a proposta ainda
+não conhece entra no lugar de sempre.
+
 ### Preencher com IA
 
 No topo do editor de uma proposta há o botão **Preencher com IA**. Cole
@@ -294,6 +305,8 @@ print pode ser colado direto na janela com Ctrl+V). A IA lê e preenche
 - data (se o material não diz, vai a de hoje)
 - valor e parcelas
 - os entregáveis, estruturados um a um
+- o que cada entregável inclui: aqui a IA completa com o que um trabalho
+  daquele tipo envolve, adaptado ao combinado, para o cliente ver valor
 - o prazo em dias, só na condição do prazo
 - a condição de ferramentas e hospedagem, só se o material fala de quem paga
 - as perguntas do fim, com as dúvidas que o cliente ainda parece ter
