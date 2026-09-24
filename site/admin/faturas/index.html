@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Faturas | Painel Samuel Freire</title>
+<link rel="icon" href="/img/favicon.png" type="image/png">
+<link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/styles/tokens.css?v=20260909h">
+<link rel="stylesheet" href="/styles/base.css?v=20260911a">
+<link rel="stylesheet" href="/admin/painel.css?v=4">
+<!-- Campos, blocos, chaves e prévia são as mesmas peças do editor de propostas. -->
+<link rel="stylesheet" href="/admin/propostas/editor.css">
+<link rel="stylesheet" href="./faturas.css">
+</head>
+<body class="ed">
+
+<header class="topo">
+  <h1><a href="/admin/">Painel</a> <i>Samuel Freire</i><span class="sec" id="topo-sec">Faturas</span></h1>
+  <div class="ed-topo__acoes" id="topo-acoes"></div>
+</header>
+
+<p class="aviso" id="aviso" role="status"></p>
+
+<main class="ed-raiz" id="app">
+  <p class="ed-vazio" style="padding:var(--sp-xl)">Carregando…</p>
+</main>
+
+<script type="module" src="./faturas.js"></script>
+</body>
+</html>

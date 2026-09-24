@@ -1,0 +1,87 @@
+/* ============================================================
+   Faturas no painel.
+   Entra depois de painel.css e do editor.css das propostas, de
+   onde vêm campos, blocos, chaves e a moldura da prévia. Aqui fica
+   só o que é das faturas: a lista, a escolha do tipo e o editor em
+   duas colunas (formulário | folha).
+   ============================================================ */
+
+.fx-raiz--lista { overflow: auto; }
+.fx-lista { max-width: 1040px; margin-inline: auto; padding: var(--sp-2xl) var(--sp-md) var(--sp-3xl); }
+
+/* ---------- etiquetas ---------- */
+.fx-tag {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: .3em .65em; border-radius: var(--radius-img);
+  font-size: .6875rem; font-weight: var(--w-bold); letter-spacing: .1em; text-transform: uppercase;
+  background: var(--bg-2); color: var(--ink);
+}
+.fx-tag[data-tipo="invoice"] { background: var(--ink); color: #fff; }
+.fx-sit { font-size: .75rem; font-weight: var(--w-semi); color: var(--muted); display: inline-flex; align-items: center; gap: .45em; white-space: nowrap; }
+.fx-sit::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--line-2); }
+.fx-sit[data-situacao="vencida"] { color: var(--brand); }
+.fx-sit[data-situacao="vencida"]::before { background: var(--brand); }
+.fx-sit[data-situacao="paga"]::before { background: #2DB36B; }
+
+/* ---------- resumo ---------- */
+.fx-resumo { display: flex; gap: var(--sp-lg); flex-wrap: wrap; margin-bottom: var(--sp-md); font-size: var(--t-small); color: var(--muted); }
+.fx-resumo b { color: var(--ink); font-weight: var(--w-black); font-size: 1.125rem; letter-spacing: -.02em; margin-right: .15em; }
+.fx-resumo [data-situacao="vencida"] b { color: var(--brand); }
+
+/* ---------- lista ---------- */
+.fx-itens { display: grid; gap: 6px; }
+.fx-item { background: var(--bg); border: var(--hair) solid var(--line); border-radius: var(--radius-img); transition: border-color var(--d-fast); }
+.fx-item:hover { border-color: var(--ink); }
+.fx-item__abrir {
+  width: 100%; text-align: left;
+  display: grid; grid-template-columns: 5.5rem minmax(0, 1fr) auto 9.5rem 6.5rem; gap: var(--sp-md); align-items: center;
+  padding: var(--sp-sm) var(--sp-md);
+}
+.fx-item__quem { display: flex; flex-direction: column; min-width: 0; }
+.fx-item__quem b { font-weight: var(--w-bold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fx-item__quem small { font-size: .75rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fx-item__valor { font-weight: var(--w-black); letter-spacing: -.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fx-item__data { font-size: .8125rem; color: var(--muted); white-space: nowrap; }
+.fx-item__acoes { display: flex; gap: 4px; flex-wrap: wrap; padding: 0 var(--sp-md) var(--sp-sm); }
+@media (max-width: 760px) {
+  .fx-item__abrir { grid-template-columns: auto minmax(0, 1fr) auto; row-gap: var(--sp-2xs); }
+  .fx-item__data { grid-column: 2; }
+  .fx-item__sit, .fx-sit { justify-self: end; }
+}
+
+/* ---------- escolha do tipo ---------- */
+.fx-tipos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-md); }
+@media (max-width: 640px) { .fx-tipos { grid-template-columns: minmax(0, 1fr); } }
+.fx-tipo {
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-sm);
+  min-height: 240px; padding: var(--sp-lg); text-align: left;
+  background: var(--bg); border: var(--hair) solid var(--line); border-radius: var(--radius-img);
+  transition: border-color var(--d-fast), transform var(--d-base) var(--ease-out);
+}
+.fx-tipo:hover { border-color: var(--ink); transform: translateY(-2px); }
+.fx-tipo__titulo { margin-top: auto; font-size: var(--t-h3); font-weight: var(--w-black); letter-spacing: var(--ls-h3); line-height: 1; }
+.fx-tipo__texto { color: var(--ink-2); font-size: var(--t-small); line-height: 1.5; max-width: 38ch; }
+.fx-tipo__detalhe { font-size: var(--t-eyebrow); font-weight: var(--w-semi); letter-spacing: .1em; text-transform: uppercase; color: var(--brand); }
+
+/* ---------- editor ---------- */
+.fx-editor { display: grid; grid-template-columns: minmax(400px, 600px) minmax(0, 1fr); }
+.fx-palco { overflow: auto; align-items: flex-start; }
+.fx-atalhos button { font-size: .75rem; }
+
+.ed input[type=date], .ed select {
+  width: 100%; padding: .6em .75em; font-size: .9375rem; line-height: 1.45; font-family: inherit;
+  color: var(--ink); background: var(--bg);
+  border: var(--hair) solid var(--line-2); border-radius: var(--radius-img);
+  transition: border-color var(--d-fast), box-shadow var(--d-fast);
+}
+.ed input[type=date]:hover, .ed select:hover { border-color: #C3C9D1; }
+.ed input[type=date]:focus-visible, .ed select:focus-visible { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-wash); }
+
+@media (max-width: 1199px) {
+  .fx-editor { grid-template-columns: minmax(0, 1fr); }
+  .fx-editor .ed-form { max-width: 720px; width: 100%; margin-inline: auto; }
+}
+@media (max-width: 759px) {
+  .fx-editor { display: flex; flex-direction: column; }
+  .fx-editor .ed-form { overflow: visible; }
+}

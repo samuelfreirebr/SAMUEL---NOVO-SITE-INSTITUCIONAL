@@ -3,13 +3,14 @@
 
    Substitui o KV e o R2 da Cloudflare por algo mais simples e
    mais seu: arquivos numa pasta. Essa pasta é um volume do
-   Docker, então sobrevive a rebuild, update e restart da stack —
+   Docker, então sobrevive a rebuild, update e restart da stack,
    e você pode copiá-la inteira para fazer backup.
 
      /dados
        conteudo.json            textos e imagens editados no painel
        conteudo.anterior.json   a versão de antes do último salvar
        propostas/<id>.json      uma proposta por arquivo
+       faturas/<id>.json        uma fatura (ou invoice) por arquivo
        img/<pasta>/<arquivo>    o que foi enviado pelo painel
 
    Gravação atômica em toda escrita: escreve num temporário e
@@ -18,6 +19,7 @@
    ============================================================ */
 
 import { promises as fs } from 'node:fs';
+import { randomBytes } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -27,9 +29,11 @@ const ARQ_CONTEUDO = path.join(RAIZ_DADOS, 'conteudo.json');
 const ARQ_ANTERIOR = path.join(RAIZ_DADOS, 'conteudo.anterior.json');
 export const PASTA_PROPOSTAS = path.join(RAIZ_DADOS, 'propostas');
 export const PASTA_IMAGENS = path.join(RAIZ_DADOS, 'img');
+export const PASTA_FATURAS = path.join(RAIZ_DADOS, 'faturas');
 
 export async function preparar() {
   await fs.mkdir(PASTA_PROPOSTAS, { recursive: true });
+  await fs.mkdir(PASTA_FATURAS, { recursive: true });
   await fs.mkdir(PASTA_IMAGENS, { recursive: true });
 }
 
@@ -133,6 +137,68 @@ export async function gravarProposta(proposta) {
 export async function apagarProposta(id) {
   if (!idValido(id)) return false;
   try { await fs.unlink(path.join(PASTA_PROPOSTAS, id + '.json')); return true; }
+  catch (e) { return false; }
+}
+
+/* ---------- faturas ----------
+   O id é sorteado no primeiro salvar e vai no link que o cliente
+   recebe. Aleatório de propósito: a fatura traz CPF, CNPJ e dados
+   bancários, e um endereço sequencial (fatura-001, fatura-002) se
+   deixaria adivinhar.                                              */
+
+const idFaturaValido = (id) => /^[a-z0-9]{10,32}$/.test(String(id || ''));
+const novoIdFatura = () => {
+  const letras = 'abcdefghijkmnpqrstuvwxyz23456789';   // sem 0/o, 1/l
+  return [...randomBytes(12)].map((b) => letras[b % letras.length]).join('');
+};
+
+export async function listarFaturas() {
+  await preparar();
+  const nomes = (await fs.readdir(PASTA_FATURAS)).filter((n) => n.endsWith('.json'));
+  const itens = [];
+  for (const n of nomes) {
+    try {
+      const f = JSON.parse(await fs.readFile(path.join(PASTA_FATURAS, n), 'utf8'));
+      if (!f || !idFaturaValido(f.id)) continue;
+      itens.push({
+        id: f.id, tipo: f.tipo, codigo: f.codigo, cliente: f.cliente?.nome || '',
+        servico: f.servico?.titulo || '', valor: f.valor, moeda: f.moeda,
+        emissao: f.emissao, vencimento: f.vencimento, paga: Boolean(f.paga), pagaEm: f.pagaEm,
+        criadaEm: f.criadaEm, atualizadaEm: f.atualizadaEm,
+      });
+    } catch (e) { /* arquivo torto: ignora em vez de derrubar a lista */ }
+  }
+  return itens.sort((a, b) => String(b.criadaEm).localeCompare(String(a.criadaEm)));
+}
+
+// A última completa, para a próxima nascer com os dados do prestador.
+export async function ultimaFatura(tipo) {
+  const lista = (await listarFaturas()).filter((f) => !tipo || f.tipo === tipo);
+  return lista.length ? lerFatura(lista[0].id) : null;
+}
+
+export async function lerFatura(id) {
+  if (!idFaturaValido(id)) return null;
+  try {
+    return JSON.parse(await fs.readFile(path.join(PASTA_FATURAS, id + '.json'), 'utf8'));
+  } catch (e) { return null; }
+}
+
+export async function gravarFatura(fatura) {
+  await preparar();
+  if (!fatura || typeof fatura !== 'object' || Array.isArray(fatura)) throw new Error('A fatura precisa ser um objeto.');
+  if (!fatura.id) fatura.id = novoIdFatura();
+  if (!idFaturaValido(fatura.id)) throw new Error('Identificador de fatura inválido.');
+  const antiga = await lerFatura(fatura.id);
+  fatura.criadaEm = antiga?.criadaEm || new Date().toISOString();
+  fatura.atualizadaEm = new Date().toISOString();
+  await gravarJson(path.join(PASTA_FATURAS, fatura.id + '.json'), fatura);
+  return fatura;
+}
+
+export async function apagarFatura(id) {
+  if (!idFaturaValido(id)) return false;
+  try { await fs.unlink(path.join(PASTA_FATURAS, id + '.json')); return true; }
   catch (e) { return false; }
 }
 

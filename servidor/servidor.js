@@ -9,10 +9,12 @@
      /                    site BR      (HTML do repositório + conteúdo salvo)
      /global              site global
      /propostas/<id>      proposta gerada pelo painel
+     /faturas/<id>        fatura ou invoice (link com id sorteado)
      /admin/entrar        tela de login (aberta)
      /admin/              hub do painel     · exige sessão
      /admin/site/         editor do site    · exige sessão
      /admin/propostas/    propostas         · exige sessão
+     /admin/faturas/      faturas           · exige sessão
      /google-prospection/ prospecção        · exige sessão
      /api/...             API do painel     · exige sessão (entrar/sair abertas)
      /api/prospeccao/...  API da prospecção · exige sessão (ver prospeccao.js)
@@ -33,6 +35,7 @@ import {
 } from './seguranca.js';
 import { lerCorpo, lerMultipart } from './multipart.js';
 import { renderizarProposta, catalogoIcones } from './proposta-html.js';
+import { renderizarFatura } from './fatura-html.js';
 import { preencherComIa, temChaveIa, escolherModelo } from './proposta-ia.js';
 import { apiProspeccao, configuracao as configProspeccao } from './prospeccao.js';
 import * as dados from './dados.js';
@@ -277,6 +280,47 @@ async function api(req, res, url) {
     return json(res, d, d.erro ? (temChaveIa() ? 502 : 503) : 200);
   }
 
+  /* --- faturas e invoices --- */
+  if (rota === 'fatura-previa' && req.method === 'POST') {
+    const f = await lerJson(req, res);
+    if (!f) return;
+    if (typeof f !== 'object' || Array.isArray(f)) return json(res, { erro: 'A fatura precisa ser um objeto.' }, 400);
+    const html = renderizarFatura(f, { previa: true });
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'content-length': Buffer.byteLength(html), 'cache-control': 'no-store' });
+    return res.end(html);
+  }
+  // O prestador e os dados de pagamento da última do mesmo tipo: a
+  // fatura nova já nasce com eles, sem redigitar.
+  if (rota === 'fatura-base' && req.method === 'GET') {
+    const tipo = url.searchParams.get('tipo') === 'invoice' ? 'invoice' : 'fatura';
+    const f = (await dados.ultimaFatura(tipo)) || (await dados.ultimaFatura());
+    return json(res, { emissor: f?.emissor || null, pagamento: f?.tipo === tipo ? f.pagamento || null : null });
+  }
+  if (rota === 'faturas') {
+    if (req.method === 'GET') return json(res, { faturas: await dados.listarFaturas() });
+    if (req.method === 'POST' || req.method === 'PUT') {
+      const f = await lerJson(req, res);
+      if (!f) return;
+      try {
+        const salva = await dados.gravarFatura(f);
+        return json(res, { ok: true, id: salva.id, url: '/faturas/' + salva.id, fatura: salva });
+      } catch (e) { return json(res, { erro: e.message }, 400); }
+    }
+    return json(res, { erro: 'Método não aceito.' }, 405);
+  }
+  if (rota.startsWith('faturas/')) {
+    const id = rota.slice('faturas/'.length);
+    if (req.method === 'GET') {
+      const f = await dados.lerFatura(id);
+      return f ? json(res, f) : json(res, { erro: 'Fatura não encontrada.' }, 404);
+    }
+    if (req.method === 'DELETE') {
+      const foi = await dados.apagarFatura(id);
+      return foi ? json(res, { ok: true }) : json(res, { erro: 'Fatura não encontrada.' }, 404);
+    }
+    return json(res, { erro: 'Método não aceito.' }, 405);
+  }
+
   /* --- propostas --- */
   if (rota === 'propostas') {
     if (req.method === 'GET') return json(res, { propostas: await dados.listarPropostas() });
@@ -394,7 +438,7 @@ const servidor = http.createServer(async (req, res) => {
     if (caminho === '/admin' || caminho.startsWith('/admin/')) {
       /* Pastas precisam da barra final: sem ela o navegador resolve
          './editor.js' como /editor.js e a página abre morta. */
-      if (/^\/admin(\/site|\/propostas)?$/.test(caminho)) {
+      if (/^\/admin(\/site|\/propostas|\/faturas)?$/.test(caminho)) {
         res.writeHead(308, { location: caminho + '/' + url.search, 'cache-control': 'no-store' });
         return res.end();
       }
@@ -460,6 +504,23 @@ const servidor = http.createServer(async (req, res) => {
         'content-length': Buffer.byteLength(html),
         'cache-control': 'no-cache, must-revalidate',
         'x-robots-tag': 'noindex, nofollow',
+      });
+      return res.end(html);
+    }
+
+    /* Faturas: página pública pelo link sorteado. ?imprimir=1 abre
+       a janela de impressão sozinha (o botão "PDF" do painel). */
+    if (caminho.startsWith('/faturas/')) {
+      const id = caminho.slice('/faturas/'.length).replace(/\/$/, '');
+      const f = await dados.lerFatura(id);
+      if (!f) return texto(res, 'Fatura não encontrada.', 404);
+      const html = renderizarFatura(f, { imprimir: url.searchParams.get('imprimir') === '1' });
+      res.writeHead(200, {
+        'content-type': 'text/html; charset=utf-8',
+        'content-length': Buffer.byteLength(html),
+        'cache-control': 'no-store',
+        'x-robots-tag': 'noindex, nofollow',
+        'referrer-policy': 'no-referrer',
       });
       return res.end(html);
     }

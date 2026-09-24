@@ -1,0 +1,160 @@
+/* ============================================================
+   Fatura e invoice: uma folha A4.
+
+   Cor, fonte, peso e espaçamento saem dos tokens, como no resto
+   do site. A exceção é o tamanho da letra: os tokens crescem com a
+   tela (vw), e um documento de papel tem tamanho fixo. Por isso
+   aqui as letras são em pt, e a folha tem 210 x 297 mm.
+
+   Na tela: a folha sobre o cinza, com a barra de imprimir no alto.
+   Na impressão: só a folha, sem margem de navegador, com o laranja
+   impresso (print-color-adjust), pronta para "Salvar como PDF".
+   ============================================================ */
+
+body.fatura {
+  background: var(--bg-2);
+  font-size: 10pt;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+/* ---------- barra de imprimir (só na tela) ---------- */
+.fat-barra {
+  position: sticky; top: 0; z-index: 2;
+  display: flex; align-items: center; justify-content: flex-end; gap: var(--sp-md);
+  padding: var(--sp-xs) var(--sp-md);
+  background: var(--bg);
+  border-bottom: var(--hair) solid var(--line);
+}
+.fat-barra__dica { font-size: 9pt; color: var(--muted); }
+.fat-barra__btn { min-height: 2.75rem; padding: .6em 1.2em; font-size: 10pt; }
+@media (max-width: 640px) { .fat-barra__dica { display: none; } .fat-barra__btn { width: 100%; justify-content: center; } }
+
+/* ---------- a folha ---------- */
+.fat-folha {
+  width: 210mm;
+  min-height: 296mm;       /* 1 mm a menos que o A4: sem página em branco no fim */
+  margin: var(--sp-lg) auto;
+  padding: 18mm 16mm 12mm;
+  display: flex; flex-direction: column;
+  background: var(--bg);
+  border: var(--hair) solid var(--line);
+  color: var(--ink);
+}
+@media (max-width: 830px) {
+  .fat-folha { width: 100%; min-height: 0; margin: 0; padding: var(--sp-lg) var(--sp-md); border: 0; }
+}
+.fatura--previa { background: var(--bg); }
+.fatura--previa .fat-folha { margin: 0 auto; border: 0; }
+
+/* rótulo pequeno com o ponto laranja, o mesmo eyebrow do site */
+.fat-rot {
+  display: flex; align-items: center; gap: .6em;
+  font-size: 7pt; font-weight: var(--w-semi);
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--muted); line-height: 1;
+}
+.fat-rot::before { content: ""; flex: none; width: 5px; height: 5px; border-radius: 50%; background: var(--brand); }
+
+/* ---------- topo ---------- */
+.fat-topo {
+  display: flex; justify-content: space-between; align-items: flex-end; gap: var(--sp-md);
+  padding-bottom: var(--sp-md);
+  border-bottom: 2px solid var(--ink);
+}
+.fat-marca { font-size: 14pt; font-weight: var(--w-black); letter-spacing: -.035em; line-height: 1; }
+.fat-marca em { font-style: normal; color: var(--brand); margin-left: .26em; }
+.fat-assinatura { margin-top: 6px; font-size: 8pt; color: var(--muted); }
+.fat-titulo { text-align: right; }
+.fat-titulo h1 { font-size: 34pt; font-weight: var(--w-black); letter-spacing: -.045em; line-height: .9; }
+.fat-titulo p { margin-top: 8px; font-size: 9pt; font-weight: var(--w-semi); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+/* ---------- datas e situação ---------- */
+.fat-datas {
+  display: grid; grid-template-columns: auto auto 1fr; gap: var(--sp-xl); align-items: end;
+  padding-block: var(--sp-md);
+  border-bottom: var(--hair) solid var(--line);
+}
+.fat-dado { margin-top: 8px; font-size: 11pt; font-weight: var(--w-bold); letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.fat-selo {
+  justify-self: end;
+  padding: .45em .8em; border-radius: var(--radius-img);
+  font-size: 7.5pt; font-weight: var(--w-bold); letter-spacing: .12em; text-transform: uppercase;
+  box-shadow: inset 0 0 0 var(--hair) var(--line-2); color: var(--ink);
+}
+.fat-selo[data-situacao="vencida"] { background: var(--brand); color: var(--brand-ink); box-shadow: none; }
+.fat-selo[data-situacao="paga"] { background: var(--ink); color: #FFFFFF; box-shadow: none; }
+
+/* ---------- prestador e cliente ---------- */
+.fat-partes {
+  display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-lg);
+  padding-block: var(--sp-md);
+  border-bottom: var(--hair) solid var(--line);
+}
+.fat-parte p { font-size: 9pt; color: var(--ink-2); overflow-wrap: anywhere; }
+.fat-parte .fat-rot { margin-bottom: 10px; color: var(--muted); }
+.fat-parte .fat-parte__nome { font-size: 12pt; font-weight: var(--w-bold); letter-spacing: -.02em; color: var(--ink); line-height: 1.25; margin-bottom: 4px; }
+
+/* ---------- serviço ---------- */
+.fat-servico { padding-block: var(--sp-md); border-bottom: var(--hair) solid var(--line); }
+.fat-servico__cab { display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: var(--hair) solid var(--line); }
+.fat-servico__linha { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--sp-lg); padding-top: 12px; align-items: start; }
+.fat-servico__titulo { font-size: 12pt; font-weight: var(--w-bold); letter-spacing: -.02em; line-height: 1.3; }
+.fat-servico__desc { margin-top: 4px; font-size: 9pt; color: var(--ink-2); overflow-wrap: anywhere; }
+.fat-servico__valor { font-size: 12pt; font-weight: var(--w-bold); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ---------- total ---------- */
+.fat-total {
+  align-self: flex-end;
+  width: min(100%, 92mm);
+  margin-top: var(--sp-lg);
+  padding-top: var(--sp-sm);
+  border-top: 3px solid var(--brand);
+  text-align: right;
+}
+.fat-total .fat-rot { justify-content: flex-end; }
+.fat-total__valor { margin-top: 10px; font-size: 28pt; font-weight: var(--w-black); letter-spacing: -.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+.fat-total__vence { margin-top: 8px; font-size: 9pt; color: var(--muted); }
+
+/* ---------- dados para pagamento ---------- */
+.fat-pagamento { margin-top: var(--sp-lg); padding: var(--sp-sm) var(--sp-md); background: var(--bg-2); border-radius: var(--radius-img); }
+.fat-pagamento dl { margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(58mm, 1fr)); gap: 6px var(--sp-md); }
+.fat-pagamento dl > div { display: grid; grid-template-columns: minmax(0, 24mm) minmax(0, 1fr); gap: var(--sp-xs); align-items: baseline; }
+.fat-pagamento dt { font-size: 8pt; color: var(--muted); }
+.fat-pagamento dd { margin: 0; display: flex; align-items: baseline; gap: var(--sp-xs); font-size: 9.5pt; font-weight: var(--w-semi); overflow-wrap: anywhere; }
+.fat-copiar {
+  flex: none; font-size: 7.5pt; font-weight: var(--w-semi); color: var(--muted);
+  padding: .15em .5em; border-radius: var(--radius-img); box-shadow: inset 0 0 0 var(--hair) var(--line-2);
+}
+.fat-copiar:hover { color: var(--ink); box-shadow: inset 0 0 0 var(--hair) var(--ink); }
+.fatura--previa .fat-copiar { display: none; }
+
+/* ---------- rodapé ---------- */
+.fat-pe {
+  margin-top: auto;
+  padding-top: var(--sp-sm);
+  display: flex; justify-content: space-between; gap: var(--sp-md); flex-wrap: wrap;
+  border-top: var(--hair) solid var(--line);
+  font-size: 7.5pt; color: var(--muted);
+}
+/* o rodapé desce até o pé da folha, mas nunca encosta no que vem antes */
+.fat-folha > :nth-last-child(2) { margin-bottom: var(--sp-xl); }
+
+@media (max-width: 560px) {
+  .fat-topo { flex-direction: column; align-items: flex-start; }
+  .fat-titulo { text-align: left; }
+  .fat-datas { grid-template-columns: 1fr 1fr; gap: var(--sp-md); }
+  .fat-selo { grid-column: 1 / -1; justify-self: start; }
+  .fat-partes { grid-template-columns: minmax(0, 1fr); }
+  .fat-total { width: 100%; }
+}
+
+/* ---------- impressão: vira o PDF ---------- */
+@page { size: A4; margin: 0; }
+@media print {
+  html, body.fatura { background: #FFFFFF; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .fat-barra, .fat-copiar { display: none !important; }
+  .fat-folha { width: 210mm; min-height: 296mm; margin: 0; border: 0; padding: 18mm 16mm 12mm; }
+  .fat-pagamento, .fat-total, .fat-servico__linha { break-inside: avoid; }
+}

@@ -9,7 +9,7 @@
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css?v=20260909h">
 <link rel="stylesheet" href="/styles/base.css?v=20260911a">
-<link rel="stylesheet" href="/admin/painel.css?v=3">
+<link rel="stylesheet" href="/admin/painel.css?v=4">
 </head>
 <body>
 
@@ -49,6 +49,12 @@
         <span class="bloco__desc">Varre os negócios de uma cidade, separa quem não tem site de quem tem site ruim, escreve a mensagem e guarda o lead na sua lista.</span>
         <span class="bloco__pe">Prospecção <svg class="arrow" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M4 12L12 4M12 4H5.5M12 4v6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       </a>
+      <a class="bloco" href="/admin/faturas/">
+        <span class="bloco__num">04</span>
+        <span class="bloco__titulo">Gerar fatura</span>
+        <span class="bloco__desc">Fatura em português para cliente do Brasil ou invoice em inglês para cliente de fora. Sai em PDF, com link e controle do que já foi pago.</span>
+        <span class="bloco__pe">Faturas <svg class="arrow" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M4 12L12 4M12 4H5.5M12 4v6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </a>
     </div>
 
     <div class="hub__pe">
@@ -73,14 +79,16 @@ $('#sair').onclick = async () => {
 
 // Um resumo do que está no ar. Se a API falhar, a tela segue sem ele.
 try {
-  const r = await fetch('/api/propostas');
+  const [r, rf] = await Promise.all([fetch('/api/propostas'), fetch('/api/faturas')]);
   if (r.status === 401) location.replace('/admin/entrar?voltar=/admin/');
   const d = await r.json();
   const n = (d.propostas || []).length;
   const ar = (d.propostas || []).filter((p) => p.publicada).length;
-  $('#resumo').textContent = n
-    ? `${n} proposta${n > 1 ? 's' : ''} · ${ar} no ar`
-    : 'nenhuma proposta ainda';
+  const partes = [n ? `${n} proposta${n > 1 ? 's' : ''} · ${ar} no ar` : 'nenhuma proposta ainda'];
+  const faturas = rf.ok ? ((await rf.json()).faturas || []) : [];
+  const abertas = faturas.filter((f) => !f.paga).length;
+  if (faturas.length) partes.push(abertas ? `${abertas} fatura${abertas > 1 ? 's' : ''} em aberto` : 'faturas em dia');
+  $('#resumo').textContent = partes.join(' · ');
 } catch (e) { $('#resumo').textContent = 'painel'; }
 </script>
 </body>
