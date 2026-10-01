@@ -15,6 +15,7 @@
      /admin/site/         editor do site    · exige sessão
      /admin/propostas/    propostas         · exige sessão
      /admin/faturas/      faturas           · exige sessão
+     /contratos/<id>      contrato da proposta, para imprimir · exige sessão
      /google-prospection/ prospecção        · exige sessão
      /api/...             API do painel     · exige sessão (entrar/sair abertas)
      /api/reunioes/entrada  recebe transcrição do Meet · exige TOKEN_REUNIOES
@@ -37,6 +38,7 @@ import {
 import { lerCorpo, lerMultipart } from './multipart.js';
 import { renderizarProposta, catalogoIcones } from './proposta-html.js';
 import { renderizarFatura } from './fatura-html.js';
+import { gerarContrato, renderizarContrato, MODELO_PADRAO } from './contrato.js';
 import { preencherComIa, temChaveIa, escolherModelo } from './proposta-ia.js';
 import { apiProspeccao, configuracao as configProspeccao } from './prospeccao.js';
 import * as dados from './dados.js';
@@ -316,6 +318,44 @@ async function api(req, res, url) {
     return json(res, { erro: 'Método não aceito.' }, 405);
   }
 
+  /* --- contratos: um por proposta, gerado do modelo e editável --- */
+  if (rota === 'modelo-contrato') {
+    if (req.method === 'GET') {
+      const m = await dados.lerModeloContrato();
+      return json(res, { texto: m.texto || MODELO_PADRAO, contaReais: m.contaReais || '', padrao: MODELO_PADRAO });
+    }
+    if (req.method === 'PUT') {
+      const dado = await lerJson(req, res);
+      if (!dado) return;
+      return json(res, await dados.gravarModeloContrato(dado));
+    }
+    return json(res, { erro: 'Método não aceito.' }, 405);
+  }
+  if (rota.startsWith('contratos/')) {
+    const [id, acao] = rota.slice('contratos/'.length).split('/');
+    const proposta = await dados.lerProposta(id);
+    if (!proposta) return json(res, { erro: 'Proposta não encontrada.' }, 404);
+    // Gera a partir da proposta salva (com o modelo, como a página
+    // pública) e da transcrição da reunião, se houver. Substitui o texto.
+    if (acao === 'gerar' && req.method === 'POST') {
+      const reuniao = proposta.reuniao ? await dados.lerReuniao(proposta.reuniao) : null;
+      const g = await gerarContrato({
+        proposta: comModelo(proposta, await dados.lerModelo()),
+        transcricao: reuniao?.texto || '',
+        modelo: await dados.lerModeloContrato(),
+      });
+      return json(res, await dados.gravarContrato(id, { texto: g.texto, avisos: g.avisos, ia: g.modelo, comReuniao: Boolean(reuniao) }));
+    }
+    if (acao) return json(res, { erro: 'Rota não existe.' }, 404);
+    if (req.method === 'GET') return json(res, (await dados.lerContrato(id)) || { proposta: id, texto: '' });
+    if (req.method === 'PUT') {
+      const dado = await lerJson(req, res);
+      if (!dado) return;
+      return json(res, await dados.gravarContrato(id, { texto: String(dado.texto || '') }));
+    }
+    return json(res, { erro: 'Método não aceito.' }, 405);
+  }
+
   /* --- faturas e invoices --- */
   if (rota === 'fatura-previa' && req.method === 'POST') {
     const f = await lerJson(req, res);
@@ -541,6 +581,22 @@ const servidor = http.createServer(async (req, res) => {
         'cache-control': 'no-cache, must-revalidate',
         'x-robots-tag': 'noindex, nofollow',
       });
+      return res.end(html);
+    }
+
+    /* Contrato: a página para imprimir em PDF. Só com login: quem
+       assina recebe o PDF pelo ZapSign, não este endereço. */
+    if (caminho.startsWith('/contratos/')) {
+      if (!liberado(req)) {
+        res.writeHead(302, { location: '/admin/entrar?voltar=' + encodeURIComponent(caminho + url.search), 'cache-control': 'no-store' });
+        return res.end();
+      }
+      const id = caminho.slice('/contratos/'.length).replace(/\/$/, '');
+      const c = await dados.lerContrato(id);
+      if (!c?.texto) return texto(res, 'Contrato não encontrado.', 404);
+      const p = await dados.lerProposta(id);
+      const html = renderizarContrato(c.texto, { titulo: 'Contrato ' + (p?.cliente || id), imprimir: url.searchParams.get('imprimir') === '1' });
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'content-length': Buffer.byteLength(html), 'cache-control': 'no-store', 'x-robots-tag': 'noindex, nofollow' });
       return res.end(html);
     }
 

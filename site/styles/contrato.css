@@ -1,0 +1,92 @@
+/* ============================================================
+   Contrato: a página que vira o PDF pela impressão.
+   Mesma ideia da fatura: uma folha A4 na tela, barra que some ao
+   imprimir. Texto de documento, não de site: serifa não, mas corpo
+   menor, entrelinha maior e numeração visível.
+   ============================================================ */
+
+body.contrato { background: var(--bg-2); }
+
+.ct-barra {
+  position: sticky; top: 0; z-index: 2;
+  display: flex; align-items: center; justify-content: flex-end; gap: var(--sp-md);
+  padding: var(--sp-xs) var(--sp-md);
+  background: var(--bg);
+  border-bottom: var(--hair) solid var(--line);
+}
+.ct-barra p { font-size: 9pt; color: var(--muted); }
+.ct-barra .btn { min-height: 2.75rem; padding: .6em 1.2em; font-size: 10pt; }
+@media (max-width: 640px) {
+  .ct-barra p { display: none; }
+  .ct-barra .btn { width: 100%; justify-content: center; }
+}
+
+/* ---------- a folha ---------- */
+.ct-folha {
+  width: 210mm;
+  min-height: 296mm;       /* 1 mm a menos que o A4: sem página em branco no fim */
+  margin: var(--sp-lg) auto;
+  padding: 20mm 18mm 15mm;
+  background: var(--bg);
+  border: var(--hair) solid var(--line);
+  color: var(--ink);
+  font-size: 10.5pt;
+  line-height: 1.55;
+}
+@media (max-width: 900px) {
+  .ct-folha { width: 100%; min-height: 0; margin: 0; border: 0; padding: var(--sp-lg) var(--sp-md); }
+}
+
+.ct-folha h1 {
+  font-size: 13pt;
+  font-weight: var(--w-black);
+  letter-spacing: -.01em;
+  line-height: 1.3;
+  text-align: center;
+  margin-bottom: var(--sp-lg);
+}
+.ct-folha h2 {
+  font-size: 10.5pt;
+  font-weight: var(--w-bold);
+  letter-spacing: .02em;
+  margin-top: var(--sp-lg);
+  margin-bottom: var(--sp-2xs);
+  break-after: avoid;
+}
+.ct-folha p { margin-bottom: var(--sp-xs); text-align: justify; }
+.ct-item b { font-weight: var(--w-bold); margin-right: .25em; }
+
+/* Rótulo de bloco (CONTRATANTE, CONTRATADA) e as linhas de dados
+   logo abaixo: alinhados à esquerda, sem justificar. */
+.ct-rot {
+  font-weight: var(--w-bold);
+  letter-spacing: .08em;
+  margin-top: var(--sp-md);
+  margin-bottom: var(--sp-3xs);
+  text-align: left;
+  break-after: avoid;
+}
+.ct-rot + p, .ct-rot + p + p, .ct-rot + p + p + p { text-align: left; margin-bottom: var(--sp-3xs); }
+
+/* Linha de assinatura. */
+.ct-linha {
+  width: 70mm;
+  margin: var(--sp-2xl) 0 var(--sp-3xs);
+  border-bottom: 1px solid var(--ink);
+}
+
+/* O que falta preencher salta aos olhos, na tela e no papel. */
+.ct-folha mark {
+  background: var(--brand-wash);
+  color: var(--brand);
+  font-weight: var(--w-semi);
+  padding: 0 .2em;
+}
+
+@media print {
+  html, body.contrato { background: #FFFFFF; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .ct-barra { display: none !important; }
+  .ct-folha { width: 210mm; min-height: 296mm; margin: 0; border: 0; padding: 18mm 16mm 12mm; }
+  .ct-item, .ct-rot + p { break-inside: avoid; }
+}

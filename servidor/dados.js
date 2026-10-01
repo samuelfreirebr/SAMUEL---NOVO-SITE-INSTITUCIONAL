@@ -12,6 +12,8 @@
        propostas/<id>.json      uma proposta por arquivo
        faturas/<id>.json        uma fatura (ou invoice) por arquivo
        reunioes/<id>.json       uma transcrição de reunião por arquivo
+       contratos/<id>.json      o contrato de cada proposta (mesmo id)
+       modelo-contrato.json     o modelo de contrato editado no painel
        img/<pasta>/<arquivo>    o que foi enviado pelo painel
 
    Gravação atômica em toda escrita: escreve num temporário e
@@ -32,11 +34,13 @@ export const PASTA_PROPOSTAS = path.join(RAIZ_DADOS, 'propostas');
 export const PASTA_IMAGENS = path.join(RAIZ_DADOS, 'img');
 export const PASTA_FATURAS = path.join(RAIZ_DADOS, 'faturas');
 export const PASTA_REUNIOES = path.join(RAIZ_DADOS, 'reunioes');
+export const PASTA_CONTRATOS = path.join(RAIZ_DADOS, 'contratos');
 
 export async function preparar() {
   await fs.mkdir(PASTA_PROPOSTAS, { recursive: true });
   await fs.mkdir(PASTA_FATURAS, { recursive: true });
   await fs.mkdir(PASTA_REUNIOES, { recursive: true });
+  await fs.mkdir(PASTA_CONTRATOS, { recursive: true });
   await fs.mkdir(PASTA_IMAGENS, { recursive: true });
 }
 
@@ -254,6 +258,38 @@ export async function apagarReuniao(id) {
   if (!idSorteadoValido(id)) return false;
   try { await fs.unlink(path.join(PASTA_REUNIOES, id + '.json')); return true; }
   catch (e) { return false; }
+}
+
+/* ---------- contratos ----------
+   Um por proposta, com o mesmo id. O texto é o contrato inteiro, do
+   jeito que foi gerado e depois editado à mão no painel. */
+
+export async function lerContrato(id) {
+  if (!idValido(id)) return null;
+  try { return JSON.parse(await fs.readFile(path.join(PASTA_CONTRATOS, id + '.json'), 'utf8')); }
+  catch (e) { return null; }
+}
+
+export async function gravarContrato(id, dado) {
+  await preparar();
+  if (!idValido(id)) throw new Error('Proposta inválida.');
+  const antigo = await lerContrato(id);
+  const c = { ...antigo, ...dado, proposta: id, criadoEm: antigo?.criadoEm || new Date().toISOString(), atualizadoEm: new Date().toISOString() };
+  await gravarJson(path.join(PASTA_CONTRATOS, id + '.json'), c);
+  return c;
+}
+
+const ARQ_MODELO_CONTRATO = path.join(RAIZ_DADOS, 'modelo-contrato.json');
+
+// Sem arquivo no volume, quem chama usa o modelo padrão do código.
+export async function lerModeloContrato() {
+  try { return JSON.parse(await fs.readFile(ARQ_MODELO_CONTRATO, 'utf8')); } catch (e) { return {}; }
+}
+
+export async function gravarModeloContrato(dado) {
+  await preparar();
+  await gravarJson(ARQ_MODELO_CONTRATO, { texto: String(dado?.texto || ''), contaReais: String(dado?.contaReais || '') });
+  return { ok: true };
 }
 
 /* ---------- modelo de proposta ----------

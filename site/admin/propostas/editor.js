@@ -98,6 +98,7 @@ function pintarTopo() {
     sec.textContent = 'Propostas';
     acoes.append(
       h('button', { type: 'button', class: 'mini', onclick: editarModelo, title: 'O que toda proposta nova já traz preenchido' }, 'Editar modelo'),
+      h('button', { type: 'button', class: 'mini', onclick: abrirModeloContrato, title: 'As cláusulas fixas e sua conta para receber em reais' }, 'Modelo do contrato'),
       h('button', { type: 'button', class: 'mini mini--ativo', onclick: nova }, '+ Nova proposta'));
   } else {
     sec.textContent = est.modo === 'modelo' ? 'Modelo' : (est.proposta.cliente || 'Nova proposta');
@@ -160,6 +161,7 @@ function mostrarLista() {
         h('button', { type: 'button', class: 'mini', onclick: async () => { try { await navigator.clipboard.writeText(link); avisar('Link copiado.'); } catch (e) { avisar(link); } } }, 'Copiar link'),
         h('button', { type: 'button', class: 'mini', onclick: () => copiarMensagem(p.id), title: 'Copia a mensagem pronta com o link desta proposta' }, 'Copiar mensagem'),
         seletorFase(p.fase, (f) => mudarFase(p.id, f)),
+        h('button', { type: 'button', class: 'mini', onclick: () => abrirContrato(p), title: 'Gera o contrato desta proposta e deixa pronto para assinar' }, 'Contrato'),
         h('button', { type: 'button', class: 'mini', onclick: () => duplicar(p.id) }, 'Duplicar'),
         h('button', { type: 'button', class: 'mini mini--perigo', onclick: () => apagar(p) }, 'Apagar')));
   });
@@ -774,6 +776,108 @@ function ligarIa() {
   });
 }
 
+/* ---------- contrato ----------
+   Uma janela só, em dois modos: o contrato de uma proposta e o
+   modelo (cláusulas fixas + conta em reais). O texto é editável à
+   mão; o PDF sai pela impressão da página /contratos/<id>. */
+let ct = { modo: 'proposta', id: '', padrao: '' };
+
+function ctAviso(txt, tipo = '') {
+  const el = $('#ct-aviso');
+  el.hidden = !txt; el.dataset.tipo = tipo; el.textContent = txt || '';
+}
+
+async function abrirContrato(p) {
+  ct = { modo: 'proposta', id: p.id, padrao: '' };
+  $('#ct-titulo').textContent = 'Contrato · ' + (p.cliente || p.id);
+  $('#ct-rotulo').textContent = 'Texto do contrato';
+  $('#ct-dica').innerHTML = 'Gerado da proposta e, quando houver, da transcrição da reunião. As cláusulas vêm do modelo; a IA só identifica o cliente e lista os serviços. O que ninguém informou fica marcado com <b>[PREENCHER]</b>.';
+  $('#ct-conta-campo').hidden = true;
+  $('#ct-padrao').hidden = true;
+  $('#ct-gerar').hidden = false;
+  $('#ct-pdf').hidden = false;
+  $('#ct-pdf').href = '/contratos/' + p.id;
+  $('#ct-meta').textContent = '';
+  ctAviso('');
+  $('#ct-texto').value = '';
+  $('#contrato').showModal();
+  try {
+    const c = await api('/api/contratos/' + encodeURIComponent(p.id));
+    $('#ct-texto').value = c.texto || '';
+    pintarMetaContrato(c);
+    if (!c.texto) await gerarContrato();
+  } catch (e) { ctAviso(e.message, 'erro'); }
+}
+
+function pintarMetaContrato(c) {
+  $('#ct-meta').textContent = c.atualizadoEm ? 'Salvo em ' + new Date(c.atualizadoEm).toLocaleString('pt-BR') + (c.ia ? ' · IA: ' + c.ia : '') : '';
+  if (c.avisos?.length) ctAviso(c.avisos.join(' '), 'erro');
+}
+
+async function gerarContrato() {
+  if ($('#ct-texto').value.trim() && !confirm('Gerar de novo troca o texto atual. O que você editou à mão se perde. Continuar?')) return;
+  const b = $('#ct-gerar');
+  b.disabled = true; b.innerHTML = '<span class="girando"></span> Gerando…';
+  ctAviso('Lendo a proposta e a reunião.');
+  try {
+    const c = await api('/api/contratos/' + encodeURIComponent(ct.id) + '/gerar', { method: 'POST' });
+    $('#ct-texto').value = c.texto || '';
+    ctAviso('');
+    pintarMetaContrato(c);
+    if (!c.avisos?.length) ctAviso('Contrato gerado. Confira antes de enviar.', 'ok');
+  } catch (e) { ctAviso(e.message, 'erro'); }
+  finally { b.disabled = false; b.textContent = 'Gerar de novo'; }
+}
+
+async function abrirModeloContrato() {
+  ct = { modo: 'modelo', id: '', padrao: '' };
+  $('#ct-titulo').textContent = 'Modelo do contrato';
+  $('#ct-rotulo').textContent = 'Cláusulas fixas';
+  $('#ct-dica').innerHTML = 'Vale para todo contrato novo. As marcas entre chaves, como <b>{{CONTRATANTE}}</b> e <b>{{SERVICOS}}</b>, são preenchidas na hora de gerar. Linha com marca sem valor some sozinha.';
+  $('#ct-conta-campo').hidden = false;
+  $('#ct-padrao').hidden = false;
+  $('#ct-gerar').hidden = true;
+  $('#ct-pdf').hidden = true;
+  $('#ct-meta').textContent = '';
+  ctAviso('');
+  $('#ct-texto').value = '';
+  $('#contrato').showModal();
+  try {
+    const m = await api('/api/modelo-contrato');
+    ct.padrao = m.padrao || '';
+    $('#ct-texto').value = m.texto || '';
+    $('#ct-conta').value = m.contaReais || '';
+  } catch (e) { ctAviso(e.message, 'erro'); }
+}
+
+async function salvarContrato() {
+  const b = $('#ct-salvar');
+  b.disabled = true; b.textContent = 'Salvando…';
+  try {
+    if (ct.modo === 'modelo') {
+      await api('/api/modelo-contrato', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ texto: $('#ct-texto').value, contaReais: $('#ct-conta').value }) });
+      ctAviso('Modelo salvo. Vale para os próximos contratos.', 'ok');
+    } else {
+      const c = await api('/api/contratos/' + encodeURIComponent(ct.id), { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ texto: $('#ct-texto').value }) });
+      pintarMetaContrato(c);
+      ctAviso('Contrato salvo.', 'ok');
+    }
+  } catch (e) { ctAviso(e.message, 'erro'); }
+  finally { b.disabled = false; b.textContent = 'Salvar'; }
+}
+
+function ligarContrato() {
+  if (!$('#contrato')) return;
+  $('#ct-fechar').onclick = () => $('#contrato').close();
+  $('#ct-salvar').onclick = salvarContrato;
+  $('#ct-gerar').onclick = gerarContrato;
+  $('#ct-padrao').onclick = () => {
+    if (!ct.padrao || !confirm('Voltar as cláusulas para o texto padrão? O que você mudou se perde.')) return;
+    $('#ct-texto').value = ct.padrao;
+    ctAviso('Texto padrão carregado. Salve para valer.', 'ok');
+  };
+}
+
 let resolver = null;
 function escolherImagem() {
   pintarGaleria();
@@ -827,6 +931,7 @@ addEventListener('keydown', (e) => {
 });
 
 ligarDialogo();
+ligarContrato();
 ligarIa();
 await carregar();
 const inicial = decodeURIComponent(location.hash.slice(1));

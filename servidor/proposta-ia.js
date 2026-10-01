@@ -255,17 +255,17 @@ function resumoAtual(p) {
 - perguntas atuais: ${(p.faq?.itens || []).map((f) => f.pergunta).join(' | ') || '(nenhuma)'}`;
 }
 
-async function chamarOpenAi(partes, modeloEscolhido) {
+async function chamarOpenAi(partes, modeloEscolhido, { sistema = SISTEMA, esquema = ESQUEMA, nome = 'proposta_preenchida' } = {}) {
   const r = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
     body: JSON.stringify({
       model: modeloEscolhido,
       input: [
-        { role: 'system', content: [{ type: 'input_text', text: SISTEMA }] },
+        { role: 'system', content: [{ type: 'input_text', text: sistema }] },
         { role: 'user', content: partes },
       ],
-      text: { format: { type: 'json_schema', name: 'proposta_preenchida', schema: ESQUEMA, strict: true } },
+      text: { format: { type: 'json_schema', name: nome, schema: esquema, strict: true } },
       max_output_tokens: 4000,
     }),
     signal: AbortSignal.timeout(120000),
@@ -287,7 +287,7 @@ async function chamarOpenAi(partes, modeloEscolhido) {
 /* ---------- aplicar só o permitido ---------- */
 
 const apelidar = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
-const semTravessao = (t) => String(t || '').replace(/\s*[\u2014\u2013]\s*/g, ', ').replace(/,\s*,/g, ',');
+export const semTravessao = (t) => String(t || '').replace(/\s*[\u2014\u2013]\s*/g, ', ').replace(/,\s*,/g, ',');
 const limpo = (t) => semTravessao(t).trim();
 
 export function aplicarNaProposta(p, ia) {
@@ -359,16 +359,22 @@ export async function preencherComIa({ proposta, texto, arquivos }) {
   partes.push(...anexos.partes);
   if (partes.length === 1) return { erro: 'Nenhum anexo pôde ser lido. Use texto, imagem, PDF, DOCX ou ZIP.', lidos: anexos.lidos };
 
-  // Tenta o modelo escolhido; se a conta não tiver acesso, desce a
-  // lista de preferência até um que funcione.
-  let ia, usado;
-  const tentar = [await escolherModelo(), ...PREFERENCIA];
+  let r;
+  try { r = await pedirJsonIa(partes); }
+  catch (e) { return { erro: e.message, lidos: anexos.lidos }; }
+
+  return { ...aplicarNaProposta(proposta || {}, r.ia), lidos: anexos.lidos, modelo: r.modelo };
+}
+
+/* Uma pergunta à IA com resposta em JSON de esquema fixo. Tenta o
+   modelo escolhido; se a conta não tiver acesso, desce a lista de
+   preferência até um que funcione. Serve às propostas e ao contrato
+   (contrato.js), cada um com o seu sistema e o seu esquema. */
+export async function pedirJsonIa(partes, opcoes) {
   let ultimoErro;
-  for (const m of [...new Set(tentar)]) {
-    try { ia = await chamarOpenAi(partes, m); usado = m; break; }
+  for (const m of [...new Set([await escolherModelo(), ...PREFERENCIA])]) {
+    try { return { ia: await chamarOpenAi(partes, m, opcoes), modelo: m }; }
     catch (e) { ultimoErro = e; if (!e.semAcesso) break; }
   }
-  if (!ia) return { erro: ultimoErro?.message || 'A IA não respondeu.', lidos: anexos.lidos };
-
-  return { ...aplicarNaProposta(proposta || {}, ia), lidos: anexos.lidos, modelo: usado };
+  throw new Error(ultimoErro?.message || 'A IA não respondeu.');
 }

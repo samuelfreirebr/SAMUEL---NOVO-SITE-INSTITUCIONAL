@@ -41,6 +41,32 @@
   </div>
 </dialog>
 
+<dialog id="contrato" class="ia">
+  <div class="modal__topo">
+    <b id="ct-titulo">Contrato</b>
+    <button class="mini" type="button" id="ct-fechar">Fechar</button>
+  </div>
+  <div class="modal__corpo">
+    <p class="ia__dica" id="ct-dica"></p>
+    <p class="ia__aviso" id="ct-aviso" hidden></p>
+    <label class="ia__campo" id="ct-conta-campo" hidden>
+      <span>Sua conta para receber em reais</span>
+      <input type="text" id="ct-conta" placeholder="Banco, agência, conta e chave PIX">
+    </label>
+    <label class="ia__campo">
+      <span id="ct-rotulo">Texto do contrato</span>
+      <textarea id="ct-texto" rows="18" spellcheck="false"></textarea>
+    </label>
+    <div class="ia__acoes">
+      <button class="btn btn--brand" type="button" id="ct-salvar">Salvar</button>
+      <button class="mini" type="button" id="ct-gerar">Gerar de novo</button>
+      <a class="mini" id="ct-pdf" target="_blank" rel="noopener">Abrir para PDF</a>
+      <button class="mini" type="button" id="ct-padrao">Voltar ao padrão</button>
+      <span class="ia__meta" id="ct-meta"></span>
+    </div>
+  </div>
+</dialog>
+
 <dialog id="ia" class="ia">
   <div class="modal__topo">
     <b>Preencher com IA</b>
