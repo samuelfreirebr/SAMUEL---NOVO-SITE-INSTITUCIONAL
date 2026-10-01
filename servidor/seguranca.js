@@ -26,7 +26,7 @@ const DURACAO_MS = 7 * 24 * 60 * 60 * 1000;   // uma semana
 
 // Comparação de tempo constante: um === simples vaza o tamanho do
 // prefixo correto para quem cronometra as respostas.
-function iguais(a, b) {
+export function iguais(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
   const A = Buffer.from(a, 'utf8');
   const B = Buffer.from(b, 'utf8');

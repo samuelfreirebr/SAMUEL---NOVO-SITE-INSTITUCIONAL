@@ -8,7 +8,7 @@
    com o modelo.
    ============================================================ */
 
-import { ctx, h, clonar, chave, ligarParte } from './ui.js';
+import { ctx, h, clonar, chave, ligarParte, texto } from './ui.js';
 import { PASSOS, ligarPassos } from './passos.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -16,7 +16,16 @@ const $ = (s, r = document) => r.querySelector(s);
 // O que pertence ao modelo (o que toda proposta nova já traz).
 // Cliente, endereço, datas e situação são de cada proposta.
 const CAMPOS_MODELO = ['titulo', 'subtitulo', 'validade', 'escopo', 'inclui', 'processo', 'investimento', 'pagamento',
-  'condicoes', 'sobre', 'ecossistema', 'assinatura', 'encerramento', 'contato', 'faq', 'visivel', 'ordem'];
+  'condicoes', 'sobre', 'ecossistema', 'assinatura', 'encerramento', 'contato', 'faq', 'visivel', 'ordem', 'mensagemEnvio'];
+
+// Em que ponto o cliente está. A proposta é o registro do cliente:
+// contrato, briefing e produção penduram nela nas próximas etapas.
+const FASES = [['preparo', 'Proposta em preparo'], ['enviada', 'Proposta enviada'], ['aprovada', 'Aprovada'],
+  ['contrato', 'Contrato enviado'], ['assinado', 'Contrato assinado'], ['briefing', 'Briefing enviado'],
+  ['producao', 'Em produção'], ['entregue', 'Entregue']];
+
+// Vale enquanto o modelo não tiver a sua. {cliente} e {link} são trocados na hora de copiar.
+const MENSAGEM_PADRAO = 'Oi! Como combinamos na reunião, aqui está a proposta do projeto da {cliente}:\n\n{link}\n\nEla reúne o escopo, o processo, o investimento e as condições. Qualquer dúvida, me chama por aqui.';
 
 const REVISAR = { id: 'revisar', titulo: 'Revisar e salvar', resumo: 'Confira o que falta e publique.' };
 
@@ -24,6 +33,7 @@ const REVISAR = { id: 'revisar', titulo: 'Revisar e salvar', resumo: 'Confira o 
 const est = {
   modelo: {},
   propostas: [],
+  reunioes: [],
   proposta: null,
   salva: '',
   modo: 'lista',        // 'lista' | 'proposta' | 'modelo'
@@ -120,6 +130,8 @@ async function carregar() {
       api('/api/propostas').then((d) => d.propostas || []),
       api('/api/proposta-icones'),
     ]);
+    // As reuniões não podem derrubar a lista se a rota falhar.
+    est.reunioes = await api('/api/reunioes').then((d) => d.reunioes || []).catch(() => []);
     est.modelo = modelo; est.propostas = lista;
     ctx.icones = icones.icones || [];
     ctx.pistas = (icones.pistas || []).map(([src, flags, nome]) => [new RegExp(src, flags), nome]);
@@ -146,11 +158,29 @@ function mostrarLista() {
         h('button', { type: 'button', class: 'mini mini--ativo', onclick: () => abrir(p.id) }, 'Editar'),
         h('a', { class: 'mini', href: '/propostas/' + p.id, target: '_blank', rel: 'noopener' }, 'Ver'),
         h('button', { type: 'button', class: 'mini', onclick: async () => { try { await navigator.clipboard.writeText(link); avisar('Link copiado.'); } catch (e) { avisar(link); } } }, 'Copiar link'),
+        h('button', { type: 'button', class: 'mini', onclick: () => copiarMensagem(p.id), title: 'Copia a mensagem pronta com o link desta proposta' }, 'Copiar mensagem'),
+        seletorFase(p.fase, (f) => mudarFase(p.id, f)),
         h('button', { type: 'button', class: 'mini', onclick: () => duplicar(p.id) }, 'Duplicar'),
         h('button', { type: 'button', class: 'mini mini--perigo', onclick: () => apagar(p) }, 'Apagar')));
   });
 
+  // Transcrições que ainda não viraram proposta.
+  const usadas = new Set(est.propostas.map((p) => p.reuniao).filter(Boolean));
+  const novas = est.reunioes.filter((r) => !usadas.has(r.id));
+  const caixa = novas.length > 0 && h('section', { class: 'ed-reunioes' },
+    h('p', { class: 'eyebrow' }, 'Reuniões'),
+    h('p', { class: 'ed-lista__apoio' }, 'Transcrições que chegaram do Meet e ainda não viraram proposta.'),
+    h('div', { class: 'ed-reunioes__lista' }, novas.map((r) => h('article', { class: 'ed-reuniao' },
+      h('div', { class: 'ed-reuniao__txt' },
+        h('b', {}, r.titulo || 'Reunião'),
+        h('small', {}, new Date(r.data || r.recebidaEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) + ' · ' + Math.round(r.tamanho / 1000) + ' mil caracteres')),
+      h('div', { class: 'ed-prop__acoes' },
+        h('button', { type: 'button', class: 'mini mini--ativo', onclick: () => novaComReuniao(r.id) }, 'Criar proposta com esta'),
+        h('button', { type: 'button', class: 'mini', onclick: () => baixarReuniao(r.id) }, 'Baixar'),
+        h('button', { type: 'button', class: 'mini mini--perigo', onclick: () => apagarReuniao(r) }, 'Apagar'))))));
+
   raiz.append(h('div', { class: 'ed-lista' },
+    caixa,
     h('header', { class: 'ed-lista__cab' },
       h('div', {},
         h('p', { class: 'eyebrow' }, 'Propostas'),
@@ -161,6 +191,73 @@ function mostrarLista() {
         h('button', { type: 'button', class: 'btn btn--ghost', onclick: editarModelo }, 'Editar modelo'))),
     cards.length ? h('div', { class: 'ed-lista__grade' }, cards)
       : h('p', { class: 'ed-vazio' }, 'Nenhuma proposta ainda. Clique em Nova proposta.')));
+}
+
+/* ---------- fase, mensagem e reuniões ---------- */
+function seletorFase(atual, aoTrocar) {
+  const sel = h('select', { class: 'ed-fase', 'aria-label': 'Fase do cliente' }, FASES.map(([v, r]) => h('option', { value: v }, r)));
+  sel.value = FASES.some(([v]) => v === atual) ? atual : 'preparo';
+  sel.addEventListener('change', () => aoTrocar(sel.value));
+  return sel;
+}
+
+async function mudarFase(id, fase) {
+  try {
+    const p = await api('/api/propostas/' + encodeURIComponent(id));
+    p.fase = fase;
+    await enviarJson('/api/propostas', 'POST', p);
+    const item = est.propostas.find((x) => x.id === id); if (item) item.fase = fase;
+    avisar((p.cliente || id) + ': ' + FASES.find(([v]) => v === fase)[1].toLowerCase() + '.');
+  } catch (e) { avisar('Não mudei a fase: ' + e.message, 'erro'); }
+}
+
+const mensagemDe = (p) => String(p.mensagemEnvio || est.modelo.mensagemEnvio || MENSAGEM_PADRAO)
+  .replaceAll('{cliente}', p.cliente || '').replaceAll('{link}', location.origin + '/propostas/' + p.id);
+
+// Da lista (id) ou de dentro do editor (sem id: a proposta aberta).
+// Copiar a mensagem é o gesto de enviar: a fase anda para "enviada".
+async function copiarMensagem(id) {
+  try {
+    const doEditor = !id;
+    const p = doEditor ? est.proposta : await api('/api/propostas/' + encodeURIComponent(id));
+    if (!p.id || (doEditor && est.novo)) { avisar('Salve a proposta antes: o link ainda não existe.', 'erro'); return; }
+    const msg = mensagemDe(p);
+    try { await navigator.clipboard.writeText(msg); } catch (e) { prompt('Copie a mensagem:', msg); }
+    const andou = !p.fase || p.fase === 'preparo';
+    if (andou) p.fase = 'enviada';
+    if (doEditor) { if (andou) { mudou(); pintarPasso(); } }
+    else if (andou) { await enviarJson('/api/propostas', 'POST', p); await carregar(); mostrarLista(); }
+    avisar(p.publicada === false
+      ? 'Mensagem copiada, mas a proposta está em rascunho: ligue "No ar" ou o cliente não abre o link.'
+      : 'Mensagem copiada.', p.publicada === false ? 'erro' : 'ok');
+  } catch (e) { avisar('Não copiei: ' + e.message, 'erro'); }
+}
+
+async function novaComReuniao(id) {
+  try {
+    const r = await api('/api/reunioes/' + encodeURIComponent(id));
+    nova();
+    est.proposta.reuniao = r.id;
+    await abrirIa();
+    $('#ia-texto').value = r.texto;
+    if (iaLigada) preencherComIa();
+  } catch (e) { avisar('Não abri a reunião: ' + e.message, 'erro'); }
+}
+
+async function baixarReuniao(id) {
+  try {
+    const r = await api('/api/reunioes/' + encodeURIComponent(id));
+    const a = h('a', { href: URL.createObjectURL(new Blob([r.texto], { type: 'text/plain;charset=utf-8' })), download: (r.titulo || 'reuniao').replace(/[\\/:*?"<>|]/g, ' ').slice(0, 80) + '.txt' });
+    a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  } catch (e) { avisar('Não baixei: ' + e.message, 'erro'); }
+}
+
+async function apagarReuniao(r) {
+  if (!confirm('Apagar a transcrição "' + (r.titulo || 'Reunião') + '"? Ela continua no seu Google Drive.')) return;
+  try {
+    await api('/api/reunioes/' + encodeURIComponent(r.id), { method: 'DELETE' });
+    await carregar(); mostrarLista();
+  } catch (e) { avisar('Não apaguei: ' + e.message, 'erro'); }
 }
 
 /* ---------- abrir / nova / duplicar / apagar ---------- */
@@ -217,6 +314,9 @@ function voltarParaLista() {
 
 /* ---------- editor ---------- */
 function abrirEditor(p, { modo, novo, passo }) {
+  // A mensagem de envio nasce aqui, antes de guardar o estado salvo:
+  // preenchida só ao abrir a revisão, a proposta apareceria "alterada".
+  if (p.mensagemEnvio === undefined) p.mensagemEnvio = est.modelo.mensagemEnvio || MENSAGEM_PADRAO;
   // Seção que a proposta não tem vem do modelo, como na página
   // pública: o editor mostra o que o cliente vê.
   // Igual ao comModelo() do servidor: seção ausente vem inteira;
@@ -383,11 +483,27 @@ function montarRevisao() {
     h('header', { class: 'ed-bloco__cab' }, h('div', {}, h('h3', { class: 'ed-bloco__titulo' }, 'Conferência'))),
     h('ol', { class: 'ed-rev' }, itens))];
 
+  const campoMensagem = texto(p, 'mensagemEnvio', 'Mensagem que acompanha o link', { area: true, linhas: 6, dica: '{cliente} vira o nome do cliente e {link} vira o endereço da proposta.' });
+
   if (est.modo === 'modelo') {
+    blocos.push(h('section', { class: 'ed-bloco' },
+      h('header', { class: 'ed-bloco__cab' }, h('div', {}, h('h3', { class: 'ed-bloco__titulo' }, 'Envio'))),
+      h('div', { class: 'ed-bloco__corpo' }, campoMensagem)));
     blocos.push(h('section', { class: 'ed-bloco' },
       h('p', { class: 'ed-bloco__dica' }, 'O modelo vale para as próximas propostas. As que já existem não mudam.')));
     return blocos;
   }
+
+  blocos.push(h('section', { class: 'ed-bloco' },
+    h('header', { class: 'ed-bloco__cab' }, h('div', {}, h('h3', { class: 'ed-bloco__titulo' }, 'Envio e fase'))),
+    h('div', { class: 'ed-bloco__corpo' },
+      campoMensagem,
+      h('div', { class: 'ed-prop__acoes' },
+        h('button', { type: 'button', class: 'mini mini--ativo', onclick: () => copiarMensagem() }, 'Copiar mensagem'),
+        p.reuniao && h('button', { type: 'button', class: 'mini', onclick: () => baixarReuniao(p.reuniao) }, 'Baixar transcrição da reunião')),
+      h('label', { class: 'ed-campo' },
+        h('span', { class: 'ed-campo__rot' }, 'Fase do cliente'),
+        seletorFase(p.fase, (f) => { p.fase = f; mudou(); })))));
 
   const link = p.id ? location.origin + '/propostas/' + p.id : '';
   blocos.push(h('section', { class: 'ed-bloco' },

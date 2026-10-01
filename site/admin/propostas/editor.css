@@ -39,6 +39,21 @@ body.ed { height: 100%; overflow: hidden; }
 .ed-prop__meta { color: var(--muted); font-size: var(--t-eyebrow); margin-top: var(--sp-2xs); }
 .ed-prop__acoes { display: flex; gap: 4px; flex-wrap: wrap; padding: var(--sp-sm) var(--sp-md); border-top: var(--hair) solid var(--line); }
 
+/* ---------- reuniões (transcrições do Meet) e fase ---------- */
+.ed-reunioes { margin-bottom: var(--sp-xl); padding: var(--sp-md); background: var(--brand-wash); border: var(--hair) solid var(--line); border-radius: var(--radius-img); }
+.ed-reunioes__lista { display: grid; gap: 6px; margin-top: var(--sp-sm); }
+.ed-reuniao { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-sm); flex-wrap: wrap; background: var(--bg); border: var(--hair) solid var(--line); border-radius: var(--radius-img); }
+.ed-reuniao__txt { display: flex; flex-direction: column; min-width: 0; padding: var(--sp-sm) var(--sp-md); }
+.ed-reuniao__txt b { font-weight: var(--w-bold); overflow-wrap: anywhere; }
+.ed-reuniao__txt small { font-size: .75rem; color: var(--muted); }
+.ed-reuniao .ed-prop__acoes { border-top: 0; }
+.ed select.ed-fase {
+  width: auto; max-width: 100%; padding: .4em .7em; border-radius: var(--radius-pill);
+  font-size: var(--t-eyebrow); font-weight: var(--w-semi); color: var(--ink);
+  border: var(--hair) solid var(--line-2); background: var(--bg); cursor: pointer;
+}
+.ed-campo select.ed-fase { display: block; }
+
 /* ---------- etapas ---------- */
 .ed-nav { background: var(--bg); border-right: var(--hair) solid var(--line); overflow: auto; padding: var(--sp-md) var(--sp-sm); }
 .ed-nav__rot { font-size: var(--t-eyebrow); font-weight: var(--w-semi); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding: 0 var(--sp-2xs) var(--sp-sm); }

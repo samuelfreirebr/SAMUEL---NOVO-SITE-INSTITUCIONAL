@@ -52,6 +52,9 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - OPENAI_MODELO=${OPENAI_MODELO:-}
       - PAGESPEED_KEY=${PAGESPEED_KEY:-}
+      # Senha que o script do Google usa para entregar as transcrições
+      # do Meet (material/meet-para-painel.gs). Vazia, a entrada fica fechada.
+      - TOKEN_REUNIOES=${TOKEN_REUNIOES:-}
     volumes:
       # Textos, imagens enviadas, propostas e os leads da
       # prospecção. Sobrevive a update.

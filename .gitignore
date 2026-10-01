@@ -16,6 +16,10 @@ material/originais/
 # Fonte dos perfis: as fotos já foram extraídas para site/img/clientes/
 material/perfis-instagram.html
 
+# Contratos e formulários de clientes reais, usados só como referência.
+# Têm dados pessoais: não vão para o GitHub.
+TYPEBOTS E CONTRATOS MODELOS/
+
 # Pasta de dados quando se roda o servidor na própria máquina
 dados-local/
 

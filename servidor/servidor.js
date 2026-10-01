@@ -17,6 +17,7 @@
      /admin/faturas/      faturas           · exige sessão
      /google-prospection/ prospecção        · exige sessão
      /api/...             API do painel     · exige sessão (entrar/sair abertas)
+     /api/reunioes/entrada  recebe transcrição do Meet · exige TOKEN_REUNIOES
      /api/prospeccao/...  API da prospecção · exige sessão (ver prospeccao.js)
      /img/...             imagens: repositório primeiro, volume depois
      /estado              diagnóstico, sem revelar valor nenhum
@@ -31,7 +32,7 @@ import { injetar } from './injetar.js';
 import {
   liberado, temSenhaConfigurada, conferirCredenciais,
   criarSessao, cookieDeSessao, cookieDeSaida,
-  bloqueado, registrarFalha, limparFalhas,
+  bloqueado, registrarFalha, limparFalhas, iguais,
 } from './seguranca.js';
 import { lerCorpo, lerMultipart } from './multipart.js';
 import { renderizarProposta, catalogoIcones } from './proposta-html.js';
@@ -173,6 +174,25 @@ async function apiAberta(req, res, rota) {
     res.setHeader('set-cookie', cookieDeSaida());
     return json(res, { ok: true });
   }
+  /* Entrada de transcrições: quem bate aqui é o script da conta
+     Google, que não tem sessão. A chave é o TOKEN_REUNIOES da stack,
+     no cabeçalho x-token. Só grava; ler continua atrás do login. */
+  if (rota === 'reunioes/entrada' && req.method === 'POST') {
+    const token = process.env.TOKEN_REUNIOES || '';
+    if (!token) return json(res, { erro: 'Defina TOKEN_REUNIOES na stack para receber transcrições.' }, 503);
+    const seg = bloqueado(req);
+    if (seg) return json(res, { erro: 'Muitas tentativas. Espere um pouco.' }, 429);
+    if (!iguais(String(req.headers['x-token'] || ''), token)) {
+      registrarFalha(req);
+      return json(res, { erro: 'Token incorreto.' }, 401);
+    }
+    const dado = await lerJson(req, res);
+    if (!dado) return;
+    try {
+      const r = await dados.gravarReuniao(dado);
+      return json(res, { ok: true, id: r.id, repetida: Boolean(r.repetida) });
+    } catch (e) { return json(res, { erro: e.message }, 400); }
+  }
   return false;   // não é rota aberta
 }
 
@@ -278,6 +298,22 @@ async function api(req, res, url) {
     try { proposta = JSON.parse(form.campos.proposta || '{}'); } catch (e) { return json(res, { erro: 'Proposta inválida.' }, 400); }
     const d = await preencherComIa({ proposta, texto: form.campos.texto || '', arquivos: form.lista || [] });
     return json(res, d, d.erro ? (temChaveIa() ? 502 : 503) : 200);
+  }
+
+  /* --- reuniões (transcrições do Meet) --- */
+  if (rota === 'reunioes' && req.method === 'GET') {
+    return json(res, { reunioes: await dados.listarReunioes(), ligada: Boolean(process.env.TOKEN_REUNIOES) });
+  }
+  if (rota.startsWith('reunioes/')) {
+    const id = rota.slice('reunioes/'.length);
+    if (req.method === 'GET') {
+      const r = await dados.lerReuniao(id);
+      return r ? json(res, r) : json(res, { erro: 'Reunião não encontrada.' }, 404);
+    }
+    if (req.method === 'DELETE') {
+      return (await dados.apagarReuniao(id)) ? json(res, { ok: true }) : json(res, { erro: 'Reunião não encontrada.' }, 404);
+    }
+    return json(res, { erro: 'Método não aceito.' }, 405);
   }
 
   /* --- faturas e invoices --- */

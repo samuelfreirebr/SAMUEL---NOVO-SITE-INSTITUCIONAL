@@ -29,6 +29,7 @@ const filho = spawn(process.execPath, [...bandeiras, alvo], {
     PORTA: process.env.PORT || process.env.PORTA || '3000',
     PASTA_DADOS: process.env.PASTA_DADOS || path.join(raiz, 'dados-local'),
     SENHA_PAINEL: process.env.SENHA_PAINEL || 'local',
+    TOKEN_REUNIOES: process.env.TOKEN_REUNIOES || 'local',
   },
 });
 

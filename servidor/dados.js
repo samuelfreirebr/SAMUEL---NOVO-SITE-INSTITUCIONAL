@@ -11,6 +11,7 @@
        conteudo.anterior.json   a versão de antes do último salvar
        propostas/<id>.json      uma proposta por arquivo
        faturas/<id>.json        uma fatura (ou invoice) por arquivo
+       reunioes/<id>.json       uma transcrição de reunião por arquivo
        img/<pasta>/<arquivo>    o que foi enviado pelo painel
 
    Gravação atômica em toda escrita: escreve num temporário e
@@ -30,10 +31,12 @@ const ARQ_ANTERIOR = path.join(RAIZ_DADOS, 'conteudo.anterior.json');
 export const PASTA_PROPOSTAS = path.join(RAIZ_DADOS, 'propostas');
 export const PASTA_IMAGENS = path.join(RAIZ_DADOS, 'img');
 export const PASTA_FATURAS = path.join(RAIZ_DADOS, 'faturas');
+export const PASTA_REUNIOES = path.join(RAIZ_DADOS, 'reunioes');
 
 export async function preparar() {
   await fs.mkdir(PASTA_PROPOSTAS, { recursive: true });
   await fs.mkdir(PASTA_FATURAS, { recursive: true });
+  await fs.mkdir(PASTA_REUNIOES, { recursive: true });
   await fs.mkdir(PASTA_IMAGENS, { recursive: true });
 }
 
@@ -111,6 +114,7 @@ export async function listarPropostas() {
         id: p.id, cliente: p.cliente, titulo: p.titulo,
         criadaEm: p.criadaEm, atualizadaEm: p.atualizadaEm,
         publicada: p.publicada !== false,
+        fase: p.fase, reuniao: p.reuniao,
       });
     } catch (e) { /* arquivo torto: ignora em vez de derrubar a lista */ }
   }
@@ -146,8 +150,8 @@ export async function apagarProposta(id) {
    bancários, e um endereço sequencial (fatura-001, fatura-002) se
    deixaria adivinhar.                                              */
 
-const idFaturaValido = (id) => /^[a-z0-9]{10,32}$/.test(String(id || ''));
-const novoIdFatura = () => {
+const idSorteadoValido = (id) => /^[a-z0-9]{10,32}$/.test(String(id || ''));
+const novoIdSorteado = () => {
   const letras = 'abcdefghijkmnpqrstuvwxyz23456789';   // sem 0/o, 1/l
   return [...randomBytes(12)].map((b) => letras[b % letras.length]).join('');
 };
@@ -159,7 +163,7 @@ export async function listarFaturas() {
   for (const n of nomes) {
     try {
       const f = JSON.parse(await fs.readFile(path.join(PASTA_FATURAS, n), 'utf8'));
-      if (!f || !idFaturaValido(f.id)) continue;
+      if (!f || !idSorteadoValido(f.id)) continue;
       itens.push({
         id: f.id, tipo: f.tipo, codigo: f.codigo, cliente: f.cliente?.nome || '',
         servico: f.servico?.titulo || '', valor: f.valor, moeda: f.moeda,
@@ -178,7 +182,7 @@ export async function ultimaFatura(tipo) {
 }
 
 export async function lerFatura(id) {
-  if (!idFaturaValido(id)) return null;
+  if (!idSorteadoValido(id)) return null;
   try {
     return JSON.parse(await fs.readFile(path.join(PASTA_FATURAS, id + '.json'), 'utf8'));
   } catch (e) { return null; }
@@ -187,8 +191,8 @@ export async function lerFatura(id) {
 export async function gravarFatura(fatura) {
   await preparar();
   if (!fatura || typeof fatura !== 'object' || Array.isArray(fatura)) throw new Error('A fatura precisa ser um objeto.');
-  if (!fatura.id) fatura.id = novoIdFatura();
-  if (!idFaturaValido(fatura.id)) throw new Error('Identificador de fatura inválido.');
+  if (!fatura.id) fatura.id = novoIdSorteado();
+  if (!idSorteadoValido(fatura.id)) throw new Error('Identificador de fatura inválido.');
   const antiga = await lerFatura(fatura.id);
   fatura.criadaEm = antiga?.criadaEm || new Date().toISOString();
   fatura.atualizadaEm = new Date().toISOString();
@@ -197,8 +201,58 @@ export async function gravarFatura(fatura) {
 }
 
 export async function apagarFatura(id) {
-  if (!idFaturaValido(id)) return false;
+  if (!idSorteadoValido(id)) return false;
   try { await fs.unlink(path.join(PASTA_FATURAS, id + '.json')); return true; }
+  catch (e) { return false; }
+}
+
+/* ---------- reuniões ----------
+   Transcrições que o Google Meet gera e um script na conta Google
+   manda para cá (material/meet-para-painel.gs). "origem" é o id do
+   arquivo no Drive: a mesma transcrição enviada duas vezes não
+   duplica. A proposta aponta para a reunião (proposta.reuniao), e o
+   texto fica só aqui, fora do JSON que o editor salva a cada tecla. */
+
+export async function listarReunioes() {
+  await preparar();
+  const itens = [];
+  for (const n of (await fs.readdir(PASTA_REUNIOES)).filter((x) => x.endsWith('.json'))) {
+    try {
+      const r = JSON.parse(await fs.readFile(path.join(PASTA_REUNIOES, n), 'utf8'));
+      if (!r || !idSorteadoValido(r.id)) continue;
+      itens.push({ id: r.id, origem: r.origem, titulo: r.titulo, data: r.data, recebidaEm: r.recebidaEm, tamanho: String(r.texto || '').length });
+    } catch (e) { /* arquivo torto: ignora */ }
+  }
+  return itens.sort((a, b) => String(b.data || b.recebidaEm).localeCompare(String(a.data || a.recebidaEm)));
+}
+
+export async function lerReuniao(id) {
+  if (!idSorteadoValido(id)) return null;
+  try { return JSON.parse(await fs.readFile(path.join(PASTA_REUNIOES, id + '.json'), 'utf8')); }
+  catch (e) { return null; }
+}
+
+export async function gravarReuniao({ origem, titulo, data, texto }) {
+  await preparar();
+  const corpo = String(texto || '').trim();
+  if (!corpo) throw new Error('A transcrição veio vazia.');
+  const chave = String(origem || '').slice(0, 200);
+  const repetida = chave && (await listarReunioes()).find((r) => r.origem === chave);
+  if (repetida) return { ...repetida, repetida: true };
+  const r = {
+    id: novoIdSorteado(), origem: chave,
+    titulo: String(titulo || 'Reunião').slice(0, 300),
+    data: /^\d{4}-\d{2}-\d{2}/.test(String(data || '')) ? String(data).slice(0, 30) : new Date().toISOString(),
+    texto: corpo.slice(0, 400000),
+    recebidaEm: new Date().toISOString(),
+  };
+  await gravarJson(path.join(PASTA_REUNIOES, r.id + '.json'), r);
+  return r;
+}
+
+export async function apagarReuniao(id) {
+  if (!idSorteadoValido(id)) return false;
+  try { await fs.unlink(path.join(PASTA_REUNIOES, id + '.json')); return true; }
   catch (e) { return false; }
 }
 
