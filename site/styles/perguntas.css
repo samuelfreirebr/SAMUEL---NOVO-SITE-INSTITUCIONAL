@@ -1,0 +1,119 @@
+/* ============================================================
+   Briefing: a página que o cliente abre pelo link e responde.
+   Mesma identidade do site: Manrope, laranja de detalhe, hairline
+   em vez de sombra, um raio só. Nada de caixa colorida.
+   ============================================================ */
+
+body.perguntas { background: var(--bg-2); }
+
+/* ---------- topo ---------- */
+.pg-topo { background: var(--bg); border-bottom: var(--hair) solid var(--line); }
+.pg-topo__in {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--sp-md); min-height: var(--nav-h);
+}
+.pg-marca { font-size: var(--t-small); font-weight: var(--w-black); letter-spacing: -.03em; color: var(--ink); }
+.pg-marca em { font-style: normal; color: var(--brand); margin-left: .28em; }
+@media (max-width: 560px) { .pg-topo__tag { display: none; } }
+
+/* ---------- a folha ---------- */
+.pg-folha {
+  max-width: 44rem;
+  padding-block: clamp(var(--sp-xl), 7vw, var(--sp-3xl)) var(--sp-3xl);
+}
+.pg-titulo { max-width: 18ch; }
+.pg-sub { margin-top: var(--sp-md); max-width: 54ch; color: var(--muted); }
+
+/* ---------- blocos ---------- */
+.pg-bloco {
+  margin-top: var(--sp-2xl);
+  padding-top: var(--sp-lg);
+  border-top: var(--hair-2) solid var(--ink);
+}
+.pg-bloco__texto { margin-top: var(--sp-sm); color: var(--muted); font-size: var(--t-body); }
+.pg-bloco .eyebrow { letter-spacing: var(--ls-eyebrow); }
+
+/* ---------- campos ---------- */
+.pg-campo { margin-top: var(--sp-lg); }
+.pg-campo label {
+  display: block;
+  font-size: var(--t-body);
+  font-weight: var(--w-semi);
+  line-height: 1.4;
+  color: var(--ink);
+}
+.pg-campo label small { font-weight: var(--w-book); color: var(--muted); }
+.pg-ajuda { margin-top: var(--sp-3xs); font-size: var(--t-small); color: var(--muted); }
+
+.pg-campo input[type=text], .pg-campo input[type=email],
+.pg-campo input[type=url], .pg-campo input[type=tel], .pg-campo textarea {
+  width: 100%;
+  margin-top: var(--sp-sm);
+  padding: .85em 1em;
+  background: var(--bg);
+  color: var(--ink);
+  border: var(--hair) solid var(--line-2);
+  border-radius: var(--radius-img);
+  font-family: inherit;
+  font-size: var(--t-body);
+  line-height: 1.5;
+}
+.pg-campo textarea { resize: vertical; min-height: 6em; }
+.pg-campo input:focus-visible, .pg-campo textarea:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+
+/* Escolhas: a linha inteira é o alvo, para funcionar bem no celular. */
+.pg-opcoes { display: grid; gap: var(--sp-2xs); margin-top: var(--sp-sm); }
+.pg-opcao {
+  display: flex; align-items: center; gap: var(--sp-sm);
+  padding: .75em 1em;
+  background: var(--bg);
+  border: var(--hair) solid var(--line-2);
+  border-radius: var(--radius-img);
+  font-weight: var(--w-book);
+  cursor: pointer;
+  transition: border-color var(--d-fast) var(--ease-out), background var(--d-fast) var(--ease-out);
+}
+.pg-opcao:hover { border-color: var(--ink); }
+.pg-opcao input { accent-color: var(--brand); width: 1.1em; height: 1.1em; flex: none; }
+.pg-opcao:has(input:checked) { border-color: var(--brand); background: var(--brand-wash); }
+
+/* ---------- enviar ---------- */
+.pg-acoes {
+  display: flex; align-items: center; gap: var(--sp-md); flex-wrap: wrap;
+  margin-top: var(--sp-2xl);
+  padding-top: var(--sp-lg);
+  border-top: var(--hair) solid var(--line);
+}
+.pg-acoes .btn { min-height: 3.25rem; padding-inline: 1.5em; }
+.pg-nota { font-size: var(--t-small); color: var(--muted); }
+.pg-erro {
+  margin-top: var(--sp-lg);
+  padding: var(--sp-sm) var(--sp-md);
+  background: var(--brand); color: #FFFFFF;
+  border-radius: var(--radius-img);
+  font-size: var(--t-small);
+}
+@media (max-width: 560px) { .pg-acoes .btn { width: 100%; justify-content: center; } }
+
+/* ---------- recebido ---------- */
+.pg-feito {
+  margin-top: var(--sp-2xl);
+  padding: var(--sp-xl);
+  background: var(--bg);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-img);
+}
+.pg-feito__t {
+  font-size: var(--t-h3); font-weight: var(--w-black);
+  letter-spacing: var(--ls-h3); line-height: var(--lh-h3);
+  margin-bottom: var(--sp-sm);
+}
+.pg-feito p { color: var(--muted); }
+.pg-feito .pg-feito__t { color: var(--ink); }
+
+.pg-rodape {
+  padding-block: var(--sp-xl);
+  border-top: var(--hair) solid var(--line);
+  background: var(--bg);
+}
+.pg-rodape .small { color: var(--muted); }

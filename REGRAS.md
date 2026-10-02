@@ -61,8 +61,10 @@ ou IA) lê isto antes de começar.
    pacote.
 2. Toda rota de dados passa pela tranca do painel (`liberado`). Ficam abertos
    só o login, a página pública da proposta publicada, a fatura pelo link
-   sorteado e a entrada de transcrições (`/api/reunioes/entrada`), que só
-   grava e exige o `TOKEN_REUNIOES`.
+   sorteado, o briefing pelo link sorteado (`/perguntas/<link>`, que só
+   aceita resposta das perguntas daquele formulário) e a entrada de
+   transcrições (`/api/reunioes/entrada`), que só grava e exige o
+   `TOKEN_REUNIOES`.
 3. Chave de serviço externo (Google, Anthropic, Serper) vem de variável de
    ambiente na stack, nunca escrita no código.
 4. Antes de dar por pronto: `node --check` nos arquivos JS alterados e teste

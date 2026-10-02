@@ -10,6 +10,7 @@
      /global              site global
      /propostas/<id>      proposta gerada pelo painel
      /faturas/<id>        fatura ou invoice (link com id sorteado)
+     /perguntas/<link>    briefing que o cliente responde (link sorteado)
      /admin/entrar        tela de login (aberta)
      /admin/              hub do painel     · exige sessão
      /admin/site/         editor do site    · exige sessão
@@ -39,6 +40,7 @@ import { lerCorpo, lerMultipart } from './multipart.js';
 import { renderizarProposta, catalogoIcones } from './proposta-html.js';
 import { renderizarFatura } from './fatura-html.js';
 import { gerarContrato, renderizarContrato, MODELO_PADRAO } from './contrato.js';
+import { gerarPerguntas, renderizarPerguntas } from './perguntas.js';
 import { preencherComIa, temChaveIa, escolherModelo } from './proposta-ia.js';
 import { apiProspeccao, configuracao as configProspeccao } from './prospeccao.js';
 import * as dados from './dados.js';
@@ -331,6 +333,29 @@ async function api(req, res, url) {
     }
     return json(res, { erro: 'Método não aceito.' }, 405);
   }
+  /* --- formulário de perguntas: um por proposta --- */
+  if (rota.startsWith('formularios/')) {
+    const [id, acao] = rota.slice('formularios/'.length).split('/');
+    const proposta = await dados.lerProposta(id);
+    if (!proposta) return json(res, { erro: 'Proposta não encontrada.' }, 404);
+    if (acao === 'gerar' && req.method === 'POST') {
+      const reuniao = proposta.reuniao ? await dados.lerReuniao(proposta.reuniao) : null;
+      const g = await gerarPerguntas({
+        proposta: comModelo(proposta, await dados.lerModelo()),
+        transcricao: reuniao?.texto || '',
+      });
+      return json(res, await dados.gravarFormulario(id, { titulo: g.titulo, texto: g.texto, blocos: g.blocos, avisos: g.avisos, ia: g.ia, comReuniao: Boolean(reuniao) }));
+    }
+    if (acao) return json(res, { erro: 'Rota não existe.' }, 404);
+    if (req.method === 'GET') return json(res, (await dados.lerFormulario(id)) || { proposta: id, blocos: [] });
+    if (req.method === 'PUT') {
+      const dado = await lerJson(req, res);
+      if (!dado) return;
+      return json(res, await dados.gravarFormulario(id, { titulo: dado.titulo, texto: dado.texto, blocos: dado.blocos }));
+    }
+    return json(res, { erro: 'Método não aceito.' }, 405);
+  }
+
   if (rota.startsWith('contratos/')) {
     const [id, acao] = rota.slice('contratos/'.length).split('/');
     const proposta = await dados.lerProposta(id);
@@ -339,10 +364,14 @@ async function api(req, res, url) {
     // pública) e da transcrição da reunião, se houver. Substitui o texto.
     if (acao === 'gerar' && req.method === 'POST') {
       const reuniao = proposta.reuniao ? await dados.lerReuniao(proposta.reuniao) : null;
+      // O briefing já respondido traz CNPJ, endereço e razão social:
+      // é o que sairia como [PREENCHER] no contrato.
+      const form = await dados.lerFormulario(id);
       const g = await gerarContrato({
         proposta: comModelo(proposta, await dados.lerModelo()),
         transcricao: reuniao?.texto || '',
         modelo: await dados.lerModeloContrato(),
+        respostas: form?.respondidoEm ? form.respostas : null,
       });
       return json(res, await dados.gravarContrato(id, { texto: g.texto, avisos: g.avisos, ia: g.modelo, comReuniao: Boolean(reuniao) }));
     }
@@ -597,6 +626,41 @@ const servidor = http.createServer(async (req, res) => {
       const p = await dados.lerProposta(id);
       const html = renderizarContrato(c.texto, { titulo: 'Contrato ' + (p?.cliente || id), imprimir: url.searchParams.get('imprimir') === '1' });
       res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'content-length': Buffer.byteLength(html), 'cache-control': 'no-store', 'x-robots-tag': 'noindex, nofollow' });
+      return res.end(html);
+    }
+
+    /* Perguntas: página aberta, pelo link sorteado. O cliente não tem
+       login; o endereço é a credencial, como na fatura. */
+    if (caminho.startsWith('/perguntas/')) {
+      const link = caminho.slice('/perguntas/'.length).replace(/\/$/, '');
+      const f = await dados.formularioPeloLink(link);
+      if (!f) return texto(res, 'Formulário não encontrado.', 404);
+
+      if (req.method === 'POST') {
+        const d = await lerJson(req, res, 512 * 1024);
+        if (!d) return;
+        if (!d.respostas || typeof d.respostas !== 'object' || Array.isArray(d.respostas)) {
+          return json(res, { erro: 'Respostas inválidas.' }, 400);
+        }
+        // Só as perguntas do formulário entram, com tamanho limitado:
+        // o corpo vem de fora e ninguém guarda o que não perguntou.
+        const validas = new Set((f.blocos || []).flatMap((b) => (b.perguntas || []).map((q) => q.id)));
+        const limpas = {};
+        for (const [k, v] of Object.entries(d.respostas)) {
+          if (validas.has(k)) limpas[k] = String(v ?? '').slice(0, 4000);
+        }
+        await dados.responderFormulario(link, limpas);
+        return json(res, { ok: true });
+      }
+
+      const html = renderizarPerguntas(f, { respondido: Boolean(f.respondidoEm) });
+      res.writeHead(200, {
+        'content-type': 'text/html; charset=utf-8',
+        'content-length': Buffer.byteLength(html),
+        'cache-control': 'no-store',
+        'x-robots-tag': 'noindex, nofollow',
+        'referrer-policy': 'no-referrer',
+      });
       return res.end(html);
     }
 

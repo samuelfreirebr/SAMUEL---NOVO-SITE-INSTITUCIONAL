@@ -41,6 +41,28 @@
   </div>
 </dialog>
 
+<dialog id="perguntas" class="ia">
+  <div class="modal__topo">
+    <b id="pg-titulo">Perguntas</b>
+    <button class="mini" type="button" id="pg-fechar">Fechar</button>
+  </div>
+  <div class="modal__corpo">
+    <p class="ia__dica">Monta o briefing a partir da proposta e da transcrição da reunião. O primeiro bloco é fixo: são os dados que o contrato precisa. Mande o link para o cliente responder; as respostas voltam para cá e preenchem o contrato.</p>
+    <p class="ia__aviso" id="pg-aviso" hidden></p>
+    <div class="ia__link" id="pg-link-caixa" hidden>
+      <span>Link para o cliente</span>
+      <input type="text" id="pg-link" readonly>
+      <button class="mini" type="button" id="pg-copiar">Copiar</button>
+      <a class="mini" id="pg-abrir" target="_blank" rel="noopener">Abrir</a>
+    </div>
+    <div id="pg-lista"></div>
+    <div class="ia__acoes">
+      <button class="btn btn--brand" type="button" id="pg-gerar">Gerar perguntas</button>
+      <span class="ia__meta" id="pg-meta"></span>
+    </div>
+  </div>
+</dialog>
+
 <dialog id="contrato" class="ia">
   <div class="modal__topo">
     <b id="ct-titulo">Contrato</b>

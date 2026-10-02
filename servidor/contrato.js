@@ -15,6 +15,7 @@
 
 import { pathToFileURL } from 'node:url';
 import { temChaveIa, pedirJsonIa, semTravessao } from './proposta-ia.js';
+import { contratanteDasRespostas } from './perguntas.js';
 
 /* ---------- o modelo ----------
    Baseado no contrato mais recente (outubro de 2026). {{MARCA}} é
@@ -253,7 +254,7 @@ export function montar(modeloTexto, campos) {
   }).filter((l) => l !== null).join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
-export async function gerarContrato({ proposta, transcricao, modelo }) {
+export async function gerarContrato({ proposta, transcricao, modelo, respostas }) {
   const p = proposta || {};
   const avisos = [];
   let ia = null, usado = null;
@@ -269,14 +270,17 @@ export async function gerarContrato({ proposta, transcricao, modelo }) {
     avisos.push('IA desligada (sem OPENAI_API_KEY): o contrato saiu só com os dados da proposta.');
   }
 
-  const nome = p.preparadaPara || p.cliente || FALTA('nome do contratante');
+  const doBriefing = contratanteDasRespostas(respostas);
+  if (doBriefing) avisos.push('Dados do contratante vieram do briefing respondido pelo cliente.');
+  const nome = doBriefing?.[0] || p.preparadaPara || p.cliente || FALTA('nome do contratante');
   const servicos = (ia?.servicos?.length ? ia.servicos : (p.escopo || []).map((e) => e.titulo + (e.descricao ? ': ' + e.descricao : ''))).filter(Boolean);
   const campos = {
     TITULO: ia?.tituloServicos || 'DE DESIGN E WEBDESIGN',
-    CONTRATANTE: (ia?.contratante?.length ? ia.contratante : [nome, FALTA('CPF ou CNPJ'), FALTA('e-mail'), FALTA('endereço')]).join('\n'),
+    // Resposta do cliente ganha da IA: foi ele quem informou.
+    CONTRATANTE: (doBriefing || (ia?.contratante?.length ? ia.contratante : [nome, FALTA('CPF ou CNPJ'), FALTA('e-mail'), FALTA('endereço')])).join('\n'),
     SERVICOS: servicos.length ? servicos.map((s) => String(s).replace(/[.;]\s*$/, '')).map((s, i, l) => s + (i === l.length - 1 ? '.' : ';')).join('\n') : FALTA('serviços contratados'),
     LOCAL_DATA: `João Pessoa, PB, ${hojeNoBrasil()}.`,
-    ASSINANTE: ia?.assinante || nome,
+    ASSINANTE: respostas?.responsavel?.trim() || ia?.assinante || nome,
   };
   for (const [n, t] of Object.entries(clausulas(p, modelo || {}, ia))) campos[n] = t ? `${n}. ${t}` : '';
 

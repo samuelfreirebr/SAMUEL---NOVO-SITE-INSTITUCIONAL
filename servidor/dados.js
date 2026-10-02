@@ -13,6 +13,7 @@
        faturas/<id>.json        uma fatura (ou invoice) por arquivo
        reunioes/<id>.json       uma transcrição de reunião por arquivo
        contratos/<id>.json      o contrato de cada proposta (mesmo id)
+       formularios/<id>.json    o formulário de perguntas e as respostas
        modelo-contrato.json     o modelo de contrato editado no painel
        img/<pasta>/<arquivo>    o que foi enviado pelo painel
 
@@ -35,12 +36,14 @@ export const PASTA_IMAGENS = path.join(RAIZ_DADOS, 'img');
 export const PASTA_FATURAS = path.join(RAIZ_DADOS, 'faturas');
 export const PASTA_REUNIOES = path.join(RAIZ_DADOS, 'reunioes');
 export const PASTA_CONTRATOS = path.join(RAIZ_DADOS, 'contratos');
+export const PASTA_FORMULARIOS = path.join(RAIZ_DADOS, 'formularios');
 
 export async function preparar() {
   await fs.mkdir(PASTA_PROPOSTAS, { recursive: true });
   await fs.mkdir(PASTA_FATURAS, { recursive: true });
   await fs.mkdir(PASTA_REUNIOES, { recursive: true });
   await fs.mkdir(PASTA_CONTRATOS, { recursive: true });
+  await fs.mkdir(PASTA_FORMULARIOS, { recursive: true });
   await fs.mkdir(PASTA_IMAGENS, { recursive: true });
 }
 
@@ -146,6 +149,58 @@ export async function apagarProposta(id) {
   if (!idValido(id)) return false;
   try { await fs.unlink(path.join(PASTA_PROPOSTAS, id + '.json')); return true; }
   catch (e) { return false; }
+}
+
+/* ---------- formulários de perguntas ----------
+   Um por proposta, com o mesmo id. O link que o cliente recebe usa
+   um id sorteado à parte, porque a página é aberta: quem tem o
+   endereço responde, e um endereço adivinhável deixaria qualquer um
+   mandar resposta no lugar do cliente. */
+
+export async function lerFormulario(id) {
+  if (!idValido(id)) return null;
+  try { return JSON.parse(await fs.readFile(path.join(PASTA_FORMULARIOS, id + '.json'), 'utf8')); }
+  catch (e) { return null; }
+}
+
+export async function gravarFormulario(id, dado) {
+  await preparar();
+  if (!idValido(id)) throw new Error('Proposta inválida.');
+  const antigo = await lerFormulario(id);
+  const f = {
+    ...antigo, ...dado,
+    proposta: id,
+    link: antigo?.link || novoIdSorteado(),
+    criadoEm: antigo?.criadoEm || new Date().toISOString(),
+    atualizadoEm: new Date().toISOString(),
+  };
+  await gravarJson(path.join(PASTA_FORMULARIOS, id + '.json'), f);
+  return f;
+}
+
+// A página pública chega pelo link sorteado, não pelo id da proposta.
+export async function formularioPeloLink(link) {
+  if (!idSorteadoValido(link)) return null;
+  await preparar();
+  let nomes;
+  try { nomes = (await fs.readdir(PASTA_FORMULARIOS)).filter((n) => n.endsWith('.json')); } catch (e) { return null; }
+  for (const n of nomes) {
+    try {
+      const f = JSON.parse(await fs.readFile(path.join(PASTA_FORMULARIOS, n), 'utf8'));
+      if (f?.link === link) return f;
+    } catch (e) { /* arquivo torto: ignora */ }
+  }
+  return null;
+}
+
+export async function responderFormulario(link, respostas) {
+  const f = await formularioPeloLink(link);
+  if (!f) return null;
+  f.respostas = respostas;
+  f.respondidoEm = new Date().toISOString();
+  f.atualizadoEm = f.respondidoEm;
+  await gravarJson(path.join(PASTA_FORMULARIOS, f.proposta + '.json'), f);
+  return f;
 }
 
 /* ---------- faturas ----------

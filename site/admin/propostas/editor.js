@@ -162,6 +162,7 @@ function mostrarLista() {
         h('button', { type: 'button', class: 'mini', onclick: () => copiarMensagem(p.id), title: 'Copia a mensagem pronta com o link desta proposta' }, 'Copiar mensagem'),
         seletorFase(p.fase, (f) => mudarFase(p.id, f)),
         h('button', { type: 'button', class: 'mini', onclick: () => abrirContrato(p), title: 'Gera o contrato desta proposta e deixa pronto para assinar' }, 'Contrato'),
+        h('button', { type: 'button', class: 'mini', onclick: () => abrirPerguntas(p), title: 'Monta o briefing e dá o link para o cliente responder' }, 'Perguntas'),
         h('button', { type: 'button', class: 'mini', onclick: () => duplicar(p.id) }, 'Duplicar'),
         h('button', { type: 'button', class: 'mini mini--perigo', onclick: () => apagar(p) }, 'Apagar')));
   });
@@ -776,6 +777,98 @@ function ligarIa() {
   });
 }
 
+/* ---------- perguntas (briefing) ----------
+   Gera da proposta e da transcrição, mostra o que vai ser perguntado
+   e dá o link para o cliente. Quando ele responde, as respostas
+   aparecem aqui e o contrato as usa. */
+let pg = { id: '' };
+
+function pgAviso(txt, tipo = '') {
+  const el = $('#pg-aviso');
+  el.hidden = !txt; el.dataset.tipo = tipo; el.textContent = txt || '';
+}
+
+async function abrirPerguntas(p) {
+  pg = { id: p.id };
+  $('#pg-titulo').textContent = 'Perguntas · ' + (p.cliente || p.id);
+  $('#pg-link-caixa').hidden = true;
+  $('#pg-lista').innerHTML = '';
+  $('#pg-meta').textContent = '';
+  pgAviso('');
+  $('#perguntas').showModal();
+  try {
+    const f = await api('/api/formularios/' + encodeURIComponent(p.id));
+    pintarPerguntas(f);
+    if (!f.blocos?.length) pgAviso('Ainda não existe. Clique em "Gerar perguntas".');
+  } catch (e) { pgAviso(e.message, 'erro'); }
+}
+
+function pintarPerguntas(f) {
+  const lista = $('#pg-lista');
+  lista.innerHTML = '';
+  if (!f.blocos?.length) return;
+
+  if (f.link) {
+    const url = location.origin + '/perguntas/' + f.link;
+    $('#pg-link').value = url;
+    $('#pg-abrir').href = url;
+    $('#pg-link-caixa').hidden = false;
+  }
+  $('#pg-gerar').textContent = 'Gerar de novo';
+
+  const total = f.blocos.reduce((n, b) => n + b.perguntas.length, 0);
+  $('#pg-meta').textContent = total + ' perguntas em ' + f.blocos.length + ' blocos'
+    + (f.ia ? ' · IA: ' + f.ia : '')
+    + (f.respondidoEm ? ' · respondido em ' + new Date(f.respondidoEm).toLocaleString('pt-BR') : '');
+
+  if (f.respondidoEm) {
+    const resp = h('div', { class: 'pg-respostas' },
+      h('p', { class: 'eyebrow' }, 'Respostas do cliente'),
+      ...f.blocos.flatMap((b) => b.perguntas
+        .filter((q) => f.respostas?.[q.id])
+        .map((q) => h('div', { class: 'pg-resp' },
+          h('b', {}, q.pergunta),
+          h('p', {}, f.respostas[q.id])))));
+    lista.append(resp);
+  }
+
+  for (const b of f.blocos) {
+    lista.append(h('div', { class: 'pg-bloco-adm' },
+      h('p', { class: 'eyebrow' }, b.titulo),
+      b.texto ? h('p', { class: 'pg-bloco-adm__txt' }, b.texto) : null,
+      h('ol', { class: 'pg-qs' }, ...b.perguntas.map((q) => h('li', {},
+        h('b', {}, q.pergunta),
+        q.obrigatoria ? h('span', { class: 'pg-obr' }, 'obrigatória') : null,
+        q.ajuda ? h('small', {}, q.ajuda) : null,
+        q.opcoes?.length ? h('small', { class: 'pg-op' }, q.opcoes.join(' · ')) : null)))));
+  }
+  if (f.avisos?.length) pgAviso(f.avisos.join(' '), 'erro');
+}
+
+async function gerarPerguntas() {
+  const b = $('#pg-gerar');
+  b.disabled = true; b.innerHTML = '<span class="girando"></span> Montando…';
+  pgAviso('Lendo a proposta e a reunião.');
+  try {
+    const f = await api('/api/formularios/' + encodeURIComponent(pg.id) + '/gerar', { method: 'POST' });
+    pgAviso('');
+    pintarPerguntas(f);
+    if (!f.avisos?.length) pgAviso('Briefing pronto. Copie o link e mande para o cliente.', 'ok');
+  } catch (e) { pgAviso(e.message, 'erro'); }
+  finally { b.disabled = false; b.textContent = 'Gerar de novo'; }
+}
+
+function ligarPerguntas() {
+  if (!$('#perguntas')) return;
+  $('#pg-fechar').onclick = () => $('#perguntas').close();
+  $('#pg-gerar').onclick = gerarPerguntas;
+  $('#pg-copiar').onclick = async () => {
+    const url = $('#pg-link').value;
+    try { await navigator.clipboard.writeText(url); avisar('Link copiado.'); }
+    catch (e) { $('#pg-link').select(); avisar('Copie o link selecionado.'); }
+  };
+}
+
 /* ---------- contrato ----------
    Uma janela só, em dois modos: o contrato de uma proposta e o
    modelo (cláusulas fixas + conta em reais). O texto é editável à
@@ -932,6 +1025,7 @@ addEventListener('keydown', (e) => {
 
 ligarDialogo();
 ligarContrato();
+ligarPerguntas();
 ligarIa();
 await carregar();
 const inicial = decodeURIComponent(location.hash.slice(1));
