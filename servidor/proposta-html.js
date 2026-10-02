@@ -11,7 +11,7 @@
 
 import { escapar } from './listas.js';
 
-const V = 'p9';   // versão do proposta.css, para o cache
+const V = 'p10';   // versão do proposta.css, para o cache
 
 const linhas = (t) => String(t || '').split('\n').filter((l) => l.trim());
 
