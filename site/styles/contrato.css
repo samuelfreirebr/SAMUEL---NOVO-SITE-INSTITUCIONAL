@@ -1,12 +1,20 @@
 /* ============================================================
    Contrato: a página que vira o PDF pela impressão.
-   Mesma ideia da fatura: uma folha A4 na tela, barra que some ao
-   imprimir. Texto de documento, não de site: serifa não, mas corpo
-   menor, entrelinha maior e numeração visível.
+
+   Documento com a identidade do site: Manrope, laranja só no
+   detalhe (numeração, régua, ponto), hairline no lugar de caixa,
+   um raio só. Corpo menor e entrelinha maior que o site, porque
+   isto se lê inteiro, não se olha de relance.
+
+   A impressão não usa a "folha" da tela. Quem desenha a página no
+   papel é o @page: assim a margem do navegador e o padding da
+   folha não se somam, que era o que espremia o texto e cortava
+   cláusula no meio.
    ============================================================ */
 
 body.contrato { background: var(--bg-2); }
 
+/* ---------- barra (some ao imprimir) ---------- */
 .ct-barra {
   position: sticky; top: 0; z-index: 2;
   display: flex; align-items: center; justify-content: flex-end; gap: var(--sp-md);
@@ -16,63 +24,133 @@ body.contrato { background: var(--bg-2); }
 }
 .ct-barra p { font-size: 9pt; color: var(--muted); }
 .ct-barra .btn { min-height: 2.75rem; padding: .6em 1.2em; font-size: 10pt; }
-@media (max-width: 640px) {
+@media (max-width: 760px) {
   .ct-barra p { display: none; }
   .ct-barra .btn { width: 100%; justify-content: center; }
 }
 
-/* ---------- a folha ---------- */
+/* ---------- a folha na tela ---------- */
 .ct-folha {
   width: 210mm;
-  min-height: 296mm;       /* 1 mm a menos que o A4: sem página em branco no fim */
   margin: var(--sp-lg) auto;
-  padding: 20mm 18mm 15mm;
+  padding: 18mm 18mm 20mm;
   background: var(--bg);
   border: var(--hair) solid var(--line);
   color: var(--ink);
-  font-size: 10.5pt;
-  line-height: 1.55;
+  font-size: 10pt;
+  line-height: 1.6;
+  letter-spacing: -.004em;
 }
 @media (max-width: 900px) {
-  .ct-folha { width: 100%; min-height: 0; margin: 0; border: 0; padding: var(--sp-lg) var(--sp-md); }
+  .ct-folha { width: 100%; margin: 0; border: 0; padding: var(--sp-lg) var(--sp-md) var(--sp-2xl); }
+}
+
+/* ---------- cabeçalho do documento ---------- */
+.ct-cab {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: var(--sp-md); flex-wrap: wrap;
+  padding-bottom: var(--sp-sm);
+  margin-bottom: var(--sp-2xl);
+  border-bottom: var(--hair-2) solid var(--ink);
+}
+.ct-marca { font-size: 11pt; font-weight: var(--w-black); letter-spacing: -.03em; }
+.ct-marca em { font-style: normal; color: var(--brand); margin-left: .28em; }
+.ct-cab__tag {
+  display: flex; align-items: center; gap: .55em;
+  font-size: 7.5pt; font-weight: var(--w-semi);
+  letter-spacing: .16em; text-transform: uppercase; color: var(--muted);
+}
+/* o ponto laranja do eyebrow, o detalhe do sistema */
+.ct-cab__tag::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--brand); flex: none;
 }
 
 .ct-folha h1 {
-  font-size: 13pt;
+  font-size: 15pt;
   font-weight: var(--w-black);
-  letter-spacing: -.01em;
-  line-height: 1.3;
-  text-align: center;
-  margin-bottom: var(--sp-lg);
+  letter-spacing: -.025em;
+  line-height: 1.2;
+  max-width: 26ch;
 }
-.ct-folha h2 {
-  font-size: 10.5pt;
-  font-weight: var(--w-bold);
-  letter-spacing: .02em;
-  margin-top: var(--sp-lg);
+.ct-tipo {
+  display: inline-flex; align-items: center; gap: .5em;
+  margin-top: var(--sp-sm);
+  font-size: 7.5pt; font-weight: var(--w-bold);
+  letter-spacing: .16em; text-transform: uppercase; color: var(--ink);
+}
+.ct-tipo::before {
+  content: ""; width: 7px; height: 7px; background: var(--brand); flex: none;
+}
+.ct-ref {
+  margin-top: var(--sp-sm);
+  font-size: 8.5pt; font-weight: var(--w-semi);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ---------- as partes ---------- */
+.ct-partes {
+  display: grid; gap: var(--sp-lg);
+  margin: var(--sp-xl) 0;
+  padding: var(--sp-md) 0;
+  border-top: var(--hair) solid var(--line);
+  border-bottom: var(--hair) solid var(--line);
+  break-inside: avoid;
+}
+@media (min-width: 620px) { .ct-partes[data-duas] { grid-template-columns: 1fr 1fr; gap: var(--sp-xl); } }
+.ct-parte__rot {
+  font-size: 7.5pt; font-weight: var(--w-bold);
+  letter-spacing: .16em; text-transform: uppercase; color: var(--brand);
   margin-bottom: var(--sp-2xs);
-  break-after: avoid;
 }
-.ct-folha p { margin-bottom: var(--sp-xs); text-align: justify; }
-.ct-item b { font-weight: var(--w-bold); margin-right: .25em; }
+.ct-parte__l { text-align: left; margin-bottom: 1px; color: var(--ink-2); }
+.ct-parte__l--nome { font-weight: var(--w-bold); color: var(--ink); }
 
-/* Rótulo de bloco (CONTRATANTE, CONTRATADA) e as linhas de dados
-   logo abaixo: alinhados à esquerda, sem justificar. */
-.ct-rot {
+/* ---------- cláusulas ---------- */
+.ct-folha h2 {
+  display: flex; align-items: baseline; gap: .6em;
+  font-size: 9.5pt;
   font-weight: var(--w-bold);
-  letter-spacing: .08em;
-  margin-top: var(--sp-md);
-  margin-bottom: var(--sp-3xs);
-  text-align: left;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-top: var(--sp-xl);
+  margin-bottom: var(--sp-sm);
+  padding-bottom: var(--sp-2xs);
+  border-bottom: var(--hair) solid var(--line);
   break-after: avoid;
 }
-.ct-rot + p, .ct-rot + p + p, .ct-rot + p + p + p { text-align: left; margin-bottom: var(--sp-3xs); }
+.ct-secao__n { color: var(--brand); font-variant-numeric: tabular-nums; }
 
-/* Linha de assinatura. */
-.ct-linha {
-  width: 70mm;
-  margin: var(--sp-2xl) 0 var(--sp-3xs);
-  border-bottom: 1px solid var(--ink);
+/* Número à esquerda, texto numa coluna só: a leitura corre pela
+   margem, como num contrato impresso. */
+.ct-item {
+  display: grid;
+  grid-template-columns: 11mm 1fr;
+  gap: 0 var(--sp-2xs);
+  margin-bottom: var(--sp-xs);
+  text-align: justify;
+  break-inside: avoid;
+}
+.ct-item b {
+  font-weight: var(--w-bold);
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+.ct-folha > p { margin-bottom: var(--sp-xs); text-align: justify; }
+
+/* ---------- assinaturas ---------- */
+.ct-assinaturas {
+  display: grid; gap: var(--sp-2xl);
+  margin-top: var(--sp-3xl);
+  break-inside: avoid;
+}
+@media (min-width: 620px) { .ct-assinaturas { grid-template-columns: 1fr 1fr; gap: var(--sp-3xl); } }
+.ct-assina__risco { display: block; height: 1px; background: var(--ink); margin-bottom: var(--sp-2xs); }
+.ct-assina__nome { font-weight: var(--w-bold); margin-bottom: 1px; }
+.ct-assina__papel {
+  font-size: 7.5pt; font-weight: var(--w-semi);
+  letter-spacing: .16em; text-transform: uppercase; color: var(--muted);
 }
 
 /* O que falta preencher salta aos olhos, na tela e no papel. */
@@ -80,13 +158,32 @@ body.contrato { background: var(--bg-2); }
   background: var(--brand-wash);
   color: var(--brand);
   font-weight: var(--w-semi);
-  padding: 0 .2em;
+  padding: 0 .25em;
+  border-radius: 2px;
 }
 
+/* ---------- impressão ----------
+   A página é desenhada aqui, não pela folha: margem do @page e
+   conteúdo correndo livre. Antes a margem do navegador somava com
+   o padding da folha e o texto saía espremido, com cláusula
+   cortada na virada de página. */
+@page {
+  size: A4;
+  margin: 18mm 17mm 16mm;
+}
 @media print {
   html, body.contrato { background: #FFFFFF; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .ct-barra { display: none !important; }
-  .ct-folha { width: 210mm; min-height: 296mm; margin: 0; border: 0; padding: 18mm 16mm 12mm; }
-  .ct-item, .ct-rot + p { break-inside: avoid; }
+  .ct-folha {
+    width: auto; max-width: none;
+    margin: 0; padding: 0; border: 0;
+    font-size: 9.5pt;
+  }
+  /* Nada de linha solta no pé nem no alto da página. */
+  .ct-folha p, .ct-item { orphans: 3; widows: 3; }
+  h1, h2, .ct-cab, .ct-ref { break-inside: avoid; }
+  h1, .ct-cab { break-after: avoid; }
+  .ct-partes, .ct-item, .ct-assinaturas, .ct-assina { break-inside: avoid; }
+  .ct-assinaturas { margin-top: 18mm; }
 }

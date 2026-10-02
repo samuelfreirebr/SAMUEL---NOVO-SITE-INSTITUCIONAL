@@ -624,7 +624,12 @@ const servidor = http.createServer(async (req, res) => {
       const c = await dados.lerContrato(id);
       if (!c?.texto) return texto(res, 'Contrato não encontrado.', 404);
       const p = await dados.lerProposta(id);
-      const html = renderizarContrato(c.texto, { titulo: 'Contrato ' + (p?.cliente || id), imprimir: url.searchParams.get('imprimir') === '1' });
+      const html = renderizarContrato(c.texto, {
+        titulo: 'Contrato ' + (p?.cliente || id),
+        cliente: p?.cliente || '',
+        data: c.atualizadoEm ? new Date(c.atualizadoEm).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }) : '',
+        imprimir: url.searchParams.get('imprimir') === '1',
+      });
       res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'content-length': Buffer.byteLength(html), 'cache-control': 'no-store', 'x-robots-tag': 'noindex, nofollow' });
       return res.end(html);
     }

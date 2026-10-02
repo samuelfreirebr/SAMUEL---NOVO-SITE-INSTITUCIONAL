@@ -295,20 +295,77 @@ export async function gerarContrato({ proposta, transcricao, modelo, respostas }
 const esc = (t) => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const comLacunas = (t) => esc(t).replace(/\[PREENCHER[^\]]*\]/g, '<mark>$&</mark>');
 
-export function renderizarContrato(texto, { titulo = 'Contrato', imprimir = false } = {}) {
+export function renderizarContrato(texto, { titulo = 'Contrato', imprimir = false, cliente = '', data = '' } = {}) {
   const linhas = String(texto || '').split('\n');
-  const inicio = linhas.findIndex((l) => l.trim());
-  const corpo = linhas.map((l, i) => {
-    const t = l.trim();
-    if (!t) return '';
-    if (i === inicio) return `<h1>${esc(t)}</h1>`;
-    if (/^_{5,}$/.test(t)) return '<p class="ct-linha"></p>';
-    if (/^\d+\.\s+[^a-zà-ú]+$/.test(t)) return `<h2>${esc(t)}</h2>`;
-    if (/^(CONTRATANTE|CONTRATADA|PROJETO ÚNICO)$/.test(t)) return `<p class="ct-rot">${esc(t)}</p>`;
+  const iTitulo = linhas.findIndex((l) => l.trim());
+  const cabecalho = linhas[iTitulo] ? linhas[iTitulo].trim() : titulo;
+
+  /* O texto é uma lista de linhas; aqui ela vira blocos. Rótulo
+     (CONTRATANTE, CONTRATADA) puxa as linhas seguintes para dentro
+     de uma ficha, e a ficha que tem linha de assinatura é o fecho.
+     Assim as duas partes ficam lado a lado, em vez de uma pilha de
+     parágrafos soltos. */
+  const blocos = [];
+  for (let i = iTitulo + 1; i < linhas.length; i++) {
+    const t = linhas[i].trim();
+    if (!t) continue;
+    if (/^\d+\.\s+[^a-zà-ú]+$/.test(t)) { blocos.push({ tipo: 'secao', texto: t }); continue; }
+    if (/^(CONTRATANTE|CONTRATADA|PROJETO ÚNICO)$/.test(t)) {
+      const ficha = { tipo: 'ficha', rotulo: t, linhas: [], assina: false };
+      while (i + 1 < linhas.length) {
+        const p = linhas[i + 1].trim();
+        if (!p) break;   // linha em branco fecha a ficha
+        // Cláusula tem espaço depois do ponto ("1. OBJETO", "1.1. A ...").
+        // Sem o espaço, "12.345.678/0001-90" cortava a ficha no CNPJ.
+        if (/^(CONTRATANTE|CONTRATADA|PROJETO ÚNICO)$/.test(p) || /^\d+(\.\d+)?\.\s/.test(p)) break;
+        if (/^_{5,}$/.test(p)) { ficha.assina = true; i++; continue; }
+        ficha.linhas.push(p); i++;
+      }
+      // "PROJETO ÚNICO" não é uma parte: é o tipo do contrato, logo
+      // abaixo do título. Parte é rótulo que traz dados embaixo.
+      blocos.push(ficha.linhas.length || ficha.assina ? ficha : { tipo: 'tag', texto: t });
+      continue;
+    }
     const m = /^(\d+\.\d+\.)\s+(.*)$/.exec(t);
-    if (m) return `<p class="ct-item"><b>${m[1]}</b> ${comLacunas(m[2])}</p>`;
-    return `<p>${comLacunas(t)}</p>`;
-  }).join('\n');
+    blocos.push(m ? { tipo: 'item', n: m[1], texto: m[2] } : { tipo: 'p', texto: t });
+  }
+
+  // Fichas de assinatura ficam juntas no fim, lado a lado.
+  const html = [];
+  for (let i = 0; i < blocos.length; i++) {
+    const b = blocos[i];
+    if (b.tipo === 'ficha' && b.assina) {
+      const juntas = [];
+      while (i < blocos.length && blocos[i].tipo === 'ficha' && blocos[i].assina) juntas.push(blocos[i++]);
+      i--;
+      html.push(`<div class="ct-assinaturas">${juntas.map((f) => `
+        <div class="ct-assina">
+          <span class="ct-assina__risco" aria-hidden="true"></span>
+          <p class="ct-assina__nome">${esc(f.linhas[0] || '')}</p>
+          <p class="ct-assina__papel">${esc(f.rotulo)}</p>
+        </div>`).join('')}</div>`);
+      continue;
+    }
+    if (b.tipo === 'ficha') {
+      const juntas = [];
+      while (i < blocos.length && blocos[i].tipo === 'ficha' && !blocos[i].assina) juntas.push(blocos[i++]);
+      i--;
+      html.push(`<div class="ct-partes"${juntas.length > 1 ? ' data-duas' : ''}>${juntas.map((f) => `
+        <div class="ct-parte">
+          <p class="ct-parte__rot">${esc(f.rotulo)}</p>
+          ${f.linhas.map((l, n) => `<p class="ct-parte__l${n === 0 ? ' ct-parte__l--nome' : ''}">${comLacunas(l)}</p>`).join('')}
+        </div>`).join('')}</div>`);
+      continue;
+    }
+    if (b.tipo === 'tag') { html.push(`<p class="ct-tipo">${esc(b.texto)}</p>`); continue; }
+    if (b.tipo === 'secao') {
+      const m = /^(\d+\.)\s+(.*)$/.exec(b.texto);
+      html.push(`<h2><span class="ct-secao__n">${esc(m ? m[1] : '')}</span>${esc(m ? m[2] : b.texto)}</h2>`);
+      continue;
+    }
+    if (b.tipo === 'item') { html.push(`<p class="ct-item"><b>${esc(b.n)}</b><span>${comLacunas(b.texto)}</span></p>`); continue; }
+    html.push(`<p>${comLacunas(b.texto)}</p>`);
+  }
 
   return `<!doctype html>
 <html lang="pt-BR">
@@ -317,20 +374,30 @@ export function renderizarContrato(texto, { titulo = 'Contrato', imprimir = fals
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(titulo)}</title>
 <meta name="robots" content="noindex, nofollow">
+<link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css">
 <link rel="stylesheet" href="/styles/base.css">
-<link rel="stylesheet" href="/styles/contrato.css?v=c1">
+<link rel="stylesheet" href="/styles/contrato.css?v=c2">
 <link rel="icon" href="/img/favicon.png">
 </head>
 <body class="contrato">
 <div class="ct-barra">
-  <p>Na janela de impressão, escolha "Salvar como PDF".</p>
+  <p>Na janela de impressão, escolha "Salvar como PDF". Deixe as margens no padrão.</p>
   <button class="btn btn--brand" type="button" onclick="window.print()">Imprimir ou salvar em PDF</button>
 </div>
+
 <main class="ct-folha">
-${corpo}
+  <header class="ct-cab">
+    <p class="ct-marca">Samuel<em>Freire</em></p>
+    <p class="ct-cab__tag">Contrato de prestação de serviços</p>
+  </header>
+
+  <h1>${esc(cabecalho)}</h1>
+  ${cliente || data ? `<p class="ct-ref">${[cliente, data].filter(Boolean).map(esc).join(' &middot; ')}</p>` : ''}
+
+${html.join('\n')}
 </main>
-${imprimir ? '<script>(document.fonts ? document.fonts.ready : Promise.resolve()).then(function () { setTimeout(function () { window.print(); }, 150); });</script>' : ''}
+${imprimir ? '<script>(document.fonts ? document.fonts.ready : Promise.resolve()).then(function () { setTimeout(function () { window.print(); }, 250); });</script>' : ''}
 </body>
 </html>`;
 }
