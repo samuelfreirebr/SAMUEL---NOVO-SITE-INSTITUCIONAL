@@ -101,6 +101,7 @@ export const BLOCOS_PRONTOS = [
     texto: 'É com isso que eu escrevo o texto do seu site. Quanto mais específico, melhor o resultado.',
     perguntas: [
       { id: 'cop-formulario', pergunta: 'O site vai ter formulário', ajuda: 'Para a pessoa deixar nome e contato.', tipo: 'escolha', opcoes: ['Sim', 'Não'], obrigatoria: true },
+      { id: 'cop-form-campos', pergunta: 'Quais informações o formulário precisa pedir', ajuda: 'Marque o que você precisa receber de cada pessoa que preencher.', tipo: 'varias', opcoes: ['Nome', 'E-mail', 'Telefone ou WhatsApp', 'Empresa', 'Cidade', 'Serviço de interesse', 'Mensagem', 'Orçamento estimado'], obrigatoria: true, se: { id: 'cop-formulario', valor: 'Sim' } },
       { id: 'cop-promessas', pergunta: 'Quais são as promessas que fazem a pessoa comprar de você', ajuda: 'Liste no mínimo 3. Se já tiver um texto pronto, cole aqui.', tipo: 'longo', opcoes: [], obrigatoria: true },
       { id: 'cop-fortes', pergunta: 'Quais são os 4 pontos fortes do seu negócio', ajuda: 'Um por linha.', tipo: 'longo', opcoes: [], obrigatoria: true },
       { id: 'cop-numeros', pergunta: 'Quais números de autoridade você pode mostrar', ajuda: 'No mínimo 3, no máximo 5. Se não tiver, escreva Não.', tipo: 'longo', opcoes: [], obrigatoria: false },
@@ -396,7 +397,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
     <p class="eyebrow pg-bloco__n">${String(i + 1).padStart(2, '0')} ${esc(b.titulo)}</p>
     ${b.texto ? `<p class="pg-bloco__texto">${esc(b.texto)}</p>` : ''}
     ${b.perguntas.map((q) => `
-    <div class="pg-campo" data-tipo="${esc(q.tipo)}"${q.obrigatoria ? ' data-obrigatoria="1"' : ''}${q.pular ? ' data-pular="1"' : ''}>
+    <div class="pg-campo" data-tipo="${esc(q.tipo)}"${q.obrigatoria ? ' data-obrigatoria="1"' : ''}${q.pular ? ' data-pular="1"' : ''}${q.se?.id ? ` data-se-id="${esc(q.se.id)}" data-se-valor="${esc(q.se.valor)}"` : ''}>
       <label for="${esc(q.id)}">${esc(comInterrogacao(q.pergunta))}${q.obrigatoria ? '' : ' <small>(opcional)</small>'}</label>
       ${q.ajuda ? `<p class="pg-ajuda">${esc(q.ajuda)}</p>` : ''}
       ${q.exemplo ? `<aside class="pg-exemplo"><p class="pg-exemplo__rot">Exemplo</p><p class="pg-exemplo__txt">${esc(q.exemplo)}</p></aside>` : ''}
@@ -414,7 +415,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css">
 <link rel="stylesheet" href="/styles/base.css">
-<link rel="stylesheet" href="/styles/perguntas.css?v=q13">
+<link rel="stylesheet" href="/styles/perguntas.css?v=q14">
 <link rel="icon" href="/img/favicon.png">
 </head>
 <body class="perguntas">
@@ -456,7 +457,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 
 <footer class="pg-rodape"><p class="small">Samuel Freire Web Designer</p></footer>
 
-<script type="module" src="/js/briefing.js?v=q13"></script>
+<script type="module" src="/js/briefing.js?v=q14"></script>
 </body>
 </html>`;
 }

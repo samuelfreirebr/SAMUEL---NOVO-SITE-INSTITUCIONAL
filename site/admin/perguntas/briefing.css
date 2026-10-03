@@ -237,3 +237,8 @@ html:has(body.br) { height: auto; }
 .br-envio__st--ok { color: var(--brand); }
 .br-envio__st--agora { color: var(--ink); }
 .br-envio__st--parou { color: var(--meta); }
+
+.br-cond {
+  font-size: var(--t-eyebrow); font-weight: var(--w-bold); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink); background: var(--bg-2); padding: .15em .6em; border-radius: var(--radius-pill); flex: none;
+}

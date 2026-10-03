@@ -26,7 +26,7 @@ function montar() {
   for (const bloco of $$('.pg-bloco', form)) {
     const nome = bloco.dataset.nome || '';
     const etapa = Number(bloco.dataset.etapa || 0);
-    for (const campo of $$('.pg-campo', bloco)) telas.push({ campo, bloco, nome, etapa });
+    for (const campo of $$('.pg-campo', bloco)) telas.push({ campo, bloco, nome, etapa, seId: campo.dataset.seId, seValor: campo.dataset.seValor });
   }
   if (!telas.length) return;
 
@@ -58,6 +58,21 @@ function montar() {
   const revisao = criar('section', 'pg-revisao');
   revisao.hidden = true;
   form.insertBefore(revisao, $('#erro'));
+
+  /* ---------- pergunta condicional ----------
+     "Mostrar só se a resposta de tal pergunta for Sim". Quem responde
+     Não nunca vê a pergunta, e ela não vai para a revisão nem para o
+     Samuel. */
+  function ativa(t) {
+    if (!t.seId) return true;
+    return [...form.querySelectorAll(`[name="${CSS.escape(t.seId)}"]:checked`)].some((c) => c.value === t.seValor);
+  }
+  // Próxima tela que vale mostrar, andando para frente (1) ou para trás (-1).
+  function proxima(de, passo) {
+    let n = de + passo;
+    while (n >= 0 && n < telas.length && !ativa(telas[n])) n += passo;
+    return n < 0 ? -1 : Math.min(n, telas.length);
+  }
 
   let i = -1;                      // -1 é a capa, telas.length é a revisão
   const ultima = telas.length;
@@ -125,7 +140,7 @@ function montar() {
     }
     if (i >= 0 && i < ultima && temResposta(telas[i])) pulos.delete(nomeDe(telas[i]));
     guardar();
-    mostrar(i + 1);
+    mostrar(proxima(i, 1));
   }
 
   // Respondeu de verdade? Então o pulo anterior não vale mais.
@@ -139,12 +154,12 @@ function montar() {
     if (pulos.has(id)) { pulos.delete(id); mostrar(i); return; }
     pulos.add(id);
     guardar();
-    mostrar(i + 1);
+    mostrar(proxima(i, 1));
   };
 
   seguir.onclick = avancar;
-  voltar.onclick = () => mostrar(i - 1);
-  $('#comecar').onclick = () => mostrar(0);
+  voltar.onclick = () => mostrar(proxima(i, -1));
+  $('#comecar').onclick = () => mostrar(proxima(-1, 1));
 
   // Enter avança, menos dentro de texto longo (lá ele quebra linha).
   form.addEventListener('keydown', (e) => {
@@ -196,6 +211,7 @@ function montar() {
     for (const [id, lista] of Object.entries(arquivos)) {
       if (lista.length) d[id] = lista.map((a) => a.nome + ' (' + location.origin + a.url + ')').join('\n');
     }
+    for (const t of telas) if (!ativa(t)) delete d[nomeDe(t)];   // pergunta escondida não leva resposta velha
     return d;
   }
   try {
@@ -278,6 +294,7 @@ function montar() {
     revisao.append(criar('p', 'pg-revisao__t', 'Confira antes de enviar'));
     const d = valores();
     telas.forEach((t, n) => {
+      if (!ativa(t)) return;
       const nome = t.campo.querySelector('label')?.firstChild?.textContent?.trim() || '';
       const id = t.campo.querySelector('[name]')?.name;
       const resp = (d[id] || '').trim();
@@ -296,7 +313,7 @@ function montar() {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     erro.hidden = true;
-    const ruim = telas.findIndex((t) => falta(t));
+    const ruim = telas.findIndex((t) => ativa(t) && falta(t));
     if (ruim >= 0) {
       mostrar(ruim);
       erro.textContent = falta(telas[ruim]);

@@ -171,6 +171,21 @@ function perguntaEl(b, q, qi) {
   pul.checked = !!q.pular;
   pul.onchange = () => { q.pular = pul.checked; marcar(); };
 
+  // "Mostrar só se": liga esta pergunta à resposta de uma pergunta de escolha.
+  const candidatas = f.blocos.flatMap((b) => b.perguntas || []).filter((x) => x !== q && x.tipo === 'escolha' && x.opcoes?.length && x.pergunta);
+  const selPergunta = h('select', { 'aria-label': 'Mostrar só se' },
+    h('option', { value: '' }, 'Sempre mostrar'),
+    ...candidatas.map((x) => h('option', { value: x.id, selected: q.se?.id === x.id }, x.pergunta)));
+  selPergunta.onchange = () => {
+    const alvo = candidatas.find((x) => x.id === selPergunta.value);
+    q.se = alvo ? { id: alvo.id, valor: alvo.opcoes[0] } : undefined;
+    pintar();
+  };
+  const alvoAtual = candidatas.find((x) => x.id === q.se?.id);
+  const selValor = alvoAtual && h('select', { 'aria-label': 'Resposta que mostra esta pergunta' },
+    ...alvoAtual.opcoes.map((o) => h('option', { value: o, selected: q.se.valor === o }, 'for: ' + o)));
+  if (selValor) selValor.onchange = () => { q.se.valor = selValor.value; marcar(); };
+
   const resumoEl = h('span', { class: 'br-q__t' }, q.pergunta || 'Pergunta sem texto');
   const tipoRot = TIPOS.find(([v]) => v === q.tipo)?.[1] || q.tipo;
 
@@ -187,6 +202,7 @@ function perguntaEl(b, q, qi) {
       h('span', { class: 'br-q__n' }, String(qi + 1).padStart(2, '0')),
       resumoEl,
       q.obrigatoria ? h('span', { class: 'br-obr' }, 'obrigatória') : null,
+      q.se ? h('span', { class: 'br-cond' }, 'se ' + (q.se.valor || '')) : null,
       h('span', { class: 'br-q__tipo' }, tipoRot),
       h('span', { class: 'br-q__seta', 'aria-hidden': 'true' }, '+')),
     h('div', { class: 'br-q__corpo' },
@@ -199,6 +215,9 @@ function perguntaEl(b, q, qi) {
           h('label', { class: 'br-check' }, obr, h('span', {}, fixa ? 'Obrigatória (o contrato precisa)' : 'Obrigatória')),
           h('label', { class: 'br-check' }, pul, h('span', {}, 'Pode pular e enviar depois pelo WhatsApp')))),
       opcoes,
+      candidatas.length || q.se ? h('div', { class: 'br-linha' },
+        h('label', { class: 'br-campo' }, h('span', {}, 'Mostrar só se a resposta de'), selPergunta),
+        selValor ? h('label', { class: 'br-campo' }, h('span', {}, 'Resposta'), selValor) : null) : null,
       h('div', { class: 'br-q__acoes' },
         h('button', { type: 'button', class: 'mini', disabled: qi === 0, onclick: () => mover(b.perguntas, qi, -1) }, '↑ Subir'),
         h('button', { type: 'button', class: 'mini', disabled: qi === b.perguntas.length - 1, onclick: () => mover(b.perguntas, qi, 1) }, '↓ Descer'),
