@@ -81,10 +81,10 @@ export const BLOCOS_PRONTOS = [
     texto: 'É com isso que eu escrevo o texto do seu site. Quanto mais específico, melhor o resultado.',
     perguntas: [
       { id: 'cop-formulario', pergunta: 'O site vai ter formulário', ajuda: 'Para a pessoa deixar nome e contato.', tipo: 'escolha', opcoes: ['Sim', 'Não'], obrigatoria: true },
-      { id: 'cop-promessas', pergunta: 'Quais são as promessas que fazem a pessoa comprar de você', ajuda: 'A frase de impacto e o que você entrega. Se já tiver um texto pronto, cole aqui.', tipo: 'longo', opcoes: [], obrigatoria: true },
-      { id: 'cop-fortes', pergunta: 'Quais são os 4 pontos fortes do seu negócio', ajuda: 'Um por linha. Exemplo: entrega em 2 dias úteis.', tipo: 'longo', opcoes: [], obrigatoria: true },
-      { id: 'cop-numeros', pergunta: 'Quais números de autoridade você pode mostrar', ajuda: 'Exemplo: desde 2012, mais de 20 mil peças feitas, atendimento internacional. Se não tiver, escreva Não.', tipo: 'longo', opcoes: [], obrigatoria: false },
-      { id: 'cop-referencias', pergunta: 'Sites que você admira ou concorrentes', ajuda: 'Cole os endereços, um por linha. Se não tiver, escreva Não.', tipo: 'longo', opcoes: [], obrigatoria: false },
+      { id: 'cop-promessas', pergunta: 'Quais são as promessas que fazem a pessoa comprar de você', ajuda: 'Liste no mínimo 3. Se já tiver um texto pronto, cole aqui.', tipo: 'longo', opcoes: [], obrigatoria: true },
+      { id: 'cop-fortes', pergunta: 'Quais são os 4 pontos fortes do seu negócio', ajuda: 'Um por linha.', tipo: 'longo', opcoes: [], obrigatoria: true },
+      { id: 'cop-numeros', pergunta: 'Quais números de autoridade você pode mostrar', ajuda: 'No mínimo 3, no máximo 5. Se não tiver, escreva Não.', tipo: 'longo', opcoes: [], obrigatoria: false },
+      { id: 'cop-referencias', pergunta: 'Sites que você admira ou concorrentes', ajuda: 'Um endereço por linha. Se não tiver, escreva Não.', tipo: 'longo', opcoes: [], obrigatoria: false },
     ],
   },
   {
@@ -166,6 +166,26 @@ export const BLOCOS_PRONTOS = [
   },
 ];
 
+/* Exemplo que o cliente vê numa caixa própria, em cima do campo: quem
+   não sabe como responder copia o jeito. Fica fora das perguntas acima
+   para não poluir; entra aqui pelo id. */
+const EXEMPLOS = {
+  'cop-promessas': 'Orçamento grátis em 2 minutos\nAtendimento direto com quem faz o trabalho\nEntrega no prazo combinado, ou a gente refaz',
+  'cop-fortes': '30 dias de garantia\nProdutos 100% artesanais\nEquipe especializada\nAtendimento por WhatsApp',
+  'cop-numeros': '+7 anos no mercado\n+1.000 clientes atendidos\n+100 mil reais em projetos entregues',
+  'cop-referencias': 'https://www.exemplo.com.br\nhttps://www.outroexemplo.com.br',
+  'fol-historia': 'Comecei em 2022 pintando a janela de um cliente. Hoje temos uma equipe de 10 pessoas e atendemos a região toda.',
+  'fol-servicos': 'Pintura interna e externa\nCarpintaria\nPisos\nLimpeza pós obra',
+  'fol-funciona': '1. Orçamento em 2 a 3 dias úteis\n2. Aprovado, agendamos a data e combinamos o sinal\n3. Fazemos o trabalho\n4. Entrega e pagamento do restante',
+  'fol-diferenciais': 'Materiais de qualidade\nCuidado com a mobília do cliente\nReparo em até 7 dias\nAtendimento de qualidade',
+  'fol-garantia': 'Garantia de 1 ano contra descascamento, desde que os cuidados sejam seguidos.',
+  'fol-cuidados': 'Esperar 48 horas antes de encostar nas paredes\nEvitar batidas e arranhões',
+  'fol-duvidas': 'Vocês dão conta de tudo isso? Sim, tenho profissionais em cada área.',
+  'goo-servicos': 'Pintura residencial\nPintura comercial\nReparos em drywall',
+  'goo-horario': 'De segunda a sexta, das 8h às 18h. Sábado, das 8h às 12h.',
+};
+for (const b of BLOCOS_PRONTOS) for (const q of b.perguntas) q.exemplo = EXEMPLOS[q.id] || '';
+
 /* Texto de abertura: o mesmo em todo briefing, na voz do Samuel.
    Editável na tela de cada briefing; este é só o ponto de partida. */
 export const TEXTO_ABERTURA = 'Este formulário leva de 10 a 15 minutos. É importante responder com atenção pois determinará nossa qualidade final do resultado! Assim que finalizar me confirma no Whatsapp que iniciamos a produção!';
@@ -202,10 +222,11 @@ const ESQUEMA = {
             type: 'array',
             items: {
               type: 'object', additionalProperties: false,
-              required: ['pergunta', 'ajuda', 'tipo', 'opcoes', 'obrigatoria'],
+              required: ['pergunta', 'ajuda', 'exemplo', 'tipo', 'opcoes', 'obrigatoria'],
               properties: {
                 pergunta: { type: 'string' },
                 ajuda: { type: 'string', description: 'Uma linha de exemplo ou explicação. Vazio se a pergunta já se explica.' },
+                exemplo: { type: 'string', description: 'Resposta de exemplo, de 2 a 4 linhas, para pergunta aberta que pede lista ou formato. Vazio nas outras.' },
                 tipo: { type: 'string', enum: TIPOS },
                 opcoes: { type: 'array', items: { type: 'string' }, description: 'Só para "escolha" (uma) e "varias" (mais de uma). Vazio nos outros.' },
                 obrigatoria: { type: 'boolean' },
@@ -263,6 +284,7 @@ export async function gerarPerguntas({ proposta, transcricao }) {
       id: idDe(q.pergunta, bi * 100 + qi),
       pergunta: limpo(q.pergunta),
       ajuda: limpo(q.ajuda),
+      exemplo: limpo(q.exemplo),
       tipo: TIPOS.includes(q.tipo) ? q.tipo : 'texto',
       opcoes: (q.opcoes || []).map(limpo).filter(Boolean),
       obrigatoria: Boolean(q.obrigatoria),
@@ -291,6 +313,16 @@ export function formularioVazio(p = {}) {
     blocos,
     avisos: [],
   };
+}
+
+/* Formulário gerado antes do campo "exemplo" existir: as perguntas
+   prontas recebem o exemplo padrão. Só quando o campo nunca foi
+   definido; se o Samuel apagou o exemplo, o vazio dele vale. */
+export function comExemplos(f) {
+  for (const b of f.blocos || []) for (const q of b.perguntas || []) {
+    if (q.exemplo === undefined) q.exemplo = EXEMPLOS[q.id] || '';
+  }
+  return f;
 }
 
 /* Blocos que o cliente vê: os ligados, com pergunta de verdade. */
@@ -342,6 +374,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
     <div class="pg-campo" data-tipo="${esc(q.tipo)}"${q.obrigatoria ? ' data-obrigatoria="1"' : ''}>
       <label for="${esc(q.id)}">${esc(q.pergunta)}${q.obrigatoria ? '' : ' <small>(opcional)</small>'}</label>
       ${q.ajuda ? `<p class="pg-ajuda">${esc(q.ajuda)}</p>` : ''}
+      ${q.exemplo ? `<aside class="pg-exemplo"><p class="pg-exemplo__rot">Exemplo</p><p class="pg-exemplo__txt">${esc(q.exemplo)}</p></aside>` : ''}
       ${campo(q)}
     </div>`).join('')}
   </section>`).join('');
@@ -356,7 +389,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css">
 <link rel="stylesheet" href="/styles/base.css">
-<link rel="stylesheet" href="/styles/perguntas.css?v=q7">
+<link rel="stylesheet" href="/styles/perguntas.css?v=q8">
 <link rel="icon" href="/img/favicon.png">
 </head>
 <body class="perguntas">

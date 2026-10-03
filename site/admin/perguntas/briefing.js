@@ -120,7 +120,7 @@ function blocoEl(b, bi) {
     ligado
       ? h('div', { class: 'br-qs' },
         ...(b.perguntas || []).map((q, qi) => perguntaEl(b, q, qi)),
-        h('button', { type: 'button', class: 'br-add', onclick: () => { const q = { id: novoId(), pergunta: '', ajuda: '', tipo: 'texto', opcoes: [], obrigatoria: false }; b.perguntas.push(q); pintar(); const e = document.querySelector(`.br-q[data-id="${q.id}"]`); if (e) { e.open = true; e.querySelector('input')?.focus(); } } }, '+ Adicionar pergunta'))
+        h('button', { type: 'button', class: 'br-add', onclick: () => { const q = { id: novoId(), pergunta: '', ajuda: '', exemplo: '', tipo: 'texto', opcoes: [], obrigatoria: false }; b.perguntas.push(q); pintar(); const e = document.querySelector(`.br-q[data-id="${q.id}"]`); if (e) { e.open = true; e.querySelector('input')?.focus(); } } }, '+ Adicionar pergunta'))
       : h('p', { class: 'br-bloco__off' }, n + ' pergunta' + (n === 1 ? '' : 's') + ' guardada' + (n === 1 ? '' : 's') + '. Ligue para o cliente ver.'));
 }
 
@@ -134,6 +134,10 @@ function perguntaEl(b, q, qi) {
 
   const ajuda = h('input', { type: 'text', value: q.ajuda || '', placeholder: 'Exemplo ou instrução (opcional)', 'aria-label': 'Ajuda' });
   ajuda.oninput = () => { q.ajuda = ajuda.value; marcar(); };
+
+  const exemplo = h('textarea', { rows: 3, placeholder: 'Resposta de exemplo, uma por linha (opcional)', 'aria-label': 'Exemplo' });
+  exemplo.value = q.exemplo || '';
+  exemplo.oninput = () => { q.exemplo = exemplo.value; marcar(); };
 
   const tipo = h('select', { 'aria-label': 'Tipo de resposta' }, ...TIPOS.map(([v, r]) => h('option', { value: v, selected: v === q.tipo }, r)));
   tipo.onchange = () => { q.tipo = tipo.value; if (!['escolha', 'varias'].includes(q.tipo)) q.opcoes = []; pintar(); };
@@ -163,6 +167,7 @@ function perguntaEl(b, q, qi) {
     h('div', { class: 'br-q__corpo' },
       h('label', { class: 'br-campo' }, h('span', {}, 'Pergunta'), enun),
       h('label', { class: 'br-campo' }, h('span', {}, 'Ajuda'), ajuda),
+      h('label', { class: 'br-campo' }, h('span', {}, 'Exemplo para o cliente'), exemplo),
       h('div', { class: 'br-linha' },
         h('label', { class: 'br-campo' }, h('span', {}, 'Tipo de resposta'), tipo),
         h('label', { class: 'br-check' }, obr, h('span', {}, fixa ? 'Obrigatória (o contrato precisa)' : 'Obrigatória'))),
@@ -196,7 +201,7 @@ function prontosQueFaltam() {
 
 function novoBloco() {
   return h('button', { type: 'button', class: 'br-add br-add--bloco', onclick: () => {
-    f.blocos.push({ id: 'b-' + novoId(), ligado: true, titulo: 'Novo bloco', texto: '', perguntas: [{ id: novoId(), pergunta: '', ajuda: '', tipo: 'texto', opcoes: [], obrigatoria: false }] });
+    f.blocos.push({ id: 'b-' + novoId(), ligado: true, titulo: 'Novo bloco', texto: '', perguntas: [{ id: novoId(), pergunta: '', ajuda: '', exemplo: '', tipo: 'texto', opcoes: [], obrigatoria: false }] });
     pintar();
     document.querySelector('.br-bloco:last-of-type .br-bloco__titulo')?.select();
   } }, '+ Novo bloco de perguntas');

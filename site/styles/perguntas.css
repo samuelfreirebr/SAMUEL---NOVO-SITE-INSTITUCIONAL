@@ -311,3 +311,24 @@ body.quiz .pg-campo.ativa label.pg-opcao {
 /* `.pg-campo label` (display: block) vence `.pg-opcao` sozinho: sem isto a caixa
    e o texto empilhavam em vez de ficar lado a lado. */
 .pg-campo label.pg-opcao { display: flex; align-items: center; gap: var(--sp-sm); }
+
+
+/* ---------- exemplo ----------
+   Caixa à parte, com o rótulo no mesmo traço do eyebrow do site: o
+   cliente enxerga que é um modelo de resposta, não parte da pergunta. */
+.pg-exemplo {
+  margin-top: var(--sp-sm);
+  padding: var(--sp-sm) var(--sp-md);
+  background: var(--bg-2);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-img);
+}
+.pg-exemplo__rot {
+  display: flex; align-items: center; gap: .6em;
+  font-size: var(--t-eyebrow); font-weight: var(--w-bold);
+  letter-spacing: var(--ls-eyebrow); text-transform: uppercase; color: var(--muted);
+}
+.pg-exemplo__rot::before { content: ""; width: var(--bullet); height: var(--bullet); border-radius: 50%; background: var(--brand); flex: none; }
+.pg-exemplo__txt { margin-top: var(--sp-2xs); white-space: pre-line; color: var(--ink-2); font-size: var(--t-small); line-height: 1.6; overflow-wrap: anywhere; }
+body.quiz .pg-campo.ativa .pg-exemplo { margin-top: var(--sp-md); }
+body.quiz .pg-campo.ativa .pg-exemplo__txt { font-size: var(--t-body); }

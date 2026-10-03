@@ -40,7 +40,7 @@ import { lerCorpo, lerMultipart } from './multipart.js';
 import { renderizarProposta, catalogoIcones } from './proposta-html.js';
 import { renderizarFatura } from './fatura-html.js';
 import { gerarContrato, renderizarContrato, MODELO_PADRAO } from './contrato.js';
-import { gerarPerguntas, renderizarPerguntas, formularioVazio, BLOCOS_PRONTOS } from './perguntas.js';
+import { gerarPerguntas, renderizarPerguntas, formularioVazio, BLOCOS_PRONTOS, comExemplos } from './perguntas.js';
 import { preencherComIa, temChaveIa, escolherModelo } from './proposta-ia.js';
 import { apiProspeccao, configuracao as configProspeccao } from './prospeccao.js';
 import * as dados from './dados.js';
@@ -352,7 +352,7 @@ async function api(req, res, url) {
       // dá para ligar o que o projeto pede e salvar sem passar pela IA.
       const f = await dados.lerFormulario(id);
       if (!f) return json(res, { proposta: id, novo: true, prontos: BLOCOS_PRONTOS, ...formularioVazio(proposta) });
-      return json(res, { ...f, prontos: BLOCOS_PRONTOS, anexos: await dados.listarAnexos(f.link) });
+      return json(res, { ...comExemplos(f), prontos: BLOCOS_PRONTOS, anexos: await dados.listarAnexos(f.link) });
     }
     if (req.method === 'PUT') {
       const dado = await lerJson(req, res);
@@ -701,7 +701,7 @@ const servidor = http.createServer(async (req, res) => {
         return json(res, { ok: true });
       }
 
-      const html = renderizarPerguntas(f, { respondido: Boolean(f.respondidoEm) });
+      const html = renderizarPerguntas(comExemplos(f), { respondido: Boolean(f.respondidoEm) });
       res.writeHead(200, {
         'content-type': 'text/html; charset=utf-8',
         'content-length': Buffer.byteLength(html),
