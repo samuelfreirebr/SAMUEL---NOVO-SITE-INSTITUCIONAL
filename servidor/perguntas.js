@@ -17,6 +17,9 @@
    não tem login) e o endereço é a credencial.
    ============================================================ */
 
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { pedirJsonIa, temChaveIa, semTravessao } from './proposta-ia.js';
 
 const limpo = (t) => semTravessao(t).trim();
@@ -177,33 +180,11 @@ const ESQUEMA = {
   },
 };
 
-const SISTEMA = `Você monta o formulário que Samuel Freire, designer e webdesigner brasileiro, manda ao cliente logo depois que a proposta é aceita. O objetivo é recolher de uma vez só tudo o que ele precisa para começar, sem ficar cobrando por mensagem.
-
-Você recebe a proposta aprovada e, quando houver, a transcrição da reunião. Devolve duas coisas: quais blocos prontos ligar e os blocos de perguntas do projeto, em português do Brasil.
-
-Blocos prontos (o texto deles já existe, você só diz quais ligar):
-- "materiais": ligue quando o projeto depender de logo ou manual da marca que o cliente já tem.
-- "estrutura": ligue quando houver site, loja ou landing page (seções do site e ação principal).
-- "fotos": ligue quando o projeto usar fotos do cliente. É só envio de fotos.
-- "textos": ligue quando houver site ou material com texto. Pergunta se ele já tem os textos e pede documento ou endereço.
-- "hospedagem": ligue quando houver site, loja ou landing page para publicar.
-- "google": ligue só quando Perfil da Empresa no Google, Google Meu Negócio ou otimização local estiver no escopo.
-Não repita nas suas perguntas nada que esses blocos já perguntam: nem seções do site, nem fotos, nem textos.
-
-Regras para os seus blocos:
-- Blocos na ordem do trabalho: a marca, a identidade visual, o estilo, o conteúdo, o público e a copy, as seções, os acessos. Use só os que fazem sentido para o que foi contratado.
-- Pergunta curta, com um exemplo entre parênteses quando ajudar. Ex.: "Qual é o nome da marca exatamente como deve aparecer no site?" com ajuda "Exemplo: Elora Beauty Hair".
-- Em pergunta que pode não se aplicar, a ajuda diz o que fazer: "Se não tiver, escreva Não".
-- "arquivo" quando o cliente precisa subir um arquivo. "link" para pasta no Drive. "escolha" quando houver poucas respostas possíveis e elas mudam o trabalho (site claro ou escuro, já tem identidade visual, vende por CPF ou CNPJ). "varias" quando o cliente pode marcar mais de uma (sensação que o site precisa passar). "longo" para texto corrido, "email" e "telefone" para contato.
-- O cliente clica, não escreve: sempre que a resposta cabe numa lista (seções, estilos, funcionalidades, objetivos, canais), use "varias" ou "escolha" e escreva você mesmo as opções, de 4 a 12, as mais comuns para aquele tipo de negócio. Texto livre só para o que ninguém consegue prever (nome, história, diferenciais).
-- Decisões técnicas são do Samuel, não do cliente: nunca pergunte qual provedor de hospedagem, plataforma, tecnologia ou ferramenta usar. Pergunte só o que o cliente já tem hoje.
-- Foto e texto são assuntos separados e já têm bloco pronto (fotos, textos). Não pergunte sobre eles nos seus blocos.
-- Pergunte só o que é necessário para executar o que foi contratado. Se é identidade visual: marca, público, referências, aplicações. Se é site: o que mais diferencia o negócio. Se tem loja: produtos, pagamento, envio. Se tem sistema: fluxos e acessos.
-- O que já ficou decidido na reunião não vira pergunta. Se o cliente já disse a cor, o nome ou o prazo, não pergunte de novo.
-- Dados de contrato (CNPJ, endereço, razão social) NÃO são com você: já existem num bloco à parte.
-- De 2 a 5 blocos, de 3 a 7 perguntas cada.
-- Marque como obrigatória só o que trava o início do projeto.
-- Nunca use travessão. Use vírgula, dois-pontos ou ponto.`;
+/* As regras que a IA segue ficam em sementes/regras-briefing.md: o
+   Samuel edita o arquivo e a próxima geração já usa. Lido a cada
+   geração, de propósito (não fica em memória). */
+const ARQUIVO_REGRAS = path.join(path.dirname(fileURLToPath(import.meta.url)), 'sementes', 'regras-briefing.md');
+const lerRegras = () => fs.readFile(ARQUIVO_REGRAS, 'utf8');
 
 function resumo(p) {
   return `Proposta aprovada:
@@ -225,7 +206,7 @@ export async function gerarPerguntas({ proposta, transcricao }) {
     const partes = [{ type: 'input_text', text: resumo(p) }];
     if (transcricao) partes.push({ type: 'input_text', text: `--- Transcrição da reunião ---\n${String(transcricao).slice(0, 60000)}` });
     try {
-      const r = await pedirJsonIa(partes, { sistema: SISTEMA, esquema: ESQUEMA, nome: 'formulario_de_perguntas' });
+      const r = await pedirJsonIa(partes, { sistema: await lerRegras(), esquema: ESQUEMA, nome: 'formulario_de_perguntas' });
       ia = r.ia; usado = r.modelo;
     } catch (e) { avisos.push('A IA não respondeu (' + e.message + '). O formulário saiu só com os blocos prontos.'); }
   } else {
