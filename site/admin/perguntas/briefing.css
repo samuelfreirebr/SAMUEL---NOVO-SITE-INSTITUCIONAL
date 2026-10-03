@@ -164,3 +164,8 @@ html:has(body.br) { height: auto; }
   .br-q__corpo { animation: none; }
   .br-chave__trilho::after, .br-q__seta { transition: none; }
 }
+
+.br-prontos { display: grid; gap: var(--sp-xs); }
+.br-prontos .eyebrow { display: flex; align-items: center; gap: .6em; }
+.br-prontos .eyebrow::before { content: ""; width: var(--bullet); height: var(--bullet); border-radius: 50%; background: var(--brand); }
+.br-prontos__lista { display: flex; flex-wrap: wrap; gap: var(--sp-2xs); }

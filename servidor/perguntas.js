@@ -52,9 +52,45 @@ export const BLOCOS_PRONTOS = [
     perguntas: [
       { id: 'mat-logo', pergunta: 'Logo em alta qualidade', ajuda: 'De preferência em PNG com fundo transparente, PDF, SVG ou AI. Se não tiver, escreva Não no campo de observações.', tipo: 'arquivo', opcoes: [], obrigatoria: false },
       { id: 'mat-manual', pergunta: 'Manual da marca, se existir', ajuda: 'O arquivo com as cores, as fontes e as regras de uso do logo.', tipo: 'arquivo', opcoes: [], obrigatoria: false },
-      { id: 'mat-fotos', pergunta: 'Fotos que podem entrar no projeto', ajuda: 'Fotos da equipe, do espaço, dos produtos. Se forem muitas, use o campo do link abaixo.', tipo: 'arquivo', opcoes: [], obrigatoria: false },
       { id: 'mat-pasta', pergunta: 'Link de uma pasta com o resto do material', ajuda: 'Cole o link da pasta no Drive, no Dropbox ou no WeTransfer. Se não tiver, escreva Não.', tipo: 'link', opcoes: [], obrigatoria: false },
       { id: 'mat-obs', pergunta: 'Alguma observação sobre esses materiais', ajuda: 'O que pode ser usado, o que não pode, o que está desatualizado.', tipo: 'longo', opcoes: [], obrigatoria: false },
+    ],
+  },
+  {
+    id: 'estrutura',
+    pronto: 'estrutura',
+    ligado: false,
+    titulo: 'Estrutura do site',
+    texto: 'Marque o que o seu site precisa ter. É só clicar, não precisa escrever.',
+    perguntas: [
+      { id: 'est-secoes', pergunta: 'Quais seções o site deve ter', ajuda: 'Marque todas que fazem sentido para o seu negócio.', tipo: 'varias', opcoes: ['Início com apresentação', 'Sobre a empresa', 'Serviços', 'Produtos', 'Portfólio ou projetos', 'Depoimentos de clientes', 'Perguntas frequentes', 'Equipe', 'Blog ou notícias', 'Localização e mapa', 'Formulário de contato', 'Loja virtual'], obrigatoria: true },
+      { id: 'est-acao', pergunta: 'Qual é a principal ação que o visitante deve fazer', ajuda: 'O site inteiro vai levar a pessoa até isso.', tipo: 'escolha', opcoes: ['Chamar no WhatsApp', 'Pedir um orçamento', 'Comprar online', 'Agendar um horário', 'Ligar', 'Preencher um formulário'], obrigatoria: true },
+      { id: 'est-extra', pergunta: 'Falta alguma seção que não está na lista', ajuda: 'Se não faltar, escreva Não.', tipo: 'texto', opcoes: [], obrigatoria: false },
+    ],
+  },
+  {
+    id: 'fotos',
+    pronto: 'fotos',
+    ligado: false,
+    titulo: 'Fotos do site',
+    texto: 'Primeiro as fotos. Os textos vêm na próxima etapa.',
+    perguntas: [
+      { id: 'fot-envio', pergunta: 'Envie as fotos que devem ir para o site', ajuda: 'Equipe, espaço, produtos, trabalhos feitos. Pode selecionar várias de uma vez.', tipo: 'arquivo', opcoes: [], obrigatoria: false },
+      { id: 'fot-pasta', pergunta: 'Se forem muitas, cole o link da pasta', ajuda: 'Drive, Dropbox ou WeTransfer. Se não tiver, escreva Não.', tipo: 'link', opcoes: [], obrigatoria: false },
+      { id: 'fot-faltam', pergunta: 'Você acha que tem fotos boas o suficiente', ajuda: '', tipo: 'escolha', opcoes: ['Sim, tenho o que preciso', 'Tenho poucas', 'Não tenho, preciso de ajuda com isso'], obrigatoria: true },
+    ],
+  },
+  {
+    id: 'textos',
+    pronto: 'textos',
+    ligado: false,
+    titulo: 'Textos do site',
+    texto: 'Aqui é o que vai escrito no site. Se ainda não tem, a gente cria junto.',
+    perguntas: [
+      { id: 'txt-situacao', pergunta: 'Você já tem os textos do site', ajuda: '', tipo: 'escolha', opcoes: ['Sim, tenho tudo pronto', 'Tenho só uma parte', 'Não tenho, preciso que criem', 'Está no meu site ou perfil atual'], obrigatoria: true },
+      { id: 'txt-arquivo', pergunta: 'Envie o documento com os textos', ajuda: 'Word, PDF ou texto, com o que você já tem sobre a empresa. Se não tiver, pule.', tipo: 'arquivo', opcoes: [], obrigatoria: false },
+      { id: 'txt-site', pergunta: 'Endereço do seu site ou perfil atual', ajuda: 'Site antigo, Instagram ou LinkedIn. Se não tiver, escreva Não.', tipo: 'link', opcoes: [], obrigatoria: false },
+      { id: 'txt-tom', pergunta: 'Como o texto deve soar', ajuda: 'Marque até duas.', tipo: 'varias', opcoes: ['Profissional e direto', 'Próximo e acolhedor', 'Premium e sofisticado', 'Descontraído e moderno'], obrigatoria: false },
     ],
   },
   {
@@ -110,7 +146,7 @@ const ESQUEMA = {
   properties: {
     prontos: {
       type: 'array',
-      items: { type: 'string', enum: ['materiais', 'hospedagem', 'google'] },
+      items: { type: 'string', enum: ['materiais', 'estrutura', 'fotos', 'textos', 'hospedagem', 'google'] },
       description: 'Blocos prontos que fazem sentido para o que foi contratado.',
     },
     blocos: {
@@ -146,17 +182,22 @@ const SISTEMA = `Você monta o formulário que Samuel Freire, designer e webdesi
 Você recebe a proposta aprovada e, quando houver, a transcrição da reunião. Devolve duas coisas: quais blocos prontos ligar e os blocos de perguntas do projeto, em português do Brasil.
 
 Blocos prontos (o texto deles já existe, você só diz quais ligar):
-- "materiais": ligue quando o projeto depender de logo, fotos ou textos que o cliente tem.
+- "materiais": ligue quando o projeto depender de logo ou manual da marca que o cliente já tem.
+- "estrutura": ligue quando houver site, loja ou landing page (seções do site e ação principal).
+- "fotos": ligue quando o projeto usar fotos do cliente. É só envio de fotos.
+- "textos": ligue quando houver site ou material com texto. Pergunta se ele já tem os textos e pede documento ou endereço.
 - "hospedagem": ligue quando houver site, loja ou landing page para publicar.
 - "google": ligue só quando Perfil da Empresa no Google, Google Meu Negócio ou otimização local estiver no escopo.
-Não repita nas suas perguntas nada que esses blocos já perguntam.
+Não repita nas suas perguntas nada que esses blocos já perguntam: nem seções do site, nem fotos, nem textos.
 
 Regras para os seus blocos:
 - Blocos na ordem do trabalho: a marca, a identidade visual, o estilo, o conteúdo, o público e a copy, as seções, os acessos. Use só os que fazem sentido para o que foi contratado.
 - Pergunta curta, com um exemplo entre parênteses quando ajudar. Ex.: "Qual é o nome da marca exatamente como deve aparecer no site?" com ajuda "Exemplo: Elora Beauty Hair".
 - Em pergunta que pode não se aplicar, a ajuda diz o que fazer: "Se não tiver, escreva Não".
 - "arquivo" quando o cliente precisa subir um arquivo. "link" para pasta no Drive. "escolha" quando houver poucas respostas possíveis e elas mudam o trabalho (site claro ou escuro, já tem identidade visual, vende por CPF ou CNPJ). "varias" quando o cliente pode marcar mais de uma (sensação que o site precisa passar). "longo" para texto corrido, "email" e "telefone" para contato.
-- Pergunte só o que é necessário para executar o que foi contratado. Se é identidade visual: marca, público, referências, aplicações. Se é site: páginas, textos, fotos. Se tem loja: produtos, pagamento, envio. Se tem sistema: fluxos e acessos.
+- O cliente clica, não escreve: sempre que a resposta cabe numa lista (seções, estilos, funcionalidades, objetivos, canais), use "varias" ou "escolha" e escreva você mesmo as opções, de 4 a 12, as mais comuns para aquele tipo de negócio. Texto livre só para o que ninguém consegue prever (nome, história, diferenciais).
+- Foto e texto são assuntos separados e já têm bloco pronto (fotos, textos). Não pergunte sobre eles nos seus blocos.
+- Pergunte só o que é necessário para executar o que foi contratado. Se é identidade visual: marca, público, referências, aplicações. Se é site: o que mais diferencia o negócio. Se tem loja: produtos, pagamento, envio. Se tem sistema: fluxos e acessos.
 - O que já ficou decidido na reunião não vira pergunta. Se o cliente já disse a cor, o nome ou o prazo, não pergunte de novo.
 - Dados de contrato (CNPJ, endereço, razão social) NÃO são com você: já existem num bloco à parte.
 - De 2 a 5 blocos, de 3 a 7 perguntas cada.
@@ -295,7 +336,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css">
 <link rel="stylesheet" href="/styles/base.css">
-<link rel="stylesheet" href="/styles/perguntas.css?v=q4">
+<link rel="stylesheet" href="/styles/perguntas.css?v=q5">
 <link rel="icon" href="/img/favicon.png">
 </head>
 <body class="perguntas">

@@ -70,7 +70,7 @@ function pintar() {
 
   app.append(
     h('div', { class: 'br-grade' },
-      h('div', { class: 'br-col' }, cabecalho(), ...f.blocos.map(blocoEl), novoBloco()),
+      h('div', { class: 'br-col' }, cabecalho(), ...f.blocos.map(blocoEl), prontosQueFaltam(), novoBloco()),
       h('aside', { class: 'br-lado' }, ladoLink(), ladoResumo(), ladoRespostas(), ladoArquivos())));
 
   for (const e of document.querySelectorAll('.br-q')) if (aberto.has(e.dataset.id)) e.open = true;
@@ -181,6 +181,19 @@ function mover(lista, i, d) {
   pintar();
 }
 
+// Formulários antigos não têm os blocos prontos criados depois: um clique traz.
+function prontosQueFaltam() {
+  const tem = new Set(f.blocos.map((b) => b.id));
+  const faltam = (f.prontos || []).filter((b) => !tem.has(b.id));
+  if (!faltam.length) return h('span', { hidden: true });
+  return h('div', { class: 'br-prontos' },
+    h('p', { class: 'eyebrow' }, 'Blocos prontos para adicionar'),
+    h('div', { class: 'br-prontos__lista' }, ...faltam.map((b) => h('button', {
+      type: 'button', class: 'mini', title: b.texto,
+      onclick: () => { f.blocos.push({ ...JSON.parse(JSON.stringify(b)), ligado: true }); pintar(); },
+    }, '+ ' + b.titulo))));
+}
+
 function novoBloco() {
   return h('button', { type: 'button', class: 'br-add br-add--bloco', onclick: () => {
     f.blocos.push({ id: 'b-' + novoId(), ligado: true, titulo: 'Novo bloco', texto: '', perguntas: [{ id: novoId(), pergunta: '', ajuda: '', tipo: 'texto', opcoes: [], obrigatoria: false }] });
@@ -270,7 +283,7 @@ async function gerar() {
   b.disabled = true; b.textContent = 'Montando…';
   try {
     const d = await api('/api/formularios/' + encodeURIComponent(id) + '/gerar', { method: 'POST' });
-    f = { ...d, anexos: f.anexos };
+    f = { ...d, anexos: f.anexos, prontos: f.prontos };
     salvo = JSON.stringify(f.blocos) + f.titulo + f.texto;
     pintar();
     avisar(d.avisos?.length ? d.avisos.join(' ') : 'Briefing montado. Revise, edite e mande o link.', d.avisos?.length ? 'erro' : 'ok');

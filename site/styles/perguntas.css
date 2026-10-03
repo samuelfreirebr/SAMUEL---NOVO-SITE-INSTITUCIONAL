@@ -274,3 +274,13 @@ body.quiz .pg-campo.ativa .pg-upload { margin-top: var(--sp-lg); }
   transition: background var(--d-fast) var(--ease-out), color var(--d-fast) var(--ease-out), border-color var(--d-fast) var(--ease-out);
 }
 .pg-form .mini:hover { background: var(--ink); border-color: var(--ink); color: #FFFFFF; }
+
+/* A opção é um label dentro da pergunta: sem isto herdava o corpo de título. */
+body.quiz .pg-campo.ativa label.pg-opcao {
+  font-size: var(--t-body); font-weight: var(--w-medium);
+  letter-spacing: var(--ls-body); line-height: 1.35; max-width: none;
+}
+/* Lista longa em duas colunas no computador: cabe sem rolar tanto. */
+@media (min-width: 760px) {
+  body.quiz .pg-campo.ativa .pg-opcoes:has(.pg-opcao:nth-child(7)) { grid-template-columns: 1fr 1fr; }
+}
