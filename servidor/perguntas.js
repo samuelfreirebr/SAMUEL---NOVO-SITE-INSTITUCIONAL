@@ -196,6 +196,7 @@ Regras para os seus blocos:
 - Em pergunta que pode não se aplicar, a ajuda diz o que fazer: "Se não tiver, escreva Não".
 - "arquivo" quando o cliente precisa subir um arquivo. "link" para pasta no Drive. "escolha" quando houver poucas respostas possíveis e elas mudam o trabalho (site claro ou escuro, já tem identidade visual, vende por CPF ou CNPJ). "varias" quando o cliente pode marcar mais de uma (sensação que o site precisa passar). "longo" para texto corrido, "email" e "telefone" para contato.
 - O cliente clica, não escreve: sempre que a resposta cabe numa lista (seções, estilos, funcionalidades, objetivos, canais), use "varias" ou "escolha" e escreva você mesmo as opções, de 4 a 12, as mais comuns para aquele tipo de negócio. Texto livre só para o que ninguém consegue prever (nome, história, diferenciais).
+- Decisões técnicas são do Samuel, não do cliente: nunca pergunte qual provedor de hospedagem, plataforma, tecnologia ou ferramenta usar. Pergunte só o que o cliente já tem hoje.
 - Foto e texto são assuntos separados e já têm bloco pronto (fotos, textos). Não pergunte sobre eles nos seus blocos.
 - Pergunte só o que é necessário para executar o que foi contratado. Se é identidade visual: marca, público, referências, aplicações. Se é site: o que mais diferencia o negócio. Se tem loja: produtos, pagamento, envio. Se tem sistema: fluxos e acessos.
 - O que já ficou decidido na reunião não vira pergunta. Se o cliente já disse a cor, o nome ou o prazo, não pergunte de novo.
