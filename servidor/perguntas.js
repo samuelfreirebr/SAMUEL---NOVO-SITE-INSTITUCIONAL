@@ -147,9 +147,8 @@ export const BLOCOS_PRONTOS = [
     titulo: 'Textos do site',
     texto: 'Aqui é o que vai escrito no site. Se ainda não tem, a gente cria junto.',
     perguntas: [
-      { id: 'txt-situacao', pergunta: 'Você já tem os textos do site', ajuda: '', tipo: 'escolha', opcoes: ['Sim, tenho tudo pronto', 'Tenho só uma parte', 'Não tenho, preciso que criem', 'Está no meu site ou perfil atual'], obrigatoria: true },
-      { id: 'txt-arquivo', pergunta: 'Envie o documento com os textos', ajuda: 'Word, PDF ou texto, com o que você já tem sobre a empresa. Se não tiver, pule.', tipo: 'arquivo', opcoes: [], obrigatoria: false },
-      { id: 'txt-site', pergunta: 'Endereço do seu site ou perfil atual', ajuda: 'Site antigo, Instagram ou LinkedIn. Se não tiver, escreva Não.', tipo: 'link', opcoes: [], obrigatoria: false },
+      { id: 'txt-situacao', pergunta: 'Você já tem os textos do site', ajuda: '', tipo: 'escolha', opcoes: ['Sim, tenho tudo pronto', 'Tenho só uma parte', 'Não tenho, preciso que criem', 'Já tenho bastante informações no meu site, ou tenho um documento com informações'], obrigatoria: true },
+      { id: 'txt-arquivo', pergunta: 'Envie o documento ou o link do seu site', ajuda: 'Pode ser o endereço do site com as informações, um perfil da empresa, ou um documento em Word, PDF ou texto.', tipo: 'arquivo', opcoes: [], obrigatoria: true, se: { id: 'txt-situacao', valor: 'Já tenho bastante informações no meu site, ou tenho um documento com informações' } },
       { id: 'txt-tom', pergunta: 'Como o texto deve soar', ajuda: 'Marque até duas.', tipo: 'varias', opcoes: ['Profissional e direto', 'Próximo e acolhedor', 'Premium e sofisticado', 'Descontraído e moderno'], obrigatoria: false },
     ],
   },
@@ -418,7 +417,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css">
 <link rel="stylesheet" href="/styles/base.css">
-<link rel="stylesheet" href="/styles/perguntas.css?v=q15">
+<link rel="stylesheet" href="/styles/perguntas.css?v=q16">
 <link rel="icon" href="/img/favicon.png">
 </head>
 <body class="perguntas">
@@ -460,7 +459,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 
 <footer class="pg-rodape"><p class="small">Samuel Freire Web Designer</p></footer>
 
-<script type="module" src="/js/briefing.js?v=q15"></script>
+<script type="module" src="/js/briefing.js?v=q16"></script>
 </body>
 </html>`;
 }
