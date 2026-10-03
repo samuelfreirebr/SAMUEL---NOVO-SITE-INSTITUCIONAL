@@ -108,14 +108,14 @@ body.quiz .pg-campo.ativa label small {
 body.quiz .pg-campo.ativa .pg-ajuda { margin-top: var(--sp-sm); max-width: 52ch; font-size: var(--t-body); }
 
 /* Entrada da tela: sobe e aparece. Quem pediu menos movimento não vê. */
-body.quiz .pg-campo.ativa, body.quiz .pg-revisao:not([hidden]), .pg-tela--capa {
+body.quiz .pg-revisao:not([hidden]), .pg-tela--capa {
   animation: pg-entra var(--d-base) var(--ease-out) both;
 }
 @keyframes pg-entra { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 .tremer { animation: pg-treme .4s var(--ease-in-out); }
 @keyframes pg-treme { 25% { transform: translateX(-6px); } 50% { transform: translateX(6px); } 75% { transform: translateX(-3px); } }
 @media (prefers-reduced-motion: reduce) {
-  body.quiz .pg-campo.ativa, body.quiz .pg-revisao, .pg-tela--capa, .tremer { animation: none; }
+  body.quiz .pg-revisao, .pg-tela--capa, .tremer { animation: none; }
   .pg-regua i { transition: none; }
 }
 
@@ -362,3 +362,34 @@ body.quiz .pg-barra, body.quiz #acoes-fim {
 }
 .pg-ou::before, .pg-ou::after { content: ""; flex: 1; height: var(--hair); background: var(--line); }
 .pg-upload .pg-upload__link { margin-top: var(--sp-sm); }
+
+
+/* ---------- entrada da pergunta (o script marca .digita) ----------
+   Cada palavra do título sobe de uma máscara, em sequência, como se
+   estivesse sendo escrita. Depois entram, nesta ordem: ajuda, exemplo,
+   campo e opções. O estado escondido só existe dentro de .digita: sem o
+   script, tudo aparece normal. */
+.digita .pg-w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .14em; margin-bottom: -.14em; }
+.digita .pg-w > span {
+  display: inline-block;
+  transform: translateY(110%);
+  animation: pg-sobe .62s var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 55ms + 60ms);
+}
+@keyframes pg-sobe { from { transform: translateY(110%); } to { transform: none; } }
+
+.digita .pg-ajuda, .digita .pg-exemplo, .digita .pg-upload, .digita > input, .digita > textarea,
+.digita .pg-opcoes:not(:has(.pg-opcao)) {
+  animation: pg-entra .55s var(--ease-out) both;
+  animation-delay: var(--base, 300ms);
+}
+.digita .pg-exemplo { animation-delay: calc(var(--base, 300ms) + 90ms); }
+.digita > input, .digita > textarea, .digita .pg-upload { animation-delay: calc(var(--base, 300ms) + 150ms); }
+.digita .pg-opcao {
+  animation: pg-entra .5s var(--ease-out) both;
+  animation-delay: calc(var(--base, 300ms) + 80ms + var(--k, 0) * 45ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .digita .pg-w > span, .digita .pg-ajuda, .digita .pg-exemplo, .digita .pg-upload,
+  .digita > input, .digita > textarea, .digita .pg-opcao { animation: none; transform: none; }
+}

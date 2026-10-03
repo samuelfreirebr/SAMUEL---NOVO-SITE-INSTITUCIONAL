@@ -104,6 +104,7 @@ function montar() {
       rotulo.innerHTML = `<b>Etapa ${t.etapa + 1} de ${etapas}</b><span>${t.nome}</span>`;
     }
     cheia.style.transform = `scaleX(${(i + 1) / (ultima + 1)})`;
+    if (emCurso) animar(telas[i].campo);
 
     window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
     if (foco && emCurso) {
@@ -305,7 +306,7 @@ function montar() {
     const d = valores();
     telas.forEach((t, n) => {
       if (!ativa(t)) return;
-      const nome = t.campo.querySelector('label')?.firstChild?.textContent?.trim() || '';
+      const nome = [...(t.campo.querySelector('label')?.childNodes || [])].filter((n) => n.nodeName !== 'SMALL').map((n) => n.textContent).join('').trim();
       const id = t.campo.querySelector('[name]')?.name;
       const resp = (d[id] || '').trim();
       const linha = criar('div', 'pg-revisao__item');
@@ -355,6 +356,43 @@ function montar() {
   });
 
   mostrar(-1, false);
+}
+
+/* ---------- entrada de cada pergunta ----------
+   O título "se escreve": cada palavra sobe de dentro de uma máscara,
+   uma depois da outra. Depois entram a ajuda, o exemplo e o campo, e as
+   opções caem em sequência. A palavra é dividida uma vez só por
+   pergunta; o texto continua sendo o mesmo para leitor de tela. */
+const SEM_MOVIMENTO = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function animar(campo) {
+  if (SEM_MOVIMENTO) return;
+  const rotulo = campo.querySelector('label');
+  if (!rotulo) return;
+  if (!rotulo.dataset.palavras) {
+    const no = rotulo.firstChild;
+    if (no && no.nodeType === 3) {
+      const palavras = no.textContent.trim().split(/\s+/);
+      const frag = document.createDocumentFragment();
+      palavras.forEach((p, k) => {
+        const fora = criar('span', 'pg-w');
+        const dentro = criar('span', '', p);
+        dentro.style.setProperty('--i', k);
+        fora.append(dentro);
+        frag.append(fora);
+        if (k < palavras.length - 1) frag.append(' ');
+      });
+      rotulo.replaceChild(frag, no);
+      rotulo.dataset.palavras = String(palavras.length);
+    }
+  }
+  const n = Number(rotulo.dataset.palavras || 4);
+  campo.style.setProperty('--base', (n * 55 + 160) + 'ms');
+  campo.querySelectorAll('.pg-opcao').forEach((o, k) => o.style.setProperty('--k', Math.min(k, 12)));
+  // reinicia a animação mesmo quando a pergunta já esteve na tela
+  campo.classList.remove('digita');
+  void campo.offsetWidth;
+  campo.classList.add('digita');
 }
 
 function criar(tag, classe, texto) {
