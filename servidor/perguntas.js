@@ -24,6 +24,16 @@ import { pedirJsonIa, temChaveIa, semTravessao } from './proposta-ia.js';
 
 const limpo = (t) => semTravessao(t).trim();
 
+/* ---------- interrogação ----------
+   Pergunta escrita como "Qual é o tamanho do time" sai com "?" no fim.
+   Frase de comando ("Envie as fotos", "Conte a história") fica como está. */
+const ABRE_PERGUNTA = /^(qual|quais|quem|como|onde|quando|quanto|quantos|quantas|por que|o que|com qual|em qual|de qual|para que|você|já|usa|tem|existe|falta|há|a empresa|a marca|o site|o domínio|o endereço)(?=\s|$)/i;   // \b não enxerga letra acentuada ("você", "já")
+export function comInterrogacao(t) {
+  const x = String(t || '').trim();
+  return x && !/[?.:!]$/.test(x) && ABRE_PERGUNTA.test(x) ? x + '?' : x;
+}
+
+
 export const TIPOS = ['texto', 'longo', 'escolha', 'varias', 'email', 'link', 'telefone', 'arquivo'];
 
 /* ---------- blocos prontos ----------
@@ -198,7 +208,7 @@ const EXEMPLOS = {
    arquivo e acesso são o que mais trava quem está respondendo. */
 const PULAR = new Set(['hosp-acesso', 'hosp-onde', 'goo-email']);
 const podePular = (q) => PULAR.has(q.id) || q.tipo === 'arquivo';
-for (const b of BLOCOS_PRONTOS) for (const q of b.perguntas) { q.exemplo = EXEMPLOS[q.id] || ''; q.pular = podePular(q); }
+for (const b of BLOCOS_PRONTOS) for (const q of b.perguntas) { q.pergunta = comInterrogacao(q.pergunta); q.exemplo = EXEMPLOS[q.id] || ''; q.pular = podePular(q); }
 
 /* Texto de abertura: o mesmo em todo briefing, na voz do Samuel.
    Editável na tela de cada briefing; este é só o ponto de partida. */
@@ -296,7 +306,7 @@ export async function gerarPerguntas({ proposta, transcricao }) {
     texto: limpo(b.texto),
     perguntas: (b.perguntas || []).filter((q) => limpo(q.pergunta)).map((q, qi) => ({
       id: idDe(q.pergunta, bi * 100 + qi),
-      pergunta: limpo(q.pergunta),
+      pergunta: comInterrogacao(limpo(q.pergunta)),
       ajuda: limpo(q.ajuda),
       exemplo: limpo(q.exemplo),
       pular: q.tipo === 'arquivo',
@@ -387,7 +397,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
     ${b.texto ? `<p class="pg-bloco__texto">${esc(b.texto)}</p>` : ''}
     ${b.perguntas.map((q) => `
     <div class="pg-campo" data-tipo="${esc(q.tipo)}"${q.obrigatoria ? ' data-obrigatoria="1"' : ''}${q.pular ? ' data-pular="1"' : ''}>
-      <label for="${esc(q.id)}">${esc(q.pergunta)}${q.obrigatoria ? '' : ' <small>(opcional)</small>'}</label>
+      <label for="${esc(q.id)}">${esc(comInterrogacao(q.pergunta))}${q.obrigatoria ? '' : ' <small>(opcional)</small>'}</label>
       ${q.ajuda ? `<p class="pg-ajuda">${esc(q.ajuda)}</p>` : ''}
       ${q.exemplo ? `<aside class="pg-exemplo"><p class="pg-exemplo__rot">Exemplo</p><p class="pg-exemplo__txt">${esc(q.exemplo)}</p></aside>` : ''}
       ${campo(q)}
@@ -404,7 +414,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css">
 <link rel="stylesheet" href="/styles/base.css">
-<link rel="stylesheet" href="/styles/perguntas.css?v=q12">
+<link rel="stylesheet" href="/styles/perguntas.css?v=q13">
 <link rel="icon" href="/img/favicon.png">
 </head>
 <body class="perguntas">
