@@ -157,7 +157,7 @@ body.quiz .pg-campo.ativa textarea { font-size: var(--t-body); min-height: 8em; 
 body.quiz .pg-campo.ativa .pg-opcoes { margin-top: var(--sp-lg); }
 .pg-opcao {
   display: flex; align-items: center; gap: var(--sp-sm);
-  padding: .9em 1.1em;
+  min-height: 3.5rem; padding: .8em 1.1em;
   background: var(--bg);
   border: var(--hair) solid var(--line-2);
   border-radius: var(--radius-img);
@@ -165,7 +165,30 @@ body.quiz .pg-campo.ativa .pg-opcoes { margin-top: var(--sp-lg); }
   transition: border-color var(--d-fast) var(--ease-out), background var(--d-fast) var(--ease-out);
 }
 .pg-opcao:hover { border-color: var(--ink); }
-.pg-opcao input { accent-color: var(--brand); width: 1.1em; height: 1.1em; flex: none; }
+/* Caixa e bolinha desenhadas aqui: a nativa é pequena, cinza e cola no texto. */
+.pg-opcao input {
+  appearance: none; -webkit-appearance: none;
+  flex: none; display: grid; place-content: center;
+  width: 1.5rem; height: 1.5rem; margin: 0;
+  background: var(--bg);
+  border: var(--hair-2) solid var(--line-2);
+  border-radius: var(--radius-img);
+  transition: background var(--d-fast) var(--ease-out), border-color var(--d-fast) var(--ease-out);
+}
+.pg-opcao input[type=radio] { border-radius: 50%; }
+.pg-opcao input::after {
+  content: ""; width: .8rem; height: .8rem;
+  background: var(--brand-ink);
+  transform: scale(0);
+  transition: transform var(--d-fast) var(--ease-out);
+}
+.pg-opcao input[type=checkbox]::after { clip-path: polygon(14% 52%, 0 66%, 38% 100%, 100% 22%, 86% 8%, 38% 72%); }
+.pg-opcao input[type=radio]::after { border-radius: 50%; width: .55rem; height: .55rem; }
+.pg-opcao input:checked { background: var(--brand); border-color: var(--brand); }
+.pg-opcao input:checked::after { transform: scale(1); }
+.pg-opcao:hover input:not(:checked) { border-color: var(--ink); }
+.pg-opcao:has(input:focus-visible) { outline: 2px solid var(--brand); outline-offset: 2px; }
+.pg-opcao > span { flex: 1; min-width: 0; }
 .pg-opcao:has(input:checked) { border-color: var(--brand); background: var(--brand-wash); }
 
 /* ---------- arquivos ---------- */
@@ -284,3 +307,7 @@ body.quiz .pg-campo.ativa label.pg-opcao {
 @media (min-width: 760px) {
   body.quiz .pg-campo.ativa .pg-opcoes:has(.pg-opcao:nth-child(7)) { grid-template-columns: 1fr 1fr; }
 }
+
+/* `.pg-campo label` (display: block) vence `.pg-opcao` sozinho: sem isto a caixa
+   e o texto empilhavam em vez de ficar lado a lado. */
+.pg-campo label.pg-opcao { display: flex; align-items: center; gap: var(--sp-sm); }

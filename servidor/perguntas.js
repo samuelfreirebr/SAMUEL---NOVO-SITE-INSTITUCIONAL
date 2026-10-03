@@ -356,7 +356,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css">
 <link rel="stylesheet" href="/styles/base.css">
-<link rel="stylesheet" href="/styles/perguntas.css?v=q5">
+<link rel="stylesheet" href="/styles/perguntas.css?v=q7">
 <link rel="icon" href="/img/favicon.png">
 </head>
 <body class="perguntas">
