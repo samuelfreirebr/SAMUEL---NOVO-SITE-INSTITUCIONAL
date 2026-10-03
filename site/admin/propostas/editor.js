@@ -204,8 +204,8 @@ function mostrarLista() {
         h('button', { type: 'button', class: 'mini mini--ativo', onclick: () => abrir(p.id) }, 'Editar'),
         h('div', { class: 'ed-grupo' },
           h('button', { type: 'button', class: 'ed-doc', onclick: () => abrirContrato(p), title: 'Gera o contrato desta proposta e deixa pronto para assinar' }, ico('doc'), 'Contrato'),
-          h('button', { type: 'button', class: 'ed-doc', onclick: () => abrirPerguntas(p), title: p.briefing?.respondidoEm ? 'O cliente respondeu: abre as respostas' : 'Monta o briefing e dá o link para o cliente responder' },
-            ico('lista'), 'Perguntas',
+          h('button', { type: 'button', class: 'ed-doc', onclick: () => abrirPerguntas(p), title: p.briefing?.total || p.briefing?.parciais ? 'Abre o briefing deste cliente no painel de formulários' : 'Cria o briefing deste cliente, com a proposta e a reunião, e abre no painel de formulários' },
+            ico('lista'), 'Briefing',
             p.briefing ? h('span', { class: 'ed-selo' + (p.briefing.respondidoEm ? ' ed-selo--ok' : '') }, p.briefing.respondidoEm ? (p.briefing.total > 1 ? 'Respondido ×' + p.briefing.total : 'Respondido') : p.briefing.parciais ? 'Parcial' : 'Aguardando') : null)),
         h('span', { class: 'ed-sep', 'aria-hidden': 'true' }),
         h('div', { class: 'ed-grupo' },
@@ -830,8 +830,14 @@ function ligarIa() {
 
 /* ---------- perguntas ----------
    O briefing tem tela própria: /admin/perguntas/#<id da proposta>. */
-// Respondido abre direto nas respostas; o resto, na edição das perguntas.
-const abrirPerguntas = (p) => { location.href = '/admin/perguntas/#' + encodeURIComponent(p.id) + (p.briefing?.total || p.briefing?.parciais ? '/respostas' : ''); };
+// Cria o formulário deste cliente (se ainda não existe, já com a proposta e a
+// reunião à mão) e abre no painel de formulários. Com resposta, vai direto a elas.
+async function abrirPerguntas(p) {
+  try {
+    await api('/api/formularios', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ proposta: p.id }) });
+    location.href = '/admin/perguntas/#' + encodeURIComponent(p.id) + (p.briefing?.total || p.briefing?.parciais ? '/respostas' : '');
+  } catch (x) { avisar(x.message, 'erro'); }
+}
 
 /* ---------- contrato ----------
    Uma janela só, em dois modos: o contrato de uma proposta e o

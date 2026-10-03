@@ -1,0 +1,85 @@
+/* ============================================================
+   Painel de formulários. Mesmo sistema do resto: hairline no lugar
+   de sombra, um raio só, laranja só no detalhe.
+   ============================================================ */
+
+body.fm { background: var(--bg-2); height: auto; min-height: 100svh; }
+html:has(body.fm) { height: auto; }
+.fm .mini { display: inline-flex; align-items: center; gap: .4em; }
+.fm .btn { gap: .5em; }
+.ico { flex: none; width: 1.05em; height: 1.05em; }
+.btn--peq { min-height: 2.5rem; padding: .55em 1.3em; font-size: var(--t-small); }
+.fm-topo__acoes { display: flex; gap: var(--sp-2xs); }
+
+.fm-raiz { width: 100%; max-width: 76rem; margin-inline: auto; padding: var(--sp-lg) var(--sp-md) var(--sp-3xl); }
+.fm-intro { margin-bottom: var(--sp-lg); }
+.fm-intro .eyebrow { display: flex; align-items: center; gap: .6em; }
+.fm-intro .eyebrow::before { content: ""; width: var(--bullet); height: var(--bullet); border-radius: 50%; background: var(--brand); }
+.fm-titulo { margin-top: var(--sp-2xs); font-size: var(--t-h3); font-weight: var(--w-black); letter-spacing: var(--ls-h3); line-height: var(--lh-h3); }
+.fm-sub { margin-top: var(--sp-xs); max-width: 58ch; color: var(--muted); font-size: var(--t-small); line-height: 1.55; }
+
+/* ---------- lista ---------- */
+.fm-lista { display: grid; gap: var(--sp-sm); grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr)); }
+.fm-card {
+  display: grid; gap: var(--sp-xs); align-content: start;
+  padding: var(--sp-md);
+  background: var(--bg); border: var(--hair) solid var(--line); border-radius: var(--radius-img);
+  transition: border-color var(--d-fast) var(--ease-out);
+}
+.fm-card:hover { border-color: var(--ink); }
+.fm-card__topo { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-sm); }
+.fm-card__tipo { font-size: var(--t-eyebrow); color: var(--muted); }
+.fm-card__nome { font-size: var(--t-body); font-weight: var(--w-black); letter-spacing: -.02em; line-height: 1.2; overflow-wrap: anywhere; }
+.fm-card__nome:hover { color: var(--brand); }
+.fm-card__meta { font-size: var(--t-eyebrow); color: var(--muted); }
+.fm-card__acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3xs); margin-top: var(--sp-2xs); padding-top: var(--sp-xs); border-top: var(--hair) solid var(--line); }
+.fm-card__apagar { margin-left: auto; padding-inline: .7em; }
+.fm-n { margin-left: .25em; padding: 0 .5em; border-radius: var(--radius-pill); background: var(--brand); color: var(--brand-ink); font-size: var(--t-eyebrow); font-weight: var(--w-bold); }
+
+.fm-selo {
+  padding: .15em .7em; border-radius: var(--radius-pill);
+  background: var(--bg-2); color: var(--muted);
+  font-size: var(--t-eyebrow); font-weight: var(--w-bold); letter-spacing: .08em; text-transform: uppercase;
+}
+.fm-selo--ok { background: var(--brand); color: var(--brand-ink); }
+.fm-selo--parcial { background: var(--brand-wash); color: var(--brand); }
+
+.fm-vazio { grid-column: 1 / -1; display: grid; gap: var(--sp-xs); justify-items: start; padding: var(--sp-xl) var(--sp-md); background: var(--bg); border: var(--hair) dashed var(--line-2); border-radius: var(--radius-img); color: var(--muted); }
+.fm-vazio__t { color: var(--ink); font-size: var(--t-h3); font-weight: var(--w-black); letter-spacing: var(--ls-h3); line-height: var(--lh-h3); }
+
+/* ---------- janela de criar ---------- */
+.fm-jan { width: min(94vw, 34rem); max-height: 92svh; padding: 0; border: 0; border-radius: var(--radius-img); background: var(--bg); color: var(--ink); overflow: hidden; }
+.fm-jan[open] { display: flex; flex-direction: column; }
+.fm-jan::backdrop { background: rgba(20, 21, 23, .5); }
+.fm-jan__topo { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-sm); padding: var(--sp-md); border-bottom: var(--hair) solid var(--line); }
+.fm-jan__topo .eyebrow { display: flex; align-items: center; gap: .6em; }
+.fm-jan__topo .eyebrow::before { content: ""; width: var(--bullet); height: var(--bullet); border-radius: 50%; background: var(--brand); }
+.fm-jan__titulo { font-size: var(--t-h3); font-weight: var(--w-black); letter-spacing: var(--ls-h3); line-height: var(--lh-h3); }
+.fm-jan__fechar { flex: none; width: 2.5rem; height: 2.5rem; border-radius: 50%; background: var(--bg-2); font-size: 1.4rem; line-height: 1; transition: background var(--d-fast), color var(--d-fast); }
+.fm-jan__fechar:hover { background: var(--ink); color: #fff; }
+.fm-jan__corpo { flex: 1; min-height: 0; overflow: auto; padding: var(--sp-md); display: grid; gap: var(--sp-sm); align-content: start; }
+.fm-jan__pe { padding: var(--sp-sm) var(--sp-md); border-top: var(--hair) solid var(--line); }
+
+.fm-opcoes { margin: 0; padding: 0; min-width: 0; border: 0; display: grid; gap: var(--sp-2xs); }
+.fm-opcoes legend { margin-bottom: var(--sp-2xs); }
+.fm-opcao {
+  display: flex; align-items: flex-start; gap: var(--sp-sm); margin: 0;
+  padding: var(--sp-sm); border: var(--hair) solid var(--line-2); border-radius: var(--radius-img); cursor: pointer;
+  transition: border-color var(--d-fast) var(--ease-out), background var(--d-fast) var(--ease-out);
+}
+.fm-opcao:hover { border-color: var(--ink); }
+.fm-opcao:has(input:checked) { border-color: var(--brand); background: var(--brand-wash); }
+.fm-opcao input { accent-color: var(--brand); margin-top: .25em; width: 1.1em; height: 1.1em; flex: none; }
+.fm-opcao b { display: block; font-size: var(--t-small); font-weight: var(--w-bold); }
+.fm-opcao small { display: block; margin-top: 2px; font-size: var(--t-eyebrow); color: var(--muted); line-height: 1.45; }
+.fm-opcao span { margin: 0; font-size: inherit; display: block; }
+
+.fm-campo { margin: 0; display: grid; gap: var(--sp-3xs); }
+.fm-campo > span { margin: 0; font-size: var(--t-eyebrow); font-weight: var(--w-bold); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.fm input[type=text], .fm select {
+  width: 100%; padding: .7em .9em; background: var(--bg); color: var(--ink);
+  border: var(--hair) solid var(--line-2); border-radius: var(--radius-img); font: inherit; font-size: var(--t-small);
+}
+.fm input[type=text]:focus-visible, .fm select:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+.fm-aviso { padding: var(--sp-xs) var(--sp-sm); border-left: var(--hair-2) solid var(--brand); background: var(--brand-wash); font-size: var(--t-small); }
+.fm [hidden] { display: none !important; }

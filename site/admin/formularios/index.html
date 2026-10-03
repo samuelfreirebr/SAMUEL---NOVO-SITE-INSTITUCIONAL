@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Formulários | Painel Samuel Freire</title>
+<link rel="icon" href="/img/favicon.png" type="image/png">
+<link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/styles/tokens.css?v=20260909h">
+<link rel="stylesheet" href="/styles/base.css?v=20260911a">
+<link rel="stylesheet" href="/admin/painel.css?v=5">
+<link rel="stylesheet" href="./formularios.css?v=2">
+</head>
+<body class="fm">
+
+<header class="topo">
+  <h1><a href="/admin/">Painel</a> <i>Samuel Freire</i><span class="sec">Formulários</span></h1>
+  <div class="fm-topo__acoes">
+    <button class="btn btn--brand btn--peq" type="button" id="novo"></button>
+  </div>
+</header>
+
+<p class="aviso" id="aviso" role="status"></p>
+
+<main class="fm-raiz">
+  <section class="fm-intro">
+    <p class="eyebrow">Briefings</p>
+    <h2 class="fm-titulo">Seus formulários</h2>
+    <p class="fm-sub">Monte as perguntas do cliente, mande o link e leia as respostas. Cada formulário pode nascer em branco ou de uma proposta, que já traz a reunião e o que foi combinado.</p>
+  </section>
+
+  <div class="fm-lista" id="lista"><p class="vazio">Carregando…</p></div>
+</main>
+
+<dialog id="criar" class="fm-jan">
+  <header class="fm-jan__topo">
+    <div><p class="eyebrow">Novo</p><p class="fm-jan__titulo">Criar formulário</p></div>
+    <button class="fm-jan__fechar" type="button" id="criar-fechar" aria-label="Fechar">&times;</button>
+  </header>
+  <div class="fm-jan__corpo">
+    <fieldset class="fm-opcoes">
+      <legend class="eyebrow">Como começar</legend>
+      <label class="fm-opcao"><input type="radio" name="origem" value="branco" checked>
+        <span><b>Em branco</b><small>Monte do zero com os blocos prontos ou carregue um modelo de Folder, Website ou Identidade visual.</small></span></label>
+      <label class="fm-opcao"><input type="radio" name="origem" value="proposta">
+        <span><b>Para uma proposta ou cliente</b><small>Puxa a proposta e a transcrição da reunião, e a IA pode gerar as perguntas a partir delas.</small></span></label>
+    </fieldset>
+
+    <label class="fm-campo" id="campo-proposta" hidden>
+      <span>Qual proposta</span>
+      <select id="proposta"></select>
+    </label>
+    <label class="fm-campo" id="campo-nome">
+      <span>Nome do formulário</span>
+      <input type="text" id="nome" placeholder="Exemplo: Briefing Loja da Maria">
+    </label>
+    <p class="fm-aviso" id="criar-aviso" hidden></p>
+  </div>
+  <footer class="fm-jan__pe">
+    <button class="btn btn--brand" type="button" id="criar-ok">Criar formulário</button>
+  </footer>
+</dialog>
+
+<script type="module" src="./formularios.js?v=1"></script>
+</body>
+</html>

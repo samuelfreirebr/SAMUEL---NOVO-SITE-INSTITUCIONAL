@@ -8,6 +8,7 @@
    ============================================================ */
 
 import { h } from '../propostas/ui.js';
+import { ico } from '../icones.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 
@@ -26,7 +27,7 @@ let salvo = '';         // JSON do último estado salvo
 let proposta = null;
 
 const suja = () => f && JSON.stringify(f.blocos) + f.titulo + f.texto !== salvo;
-const marcar = () => (f.blocos && ($('#salvar').textContent = suja() ? 'Salvar alterações' : 'Salvo'));
+const marcar = () => (f.blocos && ($('#salvar .rot').textContent = suja() ? 'Salvar alterações' : 'Salvo'));
 const novoId = () => 'q-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
 
 async function api(url, opcoes) {
@@ -53,7 +54,7 @@ async function carregar() {
       api('/api/propostas/' + encodeURIComponent(id)).catch(() => null),
     ]);
   } catch (e) { $('#app').textContent = e.message; return; }
-  $('#topo-cliente').textContent = proposta?.cliente || id;
+  $('#topo-cliente').textContent = f.cliente || proposta?.cliente || f.titulo || id;
   document.title = 'Briefing ' + (proposta?.cliente || id) + ' | Painel';
   f.titulo ||= ''; f.texto ||= '';
   salvo = JSON.stringify(f.blocos) + f.titulo + f.texto;
@@ -68,7 +69,9 @@ function pintar() {
   const aberto = new Set([...document.querySelectorAll('.br-q[open]')].map((e) => e.dataset.id));
 
   if (f.link) { $('#ver').href = '/perguntas/' + f.link; $('#ver').hidden = false; }
-  $('#gerar').textContent = f.novo || !f.criadoEm ? 'Gerar com IA' : 'Gerar de novo com IA';
+  $('#gerar .rot').textContent = f.novo || !f.criadoEm ? 'Gerar com IA' : 'Gerar de novo com IA';
+  // Formulário em branco não tem proposta nem reunião para a IA ler.
+  $('#gerar').hidden = !f.proposta;
 
   if (aba === 'respostas') { app.append(abas(), respostasEl()); marcar(); return; }
 
@@ -101,7 +104,7 @@ function modelosBarra() {
   return h('div', { class: 'br-modelos' },
     h('p', { class: 'eyebrow' }, 'Começar de um modelo'),
     h('div', { class: 'br-modelos__lista' },
-      ...Object.entries(f.modelos).map(([chave, m]) => h('button', { type: 'button', class: 'mini', onclick: () => carregarModelo(chave) }, 'Carregar modelo de ' + m.rotulo))));
+      ...Object.entries(f.modelos).map(([chave, m]) => h('button', { type: 'button', class: 'mini', onclick: () => carregarModelo(chave) }, ico('modelo'), 'Carregar modelo de ' + m.rotulo))));
 }
 
 function trocarAba(nova) {
@@ -163,7 +166,7 @@ function blocoEl(b, bi) {
     ligado
       ? h('div', { class: 'br-qs' },
         ...(b.perguntas || []).map((q, qi) => perguntaEl(b, q, qi)),
-        h('button', { type: 'button', class: 'br-add', onclick: () => { const q = { id: novoId(), pergunta: '', ajuda: '', exemplo: '', pular: false, tipo: 'texto', opcoes: [], obrigatoria: false }; b.perguntas.push(q); pintar(); const e = document.querySelector(`.br-q[data-id="${q.id}"]`); if (e) { e.open = true; e.querySelector('input')?.focus(); } } }, '+ Adicionar pergunta'))
+        h('button', { type: 'button', class: 'br-add', onclick: () => { const q = { id: novoId(), pergunta: '', ajuda: '', exemplo: '', pular: false, tipo: 'texto', opcoes: [], obrigatoria: false }; b.perguntas.push(q); pintar(); const e = document.querySelector(`.br-q[data-id="${q.id}"]`); if (e) { e.open = true; e.querySelector('input')?.focus(); } } }, ico('mais'), 'Adicionar pergunta'))
       : h('p', { class: 'br-bloco__off' }, n + ' pergunta' + (n === 1 ? '' : 's') + ' guardada' + (n === 1 ? '' : 's') + '. Ligue para o cliente ver.'));
 }
 
@@ -264,7 +267,7 @@ function prontosQueFaltam() {
     h('div', { class: 'br-prontos__lista' }, ...faltam.map((b) => h('button', {
       type: 'button', class: 'mini', title: b.texto,
       onclick: () => { f.blocos.push({ ...JSON.parse(JSON.stringify(b)), ligado: true }); pintar(); },
-    }, '+ ' + b.titulo))));
+    }, ico('mais'), b.titulo))));
 }
 
 function novoBloco() {
@@ -272,7 +275,7 @@ function novoBloco() {
     f.blocos.push({ id: 'b-' + novoId(), ligado: true, titulo: 'Novo bloco', texto: '', perguntas: [{ id: novoId(), pergunta: '', ajuda: '', exemplo: '', pular: false, tipo: 'texto', opcoes: [], obrigatoria: false }] });
     pintar();
     document.querySelector('.br-bloco:last-of-type .br-bloco__titulo')?.select();
-  } }, '+ Novo bloco de perguntas');
+  } }, ico('mais'), 'Novo bloco de perguntas');
 }
 
 /* ---------- coluna lateral ---------- */
@@ -288,8 +291,8 @@ function ladoLink() {
     h('p', { class: 'eyebrow' }, 'Link para o cliente'),
     campo,
     h('div', { class: 'br-card__acoes' },
-      h('button', { type: 'button', class: 'mini mini--ativo', onclick: async () => { try { await navigator.clipboard.writeText(url); avisar('Link copiado.'); } catch (e) { campo.select(); avisar('Copie o link selecionado.'); } } }, 'Copiar link'),
-      h('a', { class: 'mini', href: url, target: '_blank', rel: 'noopener' }, 'Abrir')));
+      h('button', { type: 'button', class: 'mini mini--ativo', onclick: async () => { try { await navigator.clipboard.writeText(url); avisar('Link copiado.'); } catch (e) { campo.select(); avisar('Copie o link selecionado.'); } } }, ico('copiar'), 'Copiar link'),
+      h('a', { class: 'mini', href: url, target: '_blank', rel: 'noopener' }, ico('abrir'), 'Abrir')));
 }
 
 function ladoResumo() {
@@ -314,7 +317,7 @@ function ladoRespostas() {
     h('p', { class: 'eyebrow' }, 'Respostas'),
     envios.length
       ? [h('p', { class: 'br-card__txt' }, concl + (concl === 1 ? ' resposta concluída' : ' respostas concluídas') + (parciais ? ' e ' + parciais + (parciais === 1 ? ' parcial.' : ' parciais.') : '.')),
-        h('div', { class: 'br-card__acoes' }, h('button', { type: 'button', class: 'mini mini--ativo', onclick: () => trocarAba('respostas') }, 'Ver respostas'))]
+        h('div', { class: 'br-card__acoes' }, h('button', { type: 'button', class: 'mini mini--ativo', onclick: () => trocarAba('respostas') }, ico('respostas'), 'Ver respostas'))]
       : h('p', { class: 'br-card__txt' }, f.link ? 'Ninguém respondeu ainda.' : 'Salve e mande o link.'));
 }
 
@@ -390,7 +393,7 @@ function respostasEl() {
       h('p', { class: 'eyebrow' }, 'Respostas'),
       h('p', { class: 'br-vazio__t' }, f.link ? 'Ninguém respondeu ainda.' : 'O briefing ainda não tem link.'),
       h('p', { class: 'br-card__txt' }, f.link ? 'Quando alguém abrir o link, as respostas aparecem aqui, inclusive as de quem parar no meio.' : 'Salve o briefing na aba Perguntas para gerar o link.'),
-      f.link ? h('div', { class: 'br-card__acoes' }, h('button', { type: 'button', class: 'mini mini--ativo', onclick: async () => { try { await navigator.clipboard.writeText(location.origin + '/perguntas/' + f.link); avisar('Link copiado.'); } catch (x) { avisar('Abra a aba Perguntas e copie o link.', 'erro'); } } }, 'Copiar link do cliente')) : null);
+      f.link ? h('div', { class: 'br-card__acoes' }, h('button', { type: 'button', class: 'mini mini--ativo', onclick: async () => { try { await navigator.clipboard.writeText(location.origin + '/perguntas/' + f.link); avisar('Link copiado.'); } catch (x) { avisar('Abra a aba Perguntas e copie o link.', 'erro'); } } }, ico('copiar'), 'Copiar link do cliente')) : null);
   }
 
   // Abre no último concluído; se ninguém concluiu, no mais recente.
@@ -413,8 +416,8 @@ function respostasEl() {
         h('p', { class: 'eyebrow' }, (e.concluidoEm ? 'Enviado em ' + new Date(e.concluidoEm).toLocaleString('pt-BR') : 'Última resposta em ' + new Date(e.atualizadoEm).toLocaleString('pt-BR'))),
         h('p', { class: 'br-resp-cab__n' }, respondidas, h('small', {}, ' de ' + total.length + ' respondidas' + (pulos ? ' · ' + pulos + ' para enviar pelo WhatsApp' : '') + (e.concluidoEm ? '' : ' · ' + rotulo.toLowerCase())))),
       h('div', { class: 'br-card__acoes' },
-        h('button', { type: 'button', class: 'mini mini--ativo', onclick: async () => { try { await navigator.clipboard.writeText(textoDasRespostas(e)); avisar('Respostas copiadas.'); } catch (x) { avisar('Não consegui copiar.', 'erro'); } } }, 'Copiar tudo'),
-        h('button', { type: 'button', class: 'mini mini--perigo', onclick: () => apagarEnvio(e) }, 'Apagar'))),
+        h('button', { type: 'button', class: 'mini mini--ativo', onclick: async () => { try { await navigator.clipboard.writeText(textoDasRespostas(e)); avisar('Respostas copiadas.'); } catch (x) { avisar('Não consegui copiar.', 'erro'); } } }, ico('copiar'), 'Copiar tudo'),
+        h('button', { type: 'button', class: 'mini mini--perigo', onclick: () => apagarEnvio(e) }, ico('apagar'), 'Apagar'))),
     ...f.blocos.filter((b) => b.ligado !== false && (b.perguntas || []).some((q) => q.pergunta)).map((b, bi) => h('section', { class: 'br-resp-bloco' },
       h('p', { class: 'br-resp-bloco__t' }, h('span', {}, String(bi + 1).padStart(2, '0')), b.titulo),
       ...(b.perguntas || []).filter((q) => q.pergunta).map((q) => {
@@ -445,17 +448,20 @@ async function salvar() {
 async function gerar() {
   if (f.criadoEm && !confirm('Gerar de novo troca tudo o que está aqui pelo que a IA montar. Continuar?')) return;
   const b = $('#gerar');
-  b.disabled = true; b.textContent = 'Montando…';
+  b.disabled = true; $('#gerar .rot').textContent = 'Montando…';
   try {
     const d = await api('/api/formularios/' + encodeURIComponent(id) + '/gerar', { method: 'POST' });
-    f = { ...d, anexos: f.anexos, prontos: f.prontos, modelos: f.modelos, textoAbertura: f.textoAbertura };
+    f = { ...d, cliente: f.cliente, anexos: f.anexos, prontos: f.prontos, modelos: f.modelos, textoAbertura: f.textoAbertura };
     salvo = JSON.stringify(f.blocos) + f.titulo + f.texto;
     pintar();
     avisar(d.avisos?.length ? d.avisos.join(' ') : 'Briefing montado. Revise, edite e mande o link.', d.avisos?.length ? 'erro' : 'ok');
   } catch (e) { avisar(e.message, 'erro'); }
-  finally { b.disabled = false; $('#gerar').textContent = 'Gerar de novo com IA'; }
+  finally { b.disabled = false; $('#gerar .rot').textContent = 'Gerar de novo com IA'; }
 }
 
+$('#salvar').prepend(ico('salvar'));
+$('#gerar').prepend(ico('ia'));
+$('#ver').prepend(ico('olho'));
 $('#salvar').onclick = salvar;
 $('#gerar').onclick = gerar;
 addEventListener('beforeunload', (e) => { if (suja()) { e.preventDefault(); e.returnValue = ''; } });

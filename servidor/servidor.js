@@ -334,17 +334,46 @@ async function api(req, res, url) {
     return json(res, { erro: 'Método não aceito.' }, 405);
   }
   /* --- formulário de perguntas: um por proposta --- */
+  /* --- formulários: lista e criação --- */
+  if (rota === 'formularios') {
+    if (req.method === 'GET') return json(res, { formularios: await dados.listarFormularios() });
+    if (req.method === 'POST') {
+      const dado = await lerJson(req, res, 8192);
+      if (!dado) return;
+      let base = {};
+      if (dado.proposta) {
+        const proposta = await dados.lerProposta(String(dado.proposta));
+        if (!proposta) return json(res, { erro: 'Proposta não encontrada.' }, 404);
+        base = formularioVazio(proposta);
+      } else {
+        base = formularioVazio({});
+        base.titulo = String(dado.titulo || '').trim().slice(0, 120) || 'Novo formulário';
+      }
+      try {
+        const { f, criado } = await dados.criarFormulario({ proposta: dado.proposta ? String(dado.proposta) : null, base: { titulo: base.titulo, texto: base.texto, blocos: base.blocos } });
+        return json(res, { ok: true, criado, id: f.id, link: f.link });
+      } catch (e) { return json(res, { erro: e.message }, 400); }
+    }
+    return json(res, { erro: 'Método não aceito.' }, 405);
+  }
+
+  /* --- um formulário: tem o id da proposta ou "avulso-..." --- */
   if (rota.startsWith('formularios/')) {
     const [id, acao, envioId] = rota.slice('formularios/'.length).split('/');
-    const proposta = await dados.lerProposta(id);
-    if (!proposta) return json(res, { erro: 'Proposta não encontrada.' }, 404);
+    const existente = await dados.lerFormulario(id);
+    const proposta = existente?.proposta ? await dados.lerProposta(existente.proposta) : (existente ? null : await dados.lerProposta(id));
+    if (!existente && !proposta) return json(res, { erro: 'Formulário não encontrado.' }, 404);
+    if (req.method === 'DELETE' && !acao) {
+      return (await dados.apagarFormulario(id)) ? json(res, { ok: true }) : json(res, { erro: 'Formulário não encontrado.' }, 404);
+    }
     if (acao === 'gerar' && req.method === 'POST') {
+      if (!proposta) return json(res, { erro: 'Este formulário não está ligado a uma proposta, então a IA não tem o que ler. Use um dos modelos.' }, 400);
       const reuniao = proposta.reuniao ? await dados.lerReuniao(proposta.reuniao) : null;
       const g = await gerarPerguntas({
         proposta: comModelo(proposta, await dados.lerModelo()),
         transcricao: reuniao?.texto || '',
       });
-      return json(res, await dados.gravarFormulario(id, { titulo: g.titulo, texto: g.texto, blocos: g.blocos, avisos: g.avisos, ia: g.ia, comReuniao: Boolean(reuniao) }));
+      return json(res, await dados.gravarFormulario(id, { proposta: proposta.id, titulo: g.titulo, texto: g.texto, blocos: g.blocos, avisos: g.avisos, ia: g.ia, comReuniao: Boolean(reuniao) }));
     }
     if (acao === 'envios' && req.method === 'DELETE' && envioId) {
       const f = await dados.apagarEnvio(id, envioId);
@@ -355,8 +384,8 @@ async function api(req, res, url) {
       // Formulário que ainda não existe já chega com os blocos prontos:
       // dá para ligar o que o projeto pede e salvar sem passar pela IA.
       const f = await dados.lerFormulario(id);
-      if (!f) return json(res, { proposta: id, novo: true, prontos: BLOCOS_PRONTOS, modelos: MODELOS, textoAbertura: TEXTO_ABERTURA, ...formularioVazio(proposta) });
-      return json(res, { ...comExemplos(f), prontos: BLOCOS_PRONTOS, modelos: MODELOS, textoAbertura: TEXTO_ABERTURA, anexos: await dados.listarAnexos(f.link) });
+      if (!f) return json(res, { id, proposta: id, novo: true, prontos: BLOCOS_PRONTOS, modelos: MODELOS, textoAbertura: TEXTO_ABERTURA, ...formularioVazio(proposta) });
+      return json(res, { ...comExemplos(f), cliente: proposta?.cliente || '', prontos: BLOCOS_PRONTOS, modelos: MODELOS, textoAbertura: TEXTO_ABERTURA, anexos: await dados.listarAnexos(f.link) });
     }
     if (req.method === 'PUT') {
       const dado = await lerJson(req, res);

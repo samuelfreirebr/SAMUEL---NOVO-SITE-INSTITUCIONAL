@@ -434,6 +434,7 @@ function campo(q) {
     return `<div class="pg-upload" data-upload="${n}">
       <input type="file" id="${n}" name="${n}" multiple hidden>
       <button class="pg-upload__alvo" type="button">
+        <svg class="pg-upload__ico" viewBox="0 0 16 16" width="22" height="22" aria-hidden="true"><path d="M8 11V3M5 6l3-3 3 3M3 13h10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <b>Enviar arquivos</b>
         <span>Toque aqui ou arraste para cá. Até 20 MB por arquivo.</span>
       </button>
@@ -490,7 +491,7 @@ ${metaCompartilhar({
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css">
 <link rel="stylesheet" href="/styles/base.css">
-<link rel="stylesheet" href="/styles/perguntas.css?v=q20">
+<link rel="stylesheet" href="/styles/perguntas.css?v=q21">
 <link rel="icon" href="/img/favicon.png">
 </head>
 <body class="perguntas">

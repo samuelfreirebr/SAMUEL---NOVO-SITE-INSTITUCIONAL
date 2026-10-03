@@ -250,3 +250,8 @@ html:has(body.br) { height: auto; }
 .br-modelos .eyebrow { display: flex; align-items: center; gap: .6em; }
 .br-modelos .eyebrow::before { content: ""; width: var(--bullet); height: var(--bullet); border-radius: 50%; background: var(--brand); }
 .br-modelos__lista { display: flex; flex-wrap: wrap; gap: var(--sp-2xs); }
+
+/* ---------- ícones dos botões ---------- */
+.br .mini, .br .btn, .br .br-add { display: inline-flex; align-items: center; gap: .45em; }
+.br .br-add { gap: .6em; }
+.ico { flex: none; width: 1.05em; height: 1.05em; }

@@ -189,7 +189,7 @@ function sincronizarUltimo(f) {
 
 export async function lerFormulario(id) {
   if (!idValido(id)) return null;
-  try { return comEnvios(JSON.parse(await fs.readFile(path.join(PASTA_FORMULARIOS, id + '.json'), 'utf8'))); }
+  try { return comEnvios({ id, ...JSON.parse(await fs.readFile(path.join(PASTA_FORMULARIOS, id + '.json'), 'utf8')) }); }
   catch (e) { return null; }
 }
 
@@ -197,11 +197,13 @@ export function gravarFormulario(id, dado) { return naFila(() => gravarFormulari
 
 async function gravarFormularioAgora(id, dado) {
   await preparar();
-  if (!idValido(id)) throw new Error('Proposta inválida.');
+  if (!idValido(id)) throw new Error('Formulário inválido.');
   const antigo = await lerFormulario(id);
   const f = {
     ...antigo, ...dado,
-    proposta: id,
+    id,
+    // Ligado a uma proposta, o formulário tem o mesmo id dela; em branco, `proposta` é null.
+    proposta: dado.proposta !== undefined ? dado.proposta : (antigo ? antigo.proposta ?? null : id),
     link: antigo?.link || novoIdSorteado(),
     criadoEm: antigo?.criadoEm || new Date().toISOString(),
     atualizadoEm: new Date().toISOString(),
@@ -219,10 +221,60 @@ export async function formularioPeloLink(link) {
   for (const n of nomes) {
     try {
       const f = JSON.parse(await fs.readFile(path.join(PASTA_FORMULARIOS, n), 'utf8'));
-      if (f?.link === link) return comEnvios(f);
+      if (f?.link === link) return comEnvios({ ...f, id: n.replace(/\.json$/, '') });
     } catch (e) { /* arquivo torto: ignora */ }
   }
   return null;
+}
+
+/* ---------- lista de formulários ----------
+   Todos os briefings juntos: os ligados a uma proposta (mesmo id dela) e
+   os em branco (id "avulso-..."). A lista traz só o resumo. */
+export async function listarFormularios() {
+  await preparar();
+  let nomes = [];
+  try { nomes = (await fs.readdir(PASTA_FORMULARIOS)).filter((n) => n.endsWith('.json')); } catch (e) { return []; }
+  const itens = [];
+  for (const n of nomes) {
+    const id = n.replace(/\.json$/, '');
+    const f = await lerFormulario(id);
+    if (!f?.link) continue;
+    const proposta = f.proposta ? await lerProposta(f.proposta) : null;
+    const envios = f.envios || [];
+    itens.push({
+      id, link: f.link, proposta: f.proposta || null,
+      cliente: proposta?.cliente || '',
+      titulo: f.titulo || '',
+      criadoEm: f.criadoEm, atualizadoEm: f.atualizadoEm,
+      respondidoEm: f.respondidoEm || null,
+      total: envios.filter((e) => e.concluidoEm).length,
+      parciais: envios.filter((e) => !e.concluidoEm).length,
+      perguntas: (f.blocos || []).filter((b) => b.ligado !== false).reduce((x, b) => x + (b.perguntas || []).filter((q) => q.pergunta).length, 0),
+    });
+  }
+  return itens.sort((a, b) => String(b.atualizadoEm || '').localeCompare(String(a.atualizadoEm || '')));
+}
+
+// `dado.proposta` liga a uma proposta (o id do formulário é o dela); sem ele, nasce em branco.
+export async function criarFormulario(dado) {
+  if (dado.proposta) {
+    const ja = await lerFormulario(dado.proposta);
+    if (ja) return { f: ja, criado: false };
+    return { f: await gravarFormulario(dado.proposta, { proposta: dado.proposta, ...dado.base }), criado: true };
+  }
+  const id = 'avulso-' + novoIdSorteado().slice(0, 8);
+  return { f: await gravarFormulario(id, { proposta: null, ...dado.base }), criado: true };
+}
+
+export function apagarFormulario(id) {
+  return naFila(async () => {
+    const f = await lerFormulario(id);
+    if (!f) return false;
+    await fs.unlink(path.join(PASTA_FORMULARIOS, id + '.json'));
+    // Os arquivos que o cliente subiu moram numa pasta com o link: saem juntos.
+    if (f.link && idSorteadoValido(f.link)) await fs.rm(path.join(PASTA_ANEXOS, f.link), { recursive: true, force: true });
+    return true;
+  });
 }
 
 /* Gravações do mesmo arquivo uma atrás da outra: dois clientes
@@ -253,7 +305,7 @@ export function salvarEnvio(link, { envio, respostas, concluir }) {
     if (concluir) e.concluidoEm = e.concluidoEm || agora;
     sincronizarUltimo(f);
     f.atualizadoEm = agora;
-    await gravarJson(path.join(PASTA_FORMULARIOS, f.proposta + '.json'), f);
+    await gravarJson(path.join(PASTA_FORMULARIOS, f.id + '.json'), f);
     return f;
   });
 }

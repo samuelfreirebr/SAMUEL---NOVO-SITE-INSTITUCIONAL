@@ -405,3 +405,5 @@ body.quiz .pg-barra, body.quiz #acoes-fim {
 /* Quem tem JavaScript envia pela barra fixa de baixo: o bloco de enviar
    do fim do formulário só existe para quem não tem. */
 body.quiz #acoes-fim { display: none; }
+
+.pg-upload__ico { align-self: center; color: var(--brand); margin-bottom: var(--sp-3xs); }
