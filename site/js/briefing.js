@@ -45,6 +45,16 @@ function montar() {
   barra.append(voltar, seguir, dicaTecla);
   form.append(barra);
 
+  /* ---------- pular: "envio depois pelo WhatsApp" ----------
+     Só nas perguntas que o Samuel marcou. Vale mesmo para obrigatória:
+     o que trava o cliente aqui ele resolve na conversa. */
+  const TEXTO_PULO = 'Vai enviar depois pelo WhatsApp';
+  const pulos = new Set();
+  const nomeDe = (t) => t.campo.querySelector('[name]')?.name;
+  const pular = criar('button', 'pg-pular', 'Pular: enviar depois pelo WhatsApp');
+  pular.hidden = true;
+  form.append(pular);
+
   /* ---------- revisão, montada no fim ---------- */
   const revisao = criar('section', 'pg-revisao');
   revisao.hidden = true;
@@ -65,6 +75,8 @@ function montar() {
     for (const t of telas) t.bloco.classList.toggle('ativo', telas[i]?.bloco === t.bloco);
 
     barra.hidden = i === -1;
+    pular.hidden = !(i >= 0 && i < ultima && telas[i].campo.dataset.pular === '1');
+    if (!pular.hidden) pular.textContent = pulos.has(nomeDe(telas[i])) ? 'Desfazer: vou responder aqui' : 'Pular: enviar depois pelo WhatsApp';
     $('#acoes-fim').hidden = i !== ultima;
     voltar.hidden = i <= 0 && i !== ultima;
     seguir.hidden = i === ultima;
@@ -87,6 +99,7 @@ function montar() {
 
   /* ---------- validação de uma tela ---------- */
   function falta(t) {
+    if (pulos.has(nomeDe(t))) return '';
     if (t.campo.dataset.obrigatoria !== '1') return '';
     const tipo = t.campo.dataset.tipo;
     if (tipo === 'arquivo') {
@@ -111,9 +124,24 @@ function montar() {
       setTimeout(() => telas[i].campo.classList.remove('tremer'), 420);
       return;
     }
+    if (i >= 0 && i < ultima && temResposta(telas[i])) pulos.delete(nomeDe(telas[i]));
     guardar();
     mostrar(i + 1);
   }
+
+  // Respondeu de verdade? Então o pulo anterior não vale mais.
+  function temResposta(t) {
+    if (t.campo.dataset.tipo === 'arquivo') return !!t.campo.querySelector('.pg-upload__lista li');
+    return !!t.campo.querySelector('input:checked') || [...t.campo.querySelectorAll('input:not([type=radio]):not([type=checkbox]):not([type=file]),textarea')].some((c) => c.value.trim());
+  }
+
+  pular.onclick = () => {
+    const id = nomeDe(telas[i]);
+    if (pulos.has(id)) { pulos.delete(id); mostrar(i); return; }
+    pulos.add(id);
+    guardar();
+    mostrar(i + 1);
+  };
 
   seguir.onclick = avancar;
   voltar.onclick = () => mostrar(i - 1);
@@ -140,6 +168,7 @@ function montar() {
       if (v instanceof File) return;                    // arquivo tem lista própria
       d[k] = d[k] === undefined ? v : [].concat(d[k], v).join(', ');
     });
+    for (const id of pulos) d[id] = TEXTO_PULO;
     for (const [id, lista] of Object.entries(arquivos)) {
       if (lista.length) d[id] = lista.map((a) => a.nome + ' (' + location.origin + a.url + ')').join('\n');
     }
@@ -148,6 +177,7 @@ function montar() {
   try {
     const salvo = JSON.parse(localStorage.getItem(chave) || '{}');
     for (const [k, v] of Object.entries(salvo)) {
+      if (v === TEXTO_PULO) { pulos.add(k); continue; }
       const campos = $$(`[name="${CSS.escape(k)}"]`, form);
       if (!campos.length) continue;
       if (campos[0].type === 'radio' || campos[0].type === 'checkbox') {

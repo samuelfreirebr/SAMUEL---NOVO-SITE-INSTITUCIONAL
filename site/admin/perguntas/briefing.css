@@ -118,7 +118,8 @@ html:has(body.br) { height: auto; }
 @media (max-width: 620px) { .br-q__corpo { padding-left: var(--sp-md); } }
 .br-linha { display: grid; gap: var(--sp-sm); align-items: end; }
 @media (min-width: 620px) { .br-linha { grid-template-columns: 1fr 1fr; } }
-.br-check { margin: 0; display: flex; align-items: center; gap: var(--sp-2xs); font-size: var(--t-small); padding-bottom: .55em; cursor: pointer; }
+.br-checks { display: grid; gap: var(--sp-3xs); }
+.br-check { margin: 0; display: flex; align-items: center; gap: var(--sp-2xs); font-size: var(--t-small); padding-bottom: 0; cursor: pointer; }
 .br-check input { accent-color: var(--brand); width: 1.1em; height: 1.1em; }
 .br-q__acoes { display: flex; gap: var(--sp-2xs); align-items: center; flex-wrap: wrap; }
 .br-nota { font-size: var(--t-eyebrow); color: var(--muted); }

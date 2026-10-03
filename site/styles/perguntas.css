@@ -332,3 +332,14 @@ body.quiz .pg-campo.ativa label.pg-opcao {
 .pg-exemplo__txt { margin-top: var(--sp-2xs); white-space: pre-line; color: var(--ink-2); font-size: var(--t-small); line-height: 1.6; overflow-wrap: anywhere; }
 body.quiz .pg-campo.ativa .pg-exemplo { margin-top: var(--sp-md); }
 body.quiz .pg-campo.ativa .pg-exemplo__txt { font-size: var(--t-body); }
+
+
+/* ---------- pular ----------
+   Peso de link, não de botão: a ação principal é responder. */
+.pg-pular {
+  display: block; margin-top: var(--sp-md);
+  font-size: var(--t-small); font-weight: var(--w-semi); color: var(--muted);
+  text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--line-2);
+  transition: color var(--d-fast) var(--ease-out), text-decoration-color var(--d-fast) var(--ease-out);
+}
+.pg-pular:hover { color: var(--brand); text-decoration-color: var(--brand); }

@@ -184,7 +184,12 @@ const EXEMPLOS = {
   'goo-servicos': 'Pintura residencial\nPintura comercial\nReparos em drywall',
   'goo-horario': 'De segunda a sexta, das 8h às 18h. Sábado, das 8h às 12h.',
 };
-for (const b of BLOCOS_PRONTOS) for (const q of b.perguntas) q.exemplo = EXEMPLOS[q.id] || '';
+
+/* Perguntas que o cliente pode pular e mandar depois pelo WhatsApp:
+   arquivo e acesso são o que mais trava quem está respondendo. */
+const PULAR = new Set(['hosp-acesso', 'hosp-onde', 'goo-email']);
+const podePular = (q) => PULAR.has(q.id) || q.tipo === 'arquivo';
+for (const b of BLOCOS_PRONTOS) for (const q of b.perguntas) { q.exemplo = EXEMPLOS[q.id] || ''; q.pular = podePular(q); }
 
 /* Texto de abertura: o mesmo em todo briefing, na voz do Samuel.
    Editável na tela de cada briefing; este é só o ponto de partida. */
@@ -285,6 +290,7 @@ export async function gerarPerguntas({ proposta, transcricao }) {
       pergunta: limpo(q.pergunta),
       ajuda: limpo(q.ajuda),
       exemplo: limpo(q.exemplo),
+      pular: q.tipo === 'arquivo',
       tipo: TIPOS.includes(q.tipo) ? q.tipo : 'texto',
       opcoes: (q.opcoes || []).map(limpo).filter(Boolean),
       obrigatoria: Boolean(q.obrigatoria),
@@ -321,6 +327,7 @@ export function formularioVazio(p = {}) {
 export function comExemplos(f) {
   for (const b of f.blocos || []) for (const q of b.perguntas || []) {
     if (q.exemplo === undefined) q.exemplo = EXEMPLOS[q.id] || '';
+    if (q.pular === undefined) q.pular = podePular(q);
   }
   return f;
 }
@@ -371,7 +378,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
     <p class="eyebrow pg-bloco__n">${String(i + 1).padStart(2, '0')} ${esc(b.titulo)}</p>
     ${b.texto ? `<p class="pg-bloco__texto">${esc(b.texto)}</p>` : ''}
     ${b.perguntas.map((q) => `
-    <div class="pg-campo" data-tipo="${esc(q.tipo)}"${q.obrigatoria ? ' data-obrigatoria="1"' : ''}>
+    <div class="pg-campo" data-tipo="${esc(q.tipo)}"${q.obrigatoria ? ' data-obrigatoria="1"' : ''}${q.pular ? ' data-pular="1"' : ''}>
       <label for="${esc(q.id)}">${esc(q.pergunta)}${q.obrigatoria ? '' : ' <small>(opcional)</small>'}</label>
       ${q.ajuda ? `<p class="pg-ajuda">${esc(q.ajuda)}</p>` : ''}
       ${q.exemplo ? `<aside class="pg-exemplo"><p class="pg-exemplo__rot">Exemplo</p><p class="pg-exemplo__txt">${esc(q.exemplo)}</p></aside>` : ''}
@@ -389,7 +396,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css">
 <link rel="stylesheet" href="/styles/base.css">
-<link rel="stylesheet" href="/styles/perguntas.css?v=q8">
+<link rel="stylesheet" href="/styles/perguntas.css?v=q9">
 <link rel="icon" href="/img/favicon.png">
 </head>
 <body class="perguntas">
@@ -432,7 +439,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 
 <footer class="pg-rodape"><p class="small">Samuel Freire Web Designer</p></footer>
 
-<script type="module" src="/js/briefing.js?v=q4"></script>
+<script type="module" src="/js/briefing.js?v=q9"></script>
 </body>
 </html>`;
 }
