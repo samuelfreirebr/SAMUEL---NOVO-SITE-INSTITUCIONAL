@@ -88,6 +88,28 @@ export const BLOCOS_PRONTOS = [
     ],
   },
   {
+    id: 'folder',
+    pronto: 'folder',
+    ligado: false,
+    titulo: 'Folder comercial',
+    texto: 'É com estas respostas que eu escrevo o texto do seu folder. Pode responder do seu jeito, que eu organizo.',
+    perguntas: [
+      { id: 'fol-cidade', pergunta: 'Cidade ou região onde você atende', ajuda: '', tipo: 'texto', opcoes: [], obrigatoria: true },
+      { id: 'fol-historia', pergunta: 'Conte a história da empresa', ajuda: 'Quando e como começou, o que significa o nome, como chegou até aqui.', tipo: 'longo', opcoes: [], obrigatoria: true },
+      { id: 'fol-time', pergunta: 'Qual é o tamanho do time', ajuda: 'Contando equipe própria e parceiros.', tipo: 'escolha', opcoes: ['Só eu', 'De 2 a 5 pessoas', 'De 6 a 10 pessoas', 'Mais de 10 pessoas'], obrigatoria: false },
+      { id: 'fol-servicos', pergunta: 'Quais serviços ou produtos você oferece', ajuda: 'Liste todos, um por linha.', tipo: 'longo', opcoes: [], obrigatoria: true },
+      { id: 'fol-funciona', pergunta: 'Como funciona o serviço, do primeiro contato até a entrega', ajuda: 'Passo a passo, do orçamento ao pagamento final.', tipo: 'longo', opcoes: [], obrigatoria: true },
+      { id: 'fol-prazo', pergunta: 'Prazo para enviar o orçamento e valor do sinal', ajuda: 'Exemplo: orçamento em 2 a 3 dias úteis, sinal de 30% a 50%.', tipo: 'texto', opcoes: [], obrigatoria: false },
+      { id: 'fol-diferenciais', pergunta: 'Quais são os seus diferenciais', ajuda: 'Um por linha.', tipo: 'longo', opcoes: [], obrigatoria: true },
+      { id: 'fol-garantia', pergunta: 'Como funciona a garantia', ajuda: 'Se não tiver, escreva Não.', tipo: 'longo', opcoes: [], obrigatoria: false },
+      { id: 'fol-avaliacoes', pergunta: 'Onde estão as suas avaliações', ajuda: '', tipo: 'varias', opcoes: ['Google', 'Facebook', 'Instagram', 'Site próprio', 'Ainda não tenho'], obrigatoria: false },
+      { id: 'fol-nota', pergunta: 'Quantidade e nota das avaliações', ajuda: 'Exemplo: 48 avaliações, nota 4,9. Se não tiver, escreva Não.', tipo: 'texto', opcoes: [], obrigatoria: false },
+      { id: 'fol-produtos', pergunta: 'Produtos, marcas ou materiais que você recomenda', ajuda: 'E para qual situação cada um serve.', tipo: 'longo', opcoes: [], obrigatoria: false },
+      { id: 'fol-cuidados', pergunta: 'Cuidados e manutenção depois da entrega', ajuda: 'O que o cliente precisa saber para o resultado durar.', tipo: 'longo', opcoes: [], obrigatoria: false },
+      { id: 'fol-duvidas', pergunta: 'Quais perguntas os clientes mais fazem', ajuda: 'Com a resposta que você costuma dar. Se não souber, escreva Não sei.', tipo: 'longo', opcoes: [], obrigatoria: false },
+    ],
+  },
+  {
     id: 'fotos',
     pronto: 'fotos',
     ligado: false,
@@ -165,7 +187,7 @@ const ESQUEMA = {
   properties: {
     prontos: {
       type: 'array',
-      items: { type: 'string', enum: ['materiais', 'estrutura', 'copy', 'fotos', 'textos', 'hospedagem', 'google'] },
+      items: { type: 'string', enum: ['materiais', 'estrutura', 'copy', 'folder', 'fotos', 'textos', 'hospedagem', 'google'] },
       description: 'Blocos prontos que fazem sentido para o que foi contratado.',
     },
     blocos: {

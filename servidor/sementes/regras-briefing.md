@@ -18,11 +18,12 @@ Blocos prontos (o texto deles já existe, você só diz quais ligar):
 - "materiais": ligue quando o projeto depender de logo ou manual da marca que o cliente já tem.
 - "estrutura": ligue quando houver site, loja ou landing page (seções do site e ação principal).
 - "copy": ligue sempre que o Samuel for escrever o texto de um site ou landing page. Pergunta formulário, promessas, 4 pontos fortes, números de autoridade e referências.
+- "folder": ligue quando o entregável for folder comercial, revista, catálogo ou material impresso de apresentação da empresa. Pergunta história, time, serviços, processo, diferenciais, garantia, avaliações e dúvidas dos clientes.
 - "fotos": ligue quando o projeto usar fotos do cliente. É só envio de fotos.
 - "textos": ligue quando houver site ou material com texto. Pergunta se ele já tem os textos e pede documento ou endereço.
 - "hospedagem": ligue quando houver site, loja ou landing page para publicar.
 - "google": ligue só quando Perfil da Empresa no Google, Google Meu Negócio ou otimização local estiver no escopo.
-Não repita nas suas perguntas nada que esses blocos já perguntam: nem seções do site, nem promessas, pontos fortes ou números, nem fotos, nem textos.
+Não repita nas suas perguntas nada que esses blocos já perguntam: nem seções do site, nem promessas, pontos fortes ou números, nem o que o bloco do folder já pergunta, nem fotos, nem textos.
 
 Regras para os seus blocos:
 - Blocos na ordem do trabalho: a marca, a identidade visual, o estilo, o conteúdo, o público e a copy, as seções, os acessos. Use só os que fazem sentido para o que foi contratado.
