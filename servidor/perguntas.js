@@ -55,6 +55,8 @@ export const BLOCOS_PRONTOS = [
     perguntas: [
       { id: 'mat-logo', pergunta: 'Logo em alta qualidade', ajuda: 'De preferência em PNG com fundo transparente, PDF, SVG ou AI. Se não tiver, escreva Não no campo de observações.', tipo: 'arquivo', opcoes: [], obrigatoria: false },
       { id: 'mat-manual', pergunta: 'Manual da marca, se existir', ajuda: 'O arquivo com as cores, as fontes e as regras de uso do logo.', tipo: 'arquivo', opcoes: [], obrigatoria: false },
+      { id: 'mat-identidade', pergunta: 'A marca já tem identidade visual', ajuda: 'Logo, cores e fontes definidos.', tipo: 'escolha', opcoes: ['Sim, já tenho', 'Tenho só o logo', 'Não tenho'], obrigatoria: true },
+      { id: 'mat-tema', pergunta: 'O site deve ser claro ou escuro', ajuda: '', tipo: 'escolha', opcoes: ['Claro', 'Escuro', 'Deixo com você'], obrigatoria: false },
       { id: 'mat-pasta', pergunta: 'Link de uma pasta com o resto do material', ajuda: 'Cole o link da pasta no Drive, no Dropbox ou no WeTransfer. Se não tiver, escreva Não.', tipo: 'link', opcoes: [], obrigatoria: false },
       { id: 'mat-obs', pergunta: 'Alguma observação sobre esses materiais', ajuda: 'O que pode ser usado, o que não pode, o que está desatualizado.', tipo: 'longo', opcoes: [], obrigatoria: false },
     ],
@@ -69,6 +71,20 @@ export const BLOCOS_PRONTOS = [
       { id: 'est-secoes', pergunta: 'Quais seções o site deve ter', ajuda: 'Marque todas que fazem sentido para o seu negócio.', tipo: 'varias', opcoes: ['Início com apresentação', 'Sobre a empresa', 'Serviços', 'Produtos', 'Portfólio ou projetos', 'Depoimentos de clientes', 'Perguntas frequentes', 'Equipe', 'Blog ou notícias', 'Localização e mapa', 'Formulário de contato', 'Loja virtual'], obrigatoria: true },
       { id: 'est-acao', pergunta: 'Qual é a principal ação que o visitante deve fazer', ajuda: 'O site inteiro vai levar a pessoa até isso.', tipo: 'escolha', opcoes: ['Chamar no WhatsApp', 'Pedir um orçamento', 'Comprar online', 'Agendar um horário', 'Ligar', 'Preencher um formulário'], obrigatoria: true },
       { id: 'est-extra', pergunta: 'Falta alguma seção que não está na lista', ajuda: 'Se não faltar, escreva Não.', tipo: 'texto', opcoes: [], obrigatoria: false },
+    ],
+  },
+  {
+    id: 'copy',
+    pronto: 'copy',
+    ligado: false,
+    titulo: 'Promessas e diferenciais',
+    texto: 'É com isso que eu escrevo o texto do seu site. Quanto mais específico, melhor o resultado.',
+    perguntas: [
+      { id: 'cop-formulario', pergunta: 'O site vai ter formulário', ajuda: 'Para a pessoa deixar nome e contato.', tipo: 'escolha', opcoes: ['Sim', 'Não'], obrigatoria: true },
+      { id: 'cop-promessas', pergunta: 'Quais são as promessas que fazem a pessoa comprar de você', ajuda: 'A frase de impacto e o que você entrega. Se já tiver um texto pronto, cole aqui.', tipo: 'longo', opcoes: [], obrigatoria: true },
+      { id: 'cop-fortes', pergunta: 'Quais são os 4 pontos fortes do seu negócio', ajuda: 'Um por linha. Exemplo: entrega em 2 dias úteis.', tipo: 'longo', opcoes: [], obrigatoria: true },
+      { id: 'cop-numeros', pergunta: 'Quais números de autoridade você pode mostrar', ajuda: 'Exemplo: desde 2012, mais de 20 mil peças feitas, atendimento internacional. Se não tiver, escreva Não.', tipo: 'longo', opcoes: [], obrigatoria: false },
+      { id: 'cop-referencias', pergunta: 'Sites que você admira ou concorrentes', ajuda: 'Cole os endereços, um por linha. Se não tiver, escreva Não.', tipo: 'longo', opcoes: [], obrigatoria: false },
     ],
   },
   {
@@ -149,7 +165,7 @@ const ESQUEMA = {
   properties: {
     prontos: {
       type: 'array',
-      items: { type: 'string', enum: ['materiais', 'estrutura', 'fotos', 'textos', 'hospedagem', 'google'] },
+      items: { type: 'string', enum: ['materiais', 'estrutura', 'copy', 'fotos', 'textos', 'hospedagem', 'google'] },
       description: 'Blocos prontos que fazem sentido para o que foi contratado.',
     },
     blocos: {
