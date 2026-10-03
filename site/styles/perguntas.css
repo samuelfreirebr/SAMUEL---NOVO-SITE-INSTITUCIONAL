@@ -69,11 +69,6 @@ body.quiz .pg-palco { display: flex; flex-direction: column; justify-content: ce
   max-width: 16ch;
 }
 .pg-sub { margin-top: var(--sp-md); max-width: 54ch; color: var(--muted); line-height: var(--lh-body); }
-.pg-conta {
-  margin-top: var(--sp-md);
-  font-size: var(--t-eyebrow); font-weight: var(--w-semi);
-  letter-spacing: var(--ls-eyebrow); text-transform: uppercase; color: var(--ink);
-}
 
 /* ---------- blocos (modo sem JavaScript) ---------- */
 .pg-bloco { margin-top: var(--sp-2xl); padding-top: var(--sp-lg); border-top: var(--hair-2) solid var(--ink); }

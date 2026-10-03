@@ -380,7 +380,6 @@ function campo(q) {
    etapa. Nada de conteúdo depende do script para existir. */
 export function renderizarPerguntas(f, { respondido = false } = {}) {
   const ativos = blocosAtivos(f);
-  const total = ativos.reduce((n, b) => n + b.perguntas.length, 0);
 
   const blocos = ativos.map((b, i) => `
   <section class="pg-bloco" data-etapa="${i}" data-nome="${esc(b.titulo)}">
@@ -405,7 +404,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css">
 <link rel="stylesheet" href="/styles/base.css">
-<link rel="stylesheet" href="/styles/perguntas.css?v=q10">
+<link rel="stylesheet" href="/styles/perguntas.css?v=q11">
 <link rel="icon" href="/img/favicon.png">
 </head>
 <body class="perguntas">
@@ -424,7 +423,6 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
     <p class="eyebrow pg-eyebrow">Briefing do projeto</p>
     <h1 class="pg-titulo">${esc(f.titulo || 'Informações para começar')}</h1>
     ${f.texto ? `<p class="pg-sub">${esc(f.texto)}</p>` : ''}
-    <p class="pg-conta" id="conta" hidden>${total} pergunta${total === 1 ? '' : 's'}, em ${ativos.length} etapa${ativos.length === 1 ? '' : 's'}.</p>
     <div class="pg-acoes">
       <button class="btn btn--brand pg-avancar" type="button" id="comecar" hidden>Começar</button>
     </div>
@@ -448,7 +446,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 
 <footer class="pg-rodape"><p class="small">Samuel Freire Web Designer</p></footer>
 
-<script type="module" src="/js/briefing.js?v=q11"></script>
+<script type="module" src="/js/briefing.js?v=q12"></script>
 </body>
 </html>`;
 }

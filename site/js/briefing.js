@@ -19,7 +19,6 @@ if (form && capa && !form.hidden) montar();
 
 function montar() {
   document.body.classList.add('quiz');
-  $('#conta').hidden = false;
   $('#comecar').hidden = false;
 
   /* ---------- as telas ---------- */
