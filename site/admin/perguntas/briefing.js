@@ -351,6 +351,13 @@ function respostaEl(r) {
   return h('p', { class: 'br-r__txt' }, r);
 }
 
+// O mesmo link recebe várias respostas: cada pessoa que abre é um envio.
+const QUINZE_MIN = 15 * 60 * 1000;
+let envioSel = null;
+
+const enviosDoForm = () => [...(f.envios || [])].sort((x, y) => String(y.concluidoEm || y.atualizadoEm).localeCompare(String(x.concluidoEm || x.atualizadoEm)));
+const quando = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+
 function estadoDe(e) {
   if (e.concluidoEm) return ['Concluído', 'ok'];
   // Sem novidade há 15 minutos: a pessoa largou no meio.
