@@ -67,16 +67,32 @@ export const BLOCOS_PRONTOS = [
     ],
   },
   {
+    id: 'identidade',
+    pronto: 'identidade',
+    ligado: false,
+    titulo: 'Marca e identidade visual',
+    texto: 'Com isso eu entendo quem é a marca e como ela precisa parecer.',
+    perguntas: [
+      { id: 'ide-nome', pergunta: 'Qual é o nome da marca exatamente como deve aparecer', ajuda: 'Do jeito que deve ser escrito, com maiúsculas e acentos.', tipo: 'texto', opcoes: [], obrigatoria: true },
+      { id: 'ide-slogan', pergunta: 'A marca tem slogan ou uma frase que a resume', ajuda: 'Se não tiver, escreva Não.', tipo: 'texto', opcoes: [], obrigatoria: false },
+      { id: 'ide-publico', pergunta: 'Quem é o seu público', ajuda: 'Idade, perfil, o que essas pessoas procuram em você.', tipo: 'longo', opcoes: [], obrigatoria: true },
+      { id: 'ide-sensacao', pergunta: 'Que sensação a marca precisa passar', ajuda: 'Marque até três.', tipo: 'varias', opcoes: ['Confiança', 'Sofisticação', 'Modernidade', 'Proximidade', 'Energia', 'Tradição', 'Simplicidade', 'Ousadia'], obrigatoria: true },
+      { id: 'ide-estilo', pergunta: 'Qual estilo visual combina mais com a marca', ajuda: '', tipo: 'escolha', opcoes: ['Minimalista e limpo', 'Clássico e elegante', 'Moderno e tecnológico', 'Artesanal e acolhedor', 'Ousado e colorido'], obrigatoria: true },
+      { id: 'ide-cores', pergunta: 'Tem cores que você quer ou que não quer de jeito nenhum', ajuda: 'Se não tiver preferência, escreva Não.', tipo: 'longo', opcoes: [], obrigatoria: false },
+      { id: 'ide-referencias', pergunta: 'Marcas ou perfis que você admira', ajuda: 'Um por linha, de qualquer área. Se não tiver, escreva Não.', tipo: 'longo', opcoes: [], obrigatoria: false },
+      { id: 'ide-aplicacoes', pergunta: 'Onde a marca vai ser aplicada', ajuda: 'Marque tudo o que se aplica.', tipo: 'varias', opcoes: ['Site', 'Redes sociais', 'Cartão e papelaria', 'Embalagem', 'Fachada ou placa', 'Uniforme', 'Folder ou catálogo'], obrigatoria: true },
+    ],
+  },
+  {
     id: 'materiais',
     pronto: 'materiais',
     ligado: false,
     titulo: 'Materiais da marca',
     texto: 'Mande aqui o que você já tem. Pode subir os arquivos direto nesta página.',
     perguntas: [
-      { id: 'mat-logo', pergunta: 'Logo em alta qualidade', ajuda: 'De preferência em PNG com fundo transparente, PDF, SVG ou AI. Se não tiver, escreva Não no campo de observações.', tipo: 'arquivo', opcoes: [], obrigatoria: false },
-      { id: 'mat-manual', pergunta: 'Manual da marca, se existir', ajuda: 'O arquivo com as cores, as fontes e as regras de uso do logo.', tipo: 'arquivo', opcoes: [], obrigatoria: false },
       { id: 'mat-identidade', pergunta: 'A marca já tem identidade visual', ajuda: 'Logo, cores e fontes definidos.', tipo: 'escolha', opcoes: ['Sim, já tenho', 'Tenho só o logo', 'Não tenho'], obrigatoria: true },
-      { id: 'mat-tema', pergunta: 'O site deve ser claro ou escuro', ajuda: '', tipo: 'escolha', opcoes: ['Claro', 'Escuro', 'Deixo com você'], obrigatoria: false },
+      { id: 'mat-logo', pergunta: 'Logo em alta qualidade', ajuda: 'De preferência em PNG com fundo transparente, PDF, SVG ou AI. Se não tiver, escreva Não no campo de observações.', tipo: 'arquivo', opcoes: [], obrigatoria: false, se: { id: 'mat-identidade', valor: ['Sim, já tenho', 'Tenho só o logo'] } },
+      { id: 'mat-manual', pergunta: 'Manual da marca, se existir', ajuda: 'O arquivo com as cores, as fontes e as regras de uso do logo.', tipo: 'arquivo', opcoes: [], obrigatoria: false, se: { id: 'mat-identidade', valor: 'Sim, já tenho' } },
       { id: 'mat-pasta', pergunta: 'Link de uma pasta com o resto do material', ajuda: 'Cole o link da pasta no Drive, no Dropbox ou no WeTransfer. Se não tiver, escreva Não.', tipo: 'link', opcoes: [], obrigatoria: false },
       { id: 'mat-obs', pergunta: 'Alguma observação sobre esses materiais', ajuda: 'O que pode ser usado, o que não pode, o que está desatualizado.', tipo: 'longo', opcoes: [], obrigatoria: false },
     ],
@@ -91,6 +107,7 @@ export const BLOCOS_PRONTOS = [
       { id: 'est-secoes', pergunta: 'Quais seções o site deve ter', ajuda: 'Marque todas que fazem sentido para o seu negócio.', tipo: 'varias', opcoes: ['Início com apresentação', 'Sobre a empresa', 'Serviços', 'Produtos', 'Portfólio ou projetos', 'Depoimentos de clientes', 'Perguntas frequentes', 'Equipe', 'Localização e mapa', 'Formulário de contato'], obrigatoria: true },
       { id: 'est-acao', pergunta: 'Qual é a principal ação que o visitante deve fazer', ajuda: 'O site inteiro vai levar a pessoa até isso.', tipo: 'escolha', opcoes: ['Chamar no WhatsApp', 'Pedir um orçamento', 'Comprar online', 'Agendar um horário', 'Ligar', 'Preencher um formulário'], obrigatoria: true },
       { id: 'est-extra', pergunta: 'Falta alguma seção que não está na lista', ajuda: 'Se não faltar, escreva Não.', tipo: 'texto', opcoes: [], obrigatoria: false },
+      { id: 'est-tema', pergunta: 'O site deve ser claro ou escuro', ajuda: '', tipo: 'escolha', opcoes: ['Claro', 'Escuro', 'Deixo com você'], obrigatoria: false },
     ],
   },
   {
@@ -123,7 +140,7 @@ export const BLOCOS_PRONTOS = [
       { id: 'fol-diferenciais', pergunta: 'Quais são os seus diferenciais', ajuda: 'Um por linha.', tipo: 'longo', opcoes: [], obrigatoria: true },
       { id: 'fol-garantia', pergunta: 'Como funciona a garantia', ajuda: 'Se não tiver, escreva Não.', tipo: 'longo', opcoes: [], obrigatoria: false },
       { id: 'fol-avaliacoes', pergunta: 'Onde estão as suas avaliações', ajuda: '', tipo: 'varias', opcoes: ['Google', 'Facebook', 'Instagram', 'Site próprio', 'Ainda não tenho'], obrigatoria: false },
-      { id: 'fol-nota', pergunta: 'Quantidade e nota das avaliações', ajuda: 'Exemplo: 48 avaliações, nota 4,9. Se não tiver, escreva Não.', tipo: 'texto', opcoes: [], obrigatoria: false },
+      { id: 'fol-nota', pergunta: 'Quantidade e nota das avaliações', ajuda: 'Exemplo: 48 avaliações, nota 4,9. Se não tiver, escreva Não.', tipo: 'texto', opcoes: [], obrigatoria: false, se: { id: 'fol-avaliacoes', valor: ['Google', 'Facebook', 'Instagram', 'Site próprio'] } },
       { id: 'fol-produtos', pergunta: 'Produtos, marcas ou materiais que você recomenda', ajuda: 'E para qual situação cada um serve.', tipo: 'longo', opcoes: [], obrigatoria: false },
       { id: 'fol-cuidados', pergunta: 'Cuidados e manutenção depois da entrega', ajuda: 'O que o cliente precisa saber para o resultado durar.', tipo: 'longo', opcoes: [], obrigatoria: false },
       { id: 'fol-duvidas', pergunta: 'Quais perguntas os clientes mais fazem', ajuda: 'Com a resposta que você costuma dar. Se não souber, escreva Não sei.', tipo: 'longo', opcoes: [], obrigatoria: false },
@@ -176,7 +193,7 @@ export const BLOCOS_PRONTOS = [
     texto: 'O perfil que aparece no Google e no Maps quando procuram pelo seu nome.',
     perguntas: [
       { id: 'goo-existe', pergunta: 'A empresa já tem perfil no Google', ajuda: '', tipo: 'escolha', opcoes: ['Sim, e eu tenho o acesso', 'Sim, mas não tenho o acesso', 'Não tem'], obrigatoria: true },
-      { id: 'goo-email', pergunta: 'Com qual e-mail o perfil foi criado', ajuda: 'O e-mail do Google que administra o perfil. Se não souber, escreva Não sei.', tipo: 'texto', opcoes: [], obrigatoria: false },
+      { id: 'goo-email', pergunta: 'Com qual e-mail o perfil foi criado', ajuda: 'O e-mail do Google que administra o perfil. Se não souber, escreva Não sei.', tipo: 'texto', opcoes: [], obrigatoria: false, se: { id: 'goo-existe', valor: ['Sim, e eu tenho o acesso', 'Sim, mas não tenho o acesso'] } },
       { id: 'goo-nome', pergunta: 'Nome da empresa como deve aparecer no Google', ajuda: 'Exatamente como você quer ler na busca.', tipo: 'texto', opcoes: [], obrigatoria: false },
       { id: 'goo-endereco', pergunta: 'O endereço aparece no perfil ou é só atendimento na região', ajuda: '', tipo: 'escolha', opcoes: ['Mostra o endereço', 'Só a região de atendimento'], obrigatoria: false },
       { id: 'goo-horario', pergunta: 'Horário de funcionamento', ajuda: 'Exemplo: de segunda a sexta, das 9h às 18h.', tipo: 'longo', opcoes: [], obrigatoria: false },
@@ -201,7 +218,19 @@ const EXEMPLOS = {
   'fol-cuidados': 'Esperar 48 horas antes de encostar nas paredes\nEvitar batidas e arranhões',
   'fol-duvidas': 'Vocês dão conta de tudo isso? Sim, tenho profissionais em cada área.',
   'goo-servicos': 'Pintura residencial\nPintura comercial\nReparos em drywall',
+  'ide-publico': 'Mulheres de 30 a 50 anos, que cuidam do cabelo em casa e buscam produtos profissionais com preço justo.',
+  'ide-cores': 'Gosto de tons terrosos. Não quero rosa nem azul bebê.',
+  'ide-referencias': 'Aesop\nNatura\nO Boticário',
   'goo-horario': 'De segunda a sexta, das 8h às 18h. Sábado, das 8h às 12h.',
+};
+
+/* Pontos de partida para quem quer montar à mão, sem IA. Cada modelo
+   liga os blocos de um tipo de trabalho; os outros ficam desligados e
+   podem ser ligados na tela. */
+export const MODELOS = {
+  folder: { rotulo: 'Folder', blocos: ['contrato', 'empresa', 'folder', 'materiais', 'fotos'] },
+  website: { rotulo: 'Website', blocos: ['contrato', 'empresa', 'materiais', 'estrutura', 'copy', 'fotos', 'textos', 'hospedagem'] },
+  identidade: { rotulo: 'Identidade visual', blocos: ['contrato', 'empresa', 'identidade', 'materiais'] },
 };
 
 /* Perguntas que o cliente pode pular e mandar depois pelo WhatsApp:
@@ -231,7 +260,7 @@ const ESQUEMA = {
   properties: {
     prontos: {
       type: 'array',
-      items: { type: 'string', enum: ['materiais', 'estrutura', 'copy', 'folder', 'fotos', 'textos', 'hospedagem', 'google'] },
+      items: { type: 'string', enum: ['materiais', 'estrutura', 'copy', 'folder', 'identidade', 'fotos', 'textos', 'hospedagem', 'google'] },
       description: 'Blocos prontos que fazem sentido para o que foi contratado.',
     },
     blocos: {
@@ -246,7 +275,7 @@ const ESQUEMA = {
             type: 'array',
             items: {
               type: 'object', additionalProperties: false,
-              required: ['pergunta', 'ajuda', 'exemplo', 'tipo', 'opcoes', 'obrigatoria'],
+              required: ['pergunta', 'ajuda', 'exemplo', 'tipo', 'opcoes', 'obrigatoria', 'seIndice', 'seValores'],
               properties: {
                 pergunta: { type: 'string' },
                 ajuda: { type: 'string', description: 'Uma linha de exemplo ou explicação. Vazio se a pergunta já se explica.' },
@@ -254,6 +283,8 @@ const ESQUEMA = {
                 tipo: { type: 'string', enum: TIPOS },
                 opcoes: { type: 'array', items: { type: 'string' }, description: 'Só para "escolha" (uma) e "varias" (mais de uma). Vazio nos outros.' },
                 obrigatoria: { type: 'boolean' },
+                seIndice: { type: 'integer', description: 'Posição (a partir de 0) de uma pergunta de escolha ou varias ANTERIOR neste mesmo bloco, cuja resposta decide se esta pergunta aparece. -1 quando aparece sempre.' },
+                seValores: { type: 'array', items: { type: 'string' }, description: 'As opções da pergunta de seIndice que fazem esta aparecer, escritas exatamente como nas opções dela. Vazio quando aparece sempre.' },
               },
             },
           },
@@ -267,7 +298,12 @@ const ESQUEMA = {
    Samuel edita o arquivo e a próxima geração já usa. Lido a cada
    geração, de propósito (não fica em memória). */
 const ARQUIVO_REGRAS = path.join(path.dirname(fileURLToPath(import.meta.url)), 'sementes', 'regras-briefing.md');
-const lerRegras = () => fs.readFile(ARQUIVO_REGRAS, 'utf8');
+// O que fica acima da primeira linha de três traços é nota para o Samuel.
+const lerRegras = async () => {
+  const t = await fs.readFile(ARQUIVO_REGRAS, 'utf8');
+  const i = t.indexOf('\n---\n');
+  return (i >= 0 ? t.slice(i + 5) : t).trim();
+};
 
 function resumo(p) {
   return `Proposta aprovada:
@@ -279,6 +315,39 @@ function resumo(p) {
 
 const idDe = (t, i) => (String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
   .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'p') + '-' + i;
+
+export function blocosDaIa(blocosIa) {
+  return (blocosIa || []).map((b, bi) => {
+    // O id nasce da posição original, para a condição apontar certo mesmo
+    // quando uma pergunta vazia é descartada.
+    const ids = (b.perguntas || []).map((q, qi) => idDe(q.pergunta, bi * 100 + qi));
+    const perguntas = [];
+    (b.perguntas || []).forEach((q, qi) => {
+      if (!limpo(q.pergunta)) return;
+      const tipo = TIPOS.includes(q.tipo) ? q.tipo : 'texto';
+      const opcoes = (q.opcoes || []).map(limpo).filter(Boolean);
+      // Condição só vale se aponta para uma pergunta de escolha anterior e
+      // para opções que existem nela. Qualquer coisa torta vira "sempre".
+      let se;
+      const alvo = Number.isInteger(q.seIndice) && q.seIndice >= 0 && q.seIndice < qi ? b.perguntas[q.seIndice] : null;
+      if (alvo && ['escolha', 'varias'].includes(alvo.tipo)) {
+        const validas = (q.seValores || []).map(limpo).filter((v) => (alvo.opcoes || []).map(limpo).includes(v));
+        if (validas.length) se = { id: ids[q.seIndice], valor: validas.length === 1 ? validas[0] : validas };
+      }
+      perguntas.push({
+        id: ids[qi],
+        pergunta: comInterrogacao(limpo(q.pergunta)),
+        ajuda: limpo(q.ajuda),
+        exemplo: limpo(q.exemplo),
+        pular: tipo === 'arquivo',
+        tipo, opcoes,
+        obrigatoria: Boolean(q.obrigatoria),
+        ...(se ? { se } : {}),
+      });
+    });
+    return { id: idDe(b.titulo, bi), ligado: true, titulo: limpo(b.titulo), texto: limpo(b.texto), perguntas };
+  }).filter((b) => b.perguntas.length);
+}
 
 export async function gerarPerguntas({ proposta, transcricao }) {
   const p = proposta || {};
@@ -299,22 +368,7 @@ export async function gerarPerguntas({ proposta, transcricao }) {
   const ligados = new Set(['contrato', 'empresa', ...(ia?.prontos || [])]);
   const prontos = BLOCOS_PRONTOS.map((b) => ({ ...b, ligado: ligados.has(b.id) }));
 
-  const doProjeto = (ia?.blocos || []).map((b, bi) => ({
-    id: idDe(b.titulo, bi),
-    ligado: true,
-    titulo: limpo(b.titulo),
-    texto: limpo(b.texto),
-    perguntas: (b.perguntas || []).filter((q) => limpo(q.pergunta)).map((q, qi) => ({
-      id: idDe(q.pergunta, bi * 100 + qi),
-      pergunta: comInterrogacao(limpo(q.pergunta)),
-      ajuda: limpo(q.ajuda),
-      exemplo: limpo(q.exemplo),
-      pular: q.tipo === 'arquivo',
-      tipo: TIPOS.includes(q.tipo) ? q.tipo : 'texto',
-      opcoes: (q.opcoes || []).map(limpo).filter(Boolean),
-      obrigatoria: Boolean(q.obrigatoria),
-    })),
-  })).filter((b) => b.perguntas.length);
+  const doProjeto = blocosDaIa(ia?.blocos);
 
   if (!doProjeto.length && temChaveIa() && ia) avisos.push('A IA não achou o que perguntar sobre o projeto. Só os blocos prontos foram montados.');
 
@@ -340,11 +394,18 @@ export function formularioVazio(p = {}) {
   };
 }
 
+const SE_PADRAO = {};
+for (const b of BLOCOS_PRONTOS) for (const q of b.perguntas) if (q.se) SE_PADRAO[q.id] = q.se;
+
 /* Formulário gerado antes do campo "exemplo" existir: as perguntas
    prontas recebem o exemplo padrão. Só quando o campo nunca foi
    definido; se o Samuel apagou o exemplo, o vazio dele vale. */
 export function comExemplos(f) {
+  const ids = new Set((f.blocos || []).flatMap((b) => (b.perguntas || []).map((q) => q.id)));
   for (const b of f.blocos || []) for (const q of b.perguntas || []) {
+    // Condição de pergunta pronta que nasceu depois do formulário. `null` é
+    // "sempre mostrar" escolhido de propósito no painel: esse vale.
+    if (q.se === undefined && SE_PADRAO[q.id] && ids.has(SE_PADRAO[q.id].id)) q.se = SE_PADRAO[q.id];
     if (q.exemplo === undefined) q.exemplo = EXEMPLOS[q.id] || '';
     if (q.pular === undefined) q.pular = podePular(q);
   }
@@ -357,6 +418,9 @@ export const blocosAtivos = (f) => (f.blocos || [])
   .map((b) => ({ ...b, perguntas: b.perguntas.filter((q) => q.pergunta) }));
 
 /* ---------- a página que o cliente abre ---------- */
+
+// Setas dos botões principais: a mesma linha fina do resto do site.
+const SETA_DIR = '<svg class="pg-seta pg-seta--dir" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 const esc = (t) => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -400,7 +464,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
     <p class="eyebrow pg-bloco__n">${String(i + 1).padStart(2, '0')} ${esc(b.titulo)}</p>
     ${b.texto ? `<p class="pg-bloco__texto">${esc(b.texto)}</p>` : ''}
     ${b.perguntas.map((q) => `
-    <div class="pg-campo" data-tipo="${esc(q.tipo)}"${q.obrigatoria ? ' data-obrigatoria="1"' : ''}${q.pular ? ' data-pular="1"' : ''}${q.se?.id ? ` data-se-id="${esc(q.se.id)}" data-se-valor="${esc(q.se.valor)}"` : ''}>
+    <div class="pg-campo" data-tipo="${esc(q.tipo)}"${q.obrigatoria ? ' data-obrigatoria="1"' : ''}${q.pular ? ' data-pular="1"' : ''}${q.se?.id ? ` data-se-id="${esc(q.se.id)}" data-se-valor="${esc(JSON.stringify([].concat(q.se.valor)))}"` : ''}>
       <label for="${esc(q.id)}">${esc(comInterrogacao(q.pergunta))}${q.obrigatoria ? '' : ' <small>(opcional)</small>'}</label>
       ${q.ajuda ? `<p class="pg-ajuda">${esc(q.ajuda)}</p>` : ''}
       ${q.exemplo ? `<aside class="pg-exemplo"><p class="pg-exemplo__rot">Exemplo</p><p class="pg-exemplo__txt">${esc(q.exemplo)}</p></aside>` : ''}
@@ -418,7 +482,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css">
 <link rel="stylesheet" href="/styles/base.css">
-<link rel="stylesheet" href="/styles/perguntas.css?v=q18">
+<link rel="stylesheet" href="/styles/perguntas.css?v=q20">
 <link rel="icon" href="/img/favicon.png">
 </head>
 <body class="perguntas">
@@ -438,7 +502,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
     <h1 class="pg-titulo">${esc(f.titulo || 'Informações para começar')}</h1>
     ${f.texto ? `<p class="pg-sub">${esc(f.texto)}</p>` : ''}
     <div class="pg-acoes">
-      <button class="btn btn--brand pg-avancar" type="button" id="comecar" hidden>Começar</button>
+      <button class="btn btn--brand pg-avancar" type="button" id="comecar" hidden>Começar ${SETA_DIR}</button>
     </div>
   </section>
 
@@ -452,7 +516,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
     ${blocos}
     <p class="pg-erro" id="erro" hidden></p>
     <div class="pg-acoes" id="acoes-fim">
-      <button class="btn btn--brand" type="submit" id="enviar">Enviar as informações</button>
+      <button class="btn btn--brand" type="submit" id="enviar">Enviar as informações ${SETA_DIR}</button>
       <span class="pg-nota">Suas respostas vão direto para o Samuel.</span>
     </div>
   </form>
@@ -460,7 +524,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 
 <footer class="pg-rodape"><p class="small">Samuel Freire Web Designer</p></footer>
 
-<script type="module" src="/js/briefing.js?v=q18"></script>
+<script type="module" src="/js/briefing.js?v=q21"></script>
 </body>
 </html>`;
 }

@@ -244,3 +244,9 @@ html:has(body.br) { height: auto; }
 }
 
 .br-arq-lista li.br-arq-lista__link { max-width: none; flex-basis: 100%; }
+
+/* ---------- modelos ---------- */
+.br-modelos { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-xs) var(--sp-md); margin-bottom: var(--sp-md); }
+.br-modelos .eyebrow { display: flex; align-items: center; gap: .6em; }
+.br-modelos .eyebrow::before { content: ""; width: var(--bullet); height: var(--bullet); border-radius: 50%; background: var(--brand); }
+.br-modelos__lista { display: flex; flex-wrap: wrap; gap: var(--sp-2xs); }

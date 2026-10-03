@@ -13,6 +13,12 @@
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
+const SETA_DIR = '<svg class="pg-seta pg-seta--dir" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const SETA_ESQ = '<svg class="pg-seta pg-seta--esq" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M13.5 8h-11M7 3.5 2.5 8 7 12.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ENVIAR = 'Enviar as informações ' + SETA_DIR;
+
+const SEM_MOVIMENTO = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 const form = $('#form');
 const capa = $('#capa');
 if (form && capa && !form.hidden) montar();
@@ -37,11 +43,20 @@ function montar() {
   const erro = $('#erro');
 
   /* ---------- barra de navegação ---------- */
-  const voltar = criar('button', 'mini pg-voltar', 'Voltar');
-  const seguir = criar('button', 'btn btn--brand pg-avancar', 'Continuar');
+  const voltar = criar('button', 'mini pg-voltar');
+  voltar.innerHTML = SETA_ESQ + ' Voltar';
+  const seguir = criar('button', 'btn btn--brand pg-avancar');
+  seguir.innerHTML = 'Continuar ' + SETA_DIR;
+  // Na revisão o Enviar ocupa o lugar do Continuar: é a mesma barra fixa,
+  // então o botão final nunca sai da tela (antes havia duas barras
+  // grudadas no mesmo lugar, e uma cobria a outra).
+  const enviarBtn = criar('button', 'btn btn--brand pg-avancar pg-enviar');
+  enviarBtn.type = 'submit';
+  enviarBtn.innerHTML = ENVIAR;
+  enviarBtn.hidden = true;
   const dicaTecla = criar('span', 'pg-nota pg-tecla', 'Enter para continuar');
   const barra = criar('div', 'pg-barra');
-  barra.append(voltar, seguir, dicaTecla);
+  barra.append(voltar, seguir, enviarBtn, dicaTecla);
   form.append(barra);
 
   /* ---------- pular: "envio depois pelo WhatsApp" ----------
@@ -66,7 +81,12 @@ function montar() {
      Samuel. */
   function ativa(t) {
     if (!t.seId) return true;
-    return [...form.querySelectorAll(`[name="${CSS.escape(t.seId)}"]:checked`)].some((c) => c.value === t.seValor);
+    const alvo = form.querySelectorAll(`[name="${CSS.escape(t.seId)}"]`);
+    if (!alvo.length) return true;                 // a pergunta de que depende foi apagada: mostra
+    let valores;
+    try { valores = JSON.parse(t.seValor); } catch (e) { valores = [t.seValor]; }
+    valores = [].concat(valores);
+    return [...form.querySelectorAll(`[name="${CSS.escape(t.seId)}"]:checked`)].some((c) => valores.includes(c.value));
   }
   // Próxima tela que vale mostrar, andando para frente (1) ou para trás (-1).
   function proxima(de, passo) {
@@ -95,6 +115,8 @@ function montar() {
     $('#acoes-fim').hidden = i !== ultima;
     voltar.hidden = i <= 0 && i !== ultima;
     seguir.hidden = i === ultima;
+    enviarBtn.hidden = i !== ultima;
+    dicaTecla.textContent = i === ultima ? 'Suas respostas vão direto para o Samuel' : 'Enter para continuar';
 
     const emCurso = i >= 0 && i < ultima;
     rotulo.hidden = !emCurso;
@@ -331,7 +353,7 @@ function montar() {
       erro.hidden = false;
       return;
     }
-    const botao = $('#enviar');
+    const botao = enviarBtn;
     botao.disabled = true; botao.textContent = 'Enviando…';
     try {
       const r = await fetch(location.pathname, {
@@ -351,7 +373,7 @@ function montar() {
     } catch (x) {
       erro.textContent = x.message;
       erro.hidden = false;
-      botao.disabled = false; botao.textContent = 'Enviar as informações';
+      botao.disabled = false; botao.innerHTML = ENVIAR;
     }
   });
 
@@ -363,7 +385,6 @@ function montar() {
    uma depois da outra. Depois entram a ajuda, o exemplo e o campo, e as
    opções caem em sequência. A palavra é dividida uma vez só por
    pergunta; o texto continua sendo o mesmo para leitor de tela. */
-const SEM_MOVIMENTO = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function animar(campo) {
   if (SEM_MOVIMENTO) return;

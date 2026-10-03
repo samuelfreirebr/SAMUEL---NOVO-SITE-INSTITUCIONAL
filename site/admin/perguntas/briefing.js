@@ -74,12 +74,34 @@ function pintar() {
 
   app.append(
     abas(),
+    modelosBarra(),
     h('div', { class: 'br-grade' },
       h('div', { class: 'br-col' }, cabecalho(), ...f.blocos.map(blocoEl), prontosQueFaltam(), novoBloco()),
       h('aside', { class: 'br-lado' }, ladoLink(), ladoResumo(), ladoRespostas(), ladoArquivos())));
 
   for (const e of document.querySelectorAll('.br-q')) if (aberto.has(e.dataset.id)) e.open = true;
   marcar();
+}
+
+/* ---------- modelos ----------
+   Ponto de partida sem IA: liga os blocos de cada tipo de trabalho e o
+   resto fica à mão para ligar e editar. */
+function carregarModelo(chave) {
+  const m = f.modelos?.[chave];
+  if (!m || !f.prontos) return;
+  if (f.blocos.length && !confirm('Carregar o modelo ' + m.rotulo + ' troca as perguntas que estão aqui. Continuar?')) return;
+  f.blocos = f.prontos.map((b) => ({ ...JSON.parse(JSON.stringify(b)), ligado: m.blocos.includes(b.id) }));
+  if (f.textoAbertura) f.texto = f.textoAbertura;
+  pintar();
+  avisar('Modelo ' + m.rotulo + ' carregado. Ajuste o que precisar e salve.');
+}
+
+function modelosBarra() {
+  if (!f.modelos) return h('span', { hidden: true });
+  return h('div', { class: 'br-modelos' },
+    h('p', { class: 'eyebrow' }, 'Começar de um modelo'),
+    h('div', { class: 'br-modelos__lista' },
+      ...Object.entries(f.modelos).map(([chave, m]) => h('button', { type: 'button', class: 'mini', onclick: () => carregarModelo(chave) }, 'Carregar modelo de ' + m.rotulo))));
 }
 
 function trocarAba(nova) {
@@ -178,12 +200,12 @@ function perguntaEl(b, q, qi) {
     ...candidatas.map((x) => h('option', { value: x.id, selected: q.se?.id === x.id }, x.pergunta)));
   selPergunta.onchange = () => {
     const alvo = candidatas.find((x) => x.id === selPergunta.value);
-    q.se = alvo ? { id: alvo.id, valor: alvo.opcoes[0] } : undefined;
+    q.se = alvo ? { id: alvo.id, valor: alvo.opcoes[0] } : null;   // null: o Samuel quis "sempre", não volta a ser condicional sozinho
     pintar();
   };
   const alvoAtual = candidatas.find((x) => x.id === q.se?.id);
   const selValor = alvoAtual && h('select', { 'aria-label': 'Resposta que mostra esta pergunta' },
-    ...alvoAtual.opcoes.map((o) => h('option', { value: o, selected: q.se.valor === o }, 'for: ' + o)));
+    ...alvoAtual.opcoes.map((o) => h('option', { value: o, selected: [].concat(q.se.valor)[0] === o }, 'for: ' + o)));
   if (selValor) selValor.onchange = () => { q.se.valor = selValor.value; marcar(); };
 
   const resumoEl = h('span', { class: 'br-q__t' }, q.pergunta || 'Pergunta sem texto');
@@ -202,7 +224,7 @@ function perguntaEl(b, q, qi) {
       h('span', { class: 'br-q__n' }, String(qi + 1).padStart(2, '0')),
       resumoEl,
       q.obrigatoria ? h('span', { class: 'br-obr' }, 'obrigatória') : null,
-      q.se ? h('span', { class: 'br-cond' }, 'se ' + (q.se.valor || '')) : null,
+      q.se ? h('span', { class: 'br-cond' }, 'se ' + [].concat(q.se.valor || '').join(' ou ')) : null,
       h('span', { class: 'br-q__tipo' }, tipoRot),
       h('span', { class: 'br-q__seta', 'aria-hidden': 'true' }, '+')),
     h('div', { class: 'br-q__corpo' },
@@ -419,7 +441,7 @@ async function gerar() {
   b.disabled = true; b.textContent = 'Montando…';
   try {
     const d = await api('/api/formularios/' + encodeURIComponent(id) + '/gerar', { method: 'POST' });
-    f = { ...d, anexos: f.anexos, prontos: f.prontos };
+    f = { ...d, anexos: f.anexos, prontos: f.prontos, modelos: f.modelos, textoAbertura: f.textoAbertura };
     salvo = JSON.stringify(f.blocos) + f.titulo + f.texto;
     pintar();
     avisar(d.avisos?.length ? d.avisos.join(' ') : 'Briefing montado. Revise, edite e mande o link.', d.avisos?.length ? 'erro' : 'ok');

@@ -393,3 +393,15 @@ body.quiz .pg-barra, body.quiz #acoes-fim {
   .digita .pg-w > span, .digita .pg-ajuda, .digita .pg-exemplo, .digita .pg-upload,
   .digita > input, .digita > textarea, .digita .pg-opcao { animation: none; transform: none; }
 }
+
+
+/* ---------- setas nos botões principais ---------- */
+.pg-seta { flex: none; width: 1.1em; height: 1.1em; transition: transform var(--d-base) var(--ease-out); }
+.btn:hover .pg-seta--dir { transform: translateX(4px); }
+.mini:hover .pg-seta--esq { transform: translateX(-3px); }
+.pg-form .mini, .pg-pular { display: inline-flex; align-items: center; gap: .45em; }
+.pg-barra .btn, .pg-acoes .btn { gap: .6em; }
+
+/* Quem tem JavaScript envia pela barra fixa de baixo: o bloco de enviar
+   do fim do formulário só existe para quem não tem. */
+body.quiz #acoes-fim { display: none; }

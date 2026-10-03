@@ -40,7 +40,7 @@ import { lerCorpo, lerMultipart } from './multipart.js';
 import { renderizarProposta, catalogoIcones } from './proposta-html.js';
 import { renderizarFatura } from './fatura-html.js';
 import { gerarContrato, renderizarContrato, MODELO_PADRAO } from './contrato.js';
-import { gerarPerguntas, renderizarPerguntas, formularioVazio, BLOCOS_PRONTOS, comExemplos } from './perguntas.js';
+import { gerarPerguntas, renderizarPerguntas, formularioVazio, BLOCOS_PRONTOS, comExemplos, MODELOS, TEXTO_ABERTURA } from './perguntas.js';
 import { preencherComIa, temChaveIa, escolherModelo } from './proposta-ia.js';
 import { apiProspeccao, configuracao as configProspeccao } from './prospeccao.js';
 import * as dados from './dados.js';
@@ -355,8 +355,8 @@ async function api(req, res, url) {
       // Formulário que ainda não existe já chega com os blocos prontos:
       // dá para ligar o que o projeto pede e salvar sem passar pela IA.
       const f = await dados.lerFormulario(id);
-      if (!f) return json(res, { proposta: id, novo: true, prontos: BLOCOS_PRONTOS, ...formularioVazio(proposta) });
-      return json(res, { ...comExemplos(f), prontos: BLOCOS_PRONTOS, anexos: await dados.listarAnexos(f.link) });
+      if (!f) return json(res, { proposta: id, novo: true, prontos: BLOCOS_PRONTOS, modelos: MODELOS, textoAbertura: TEXTO_ABERTURA, ...formularioVazio(proposta) });
+      return json(res, { ...comExemplos(f), prontos: BLOCOS_PRONTOS, modelos: MODELOS, textoAbertura: TEXTO_ABERTURA, anexos: await dados.listarAnexos(f.link) });
     }
     if (req.method === 'PUT') {
       const dado = await lerJson(req, res);
