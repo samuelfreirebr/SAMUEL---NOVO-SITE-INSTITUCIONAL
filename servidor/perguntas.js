@@ -300,7 +300,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css">
 <link rel="stylesheet" href="/styles/base.css">
-<link rel="stylesheet" href="/styles/perguntas.css?v=q3">
+<link rel="stylesheet" href="/styles/perguntas.css?v=q4">
 <link rel="icon" href="/img/favicon.png">
 </head>
 <body class="perguntas">
@@ -343,7 +343,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 
 <footer class="pg-rodape"><p class="small">Samuel Freire Web Designer</p></footer>
 
-<script type="module" src="/js/briefing.js?v=q3"></script>
+<script type="module" src="/js/briefing.js?v=q4"></script>
 </body>
 </html>`;
 }
