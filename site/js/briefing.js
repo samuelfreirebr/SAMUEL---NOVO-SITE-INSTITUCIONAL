@@ -50,6 +50,7 @@ function montar() {
   const TEXTO_PULO = 'Vai enviar depois pelo WhatsApp';
   const pulos = new Set();
   const nomeDe = (t) => t.campo.querySelector('[name]')?.name;
+  const linkDe = (t) => t.campo.querySelector('[data-link-de]')?.value.trim() || '';
   const pular = criar('button', 'pg-pular', 'Pular: enviar depois pelo WhatsApp');
   pular.hidden = true;
   form.insertBefore(pular, barra);   // antes da barra fixa, que fica sempre no fim da tela
@@ -117,7 +118,7 @@ function montar() {
     if (t.campo.dataset.obrigatoria !== '1') return '';
     const tipo = t.campo.dataset.tipo;
     if (tipo === 'arquivo') {
-      return t.campo.querySelector('.pg-upload__lista li') ? '' : 'Mande pelo menos um arquivo para seguir.';
+      return t.campo.querySelector('.pg-upload__lista li') || linkDe(t) ? '' : 'Envie um arquivo ou cole um link para seguir.';
     }
     if (tipo === 'escolha' || tipo === 'varias') {
       return t.campo.querySelector('input:checked') ? '' : 'Escolha uma opção para seguir.';
@@ -145,7 +146,7 @@ function montar() {
 
   // Respondeu de verdade? Então o pulo anterior não vale mais.
   function temResposta(t) {
-    if (t.campo.dataset.tipo === 'arquivo') return !!t.campo.querySelector('.pg-upload__lista li');
+    if (t.campo.dataset.tipo === 'arquivo') return !!t.campo.querySelector('.pg-upload__lista li') || !!linkDe(t);
     return !!t.campo.querySelector('input:checked') || [...t.campo.querySelectorAll('input:not([type=radio]):not([type=checkbox]):not([type=file]),textarea')].some((c) => c.value.trim());
   }
 
@@ -208,8 +209,12 @@ function montar() {
       d[k] = d[k] === undefined ? v : [].concat(d[k], v).join(', ');
     });
     for (const id of pulos) d[id] = TEXTO_PULO;
-    for (const [id, lista] of Object.entries(arquivos)) {
-      if (lista.length) d[id] = lista.map((a) => a.nome + ' (' + location.origin + a.url + ')').join('\n');
+    // Arquivos e link viram uma resposta só: um por linha.
+    for (const t of telas) {
+      if (t.campo.dataset.tipo !== 'arquivo') continue;
+      const id = nomeDe(t);
+      const partes = [...(arquivos[id] || []).map((a) => a.nome + ' (' + location.origin + a.url + ')'), linkDe(t)].filter(Boolean);
+      if (partes.length) d[id] = partes.join('\n');
     }
     for (const t of telas) if (!ativa(t)) delete d[nomeDe(t)];   // pergunta escondida não leva resposta velha
     return d;
@@ -223,7 +228,12 @@ function montar() {
       if (campos[0].type === 'radio' || campos[0].type === 'checkbox') {
         const marcadas = String(v).split(', ');
         for (const c of campos) c.checked = marcadas.includes(c.value);
-      } else if (campos[0].type !== 'file') campos[0].value = v;
+      } else if (campos[0].type === 'file') {
+        // arquivo não volta do rascunho, mas o link sim
+        const url = String(v).split('\n').find((l) => /^https?:\/\//i.test(l.trim()));
+        const caixa = campos[0].closest('.pg-upload')?.querySelector('[data-link-de]');
+        if (url && caixa) caixa.value = url.trim();
+      } else campos[0].value = v;
     }
   } catch (e) { /* rascunho torto: ignora */ }
   form.addEventListener('change', guardar);

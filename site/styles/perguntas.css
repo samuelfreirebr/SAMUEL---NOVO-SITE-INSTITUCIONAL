@@ -351,3 +351,14 @@ body.quiz .pg-barra, body.quiz #acoes-fim {
   background: var(--bg);
   border-top: var(--hair) solid var(--line);
 }
+
+
+/* ---------- duas saídas: arquivo ou link ---------- */
+.pg-ou {
+  display: flex; align-items: center; gap: var(--sp-sm);
+  margin: var(--sp-md) 0 0;
+  font-size: var(--t-eyebrow); font-weight: var(--w-bold);
+  letter-spacing: var(--ls-eyebrow); text-transform: uppercase; color: var(--meta);
+}
+.pg-ou::before, .pg-ou::after { content: ""; flex: 1; height: var(--hair); background: var(--line); }
+.pg-upload .pg-upload__link { margin-top: var(--sp-sm); }

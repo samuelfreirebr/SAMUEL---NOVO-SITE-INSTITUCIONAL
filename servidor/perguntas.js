@@ -137,7 +137,6 @@ export const BLOCOS_PRONTOS = [
     texto: 'Primeiro as fotos. Os textos vêm na próxima etapa.',
     perguntas: [
       { id: 'fot-envio', pergunta: 'Envie as fotos que devem ir para o site', ajuda: 'Equipe, espaço, produtos, trabalhos feitos. Pode selecionar várias de uma vez.', tipo: 'arquivo', opcoes: [], obrigatoria: false },
-      { id: 'fot-pasta', pergunta: 'Se forem muitas, cole o link da pasta', ajuda: 'Drive, Dropbox ou WeTransfer. Se não tiver, escreva Não.', tipo: 'link', opcoes: [], obrigatoria: false },
       { id: 'fot-faltam', pergunta: 'Você acha que tem fotos boas o suficiente', ajuda: '', tipo: 'escolha', opcoes: ['Sim, tenho o que preciso', 'Tenho poucas', 'Não tenho, preciso de ajuda com isso'], obrigatoria: true },
     ],
   },
@@ -365,13 +364,17 @@ function campo(q) {
   const req = q.obrigatoria ? ' required' : '';
   const n = esc(q.id);
   if (q.tipo === 'arquivo') {
+    // Duas saídas, sempre: subir o arquivo ou colar um link. O link não tem
+    // `name`: quem junta os dois na resposta é o briefing.js.
     return `<div class="pg-upload" data-upload="${n}">
       <input type="file" id="${n}" name="${n}" multiple hidden>
       <button class="pg-upload__alvo" type="button">
-        <b>Escolher arquivos</b>
-        <span>ou arraste aqui. Até 20 MB por arquivo.</span>
+        <b>Enviar arquivos</b>
+        <span>Toque aqui ou arraste para cá. Até 20 MB por arquivo.</span>
       </button>
       <ul class="pg-upload__lista"></ul>
+      <p class="pg-ou"><span>ou</span></p>
+      <input type="url" class="pg-upload__link" data-link-de="${n}" placeholder="Cole um link (Drive, Dropbox, WeTransfer)" aria-label="Ou cole um link">
     </div>`;
   }
   if (q.tipo === 'longo') return `<textarea id="${n}" name="${n}" rows="4"${req}></textarea>`;
@@ -415,7 +418,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css">
 <link rel="stylesheet" href="/styles/base.css">
-<link rel="stylesheet" href="/styles/perguntas.css?v=q14">
+<link rel="stylesheet" href="/styles/perguntas.css?v=q15">
 <link rel="icon" href="/img/favicon.png">
 </head>
 <body class="perguntas">
@@ -457,7 +460,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 
 <footer class="pg-rodape"><p class="small">Samuel Freire Web Designer</p></footer>
 
-<script type="module" src="/js/briefing.js?v=q14"></script>
+<script type="module" src="/js/briefing.js?v=q15"></script>
 </body>
 </html>`;
 }

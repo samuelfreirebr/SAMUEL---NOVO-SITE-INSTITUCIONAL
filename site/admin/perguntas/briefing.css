@@ -242,3 +242,5 @@ html:has(body.br) { height: auto; }
   font-size: var(--t-eyebrow); font-weight: var(--w-bold); letter-spacing: .08em; text-transform: uppercase;
   color: var(--ink); background: var(--bg-2); padding: .15em .6em; border-radius: var(--radius-pill); flex: none;
 }
+
+.br-arq-lista li.br-arq-lista__link { max-width: none; flex-basis: 100%; }

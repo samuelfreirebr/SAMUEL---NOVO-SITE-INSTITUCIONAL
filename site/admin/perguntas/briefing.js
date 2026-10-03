@@ -314,21 +314,20 @@ const EH_IMAGEM = /\.(jpe?g|png|webp|avif|gif|svg)(\?|$)/i;
 function respostaEl(r) {
   if (r === PULO) return h('span', { class: 'br-pulo' }, 'Vai enviar pelo WhatsApp');
   const linhas = String(r).split('\n');
-  const itens = linhas.map((l) => ARQ.exec(l)).filter(Boolean);
-  if (itens.length === linhas.length) {   // todas as linhas são arquivo
-    return h('ul', { class: 'br-arq-lista' }, ...itens.map((m) => h('li', {},
-      EH_IMAGEM.test(m[2]) ? h('a', { href: m[2], target: '_blank', rel: 'noopener' }, h('img', { src: m[2], alt: '', loading: 'lazy' })) : null,
-      h('a', { href: m[2], target: '_blank', rel: 'noopener' }, m[1]))));
+  const temArquivo = linhas.some((l) => ARQ.exec(l));
+  const ehLink = (l) => /^https?:\/\/\S+$/i.test(l.trim());
+  if (temArquivo || (linhas.length === 1 && ehLink(linhas[0]))) {
+    // arquivos enviados e/ou link colado, um por linha
+    return h('ul', { class: 'br-arq-lista' }, ...linhas.filter((l) => l.trim()).map((l) => {
+      const m = ARQ.exec(l);
+      if (m) return h('li', {},
+        EH_IMAGEM.test(m[2]) ? h('a', { href: m[2], target: '_blank', rel: 'noopener' }, h('img', { src: m[2], alt: '', loading: 'lazy' })) : null,
+        h('a', { href: m[2], target: '_blank', rel: 'noopener' }, m[1]));
+      return h('li', { class: 'br-arq-lista__link' }, ehLink(l) ? h('a', { href: l.trim(), target: '_blank', rel: 'noopener' }, l.trim()) : l);
+    }));
   }
   return h('p', { class: 'br-r__txt' }, r);
 }
-
-// O mesmo link recebe várias respostas: cada pessoa que abre é um envio.
-const QUINZE_MIN = 15 * 60 * 1000;
-let envioSel = null;
-
-const enviosDoForm = () => [...(f.envios || [])].sort((x, y) => String(y.concluidoEm || y.atualizadoEm).localeCompare(String(x.concluidoEm || x.atualizadoEm)));
-const quando = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
 function estadoDe(e) {
   if (e.concluidoEm) return ['Concluído', 'ok'];
