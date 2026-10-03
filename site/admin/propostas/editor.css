@@ -445,3 +445,11 @@ textarea.jan__campo { min-height: 9em; resize: vertical; }
 }
 .ed-mais__item:hover { background: var(--ink); color: #fff; }
 .ed-mais__item--perigo:hover { background: var(--brand); }
+
+/* Estado do briefing, no próprio botão: dá para ver sem abrir. */
+.ed-selo {
+  margin-left: .35em; padding: .1em .6em; border-radius: var(--radius-pill);
+  background: var(--bg-2); color: var(--muted);
+  font-size: var(--t-eyebrow); font-weight: var(--w-bold); letter-spacing: .08em; text-transform: uppercase;
+}
+.ed-selo--ok { background: var(--brand); color: var(--brand-ink); }

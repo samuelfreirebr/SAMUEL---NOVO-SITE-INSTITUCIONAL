@@ -47,6 +47,16 @@ export const BLOCOS_PRONTOS = [
     ],
   },
   {
+    id: 'empresa',
+    pronto: 'empresa',
+    ligado: true,
+    titulo: 'Sobre a empresa',
+    texto: 'O básico do seu negócio, para eu escrever certo desde o começo.',
+    perguntas: [
+      { id: 'emp-servicos', pergunta: 'Quais serviços ou produtos a sua empresa oferece', ajuda: 'Liste todos, um por linha.', tipo: 'longo', opcoes: [], obrigatoria: true },
+    ],
+  },
+  {
     id: 'materiais',
     pronto: 'materiais',
     ligado: false,
@@ -97,7 +107,6 @@ export const BLOCOS_PRONTOS = [
       { id: 'fol-cidade', pergunta: 'Cidade ou região onde você atende', ajuda: '', tipo: 'texto', opcoes: [], obrigatoria: true },
       { id: 'fol-historia', pergunta: 'Conte a história da empresa', ajuda: 'Quando e como começou, o que significa o nome, como chegou até aqui.', tipo: 'longo', opcoes: [], obrigatoria: true },
       { id: 'fol-time', pergunta: 'Qual é o tamanho do time', ajuda: 'Contando equipe própria e parceiros.', tipo: 'escolha', opcoes: ['Só eu', 'De 2 a 5 pessoas', 'De 6 a 10 pessoas', 'Mais de 10 pessoas'], obrigatoria: false },
-      { id: 'fol-servicos', pergunta: 'Quais serviços ou produtos você oferece', ajuda: 'Liste todos, um por linha.', tipo: 'longo', opcoes: [], obrigatoria: true },
       { id: 'fol-funciona', pergunta: 'Como funciona o serviço, do primeiro contato até a entrega', ajuda: 'Passo a passo, do orçamento ao pagamento final.', tipo: 'longo', opcoes: [], obrigatoria: true },
       { id: 'fol-prazo', pergunta: 'Prazo para enviar o orçamento e valor do sinal', ajuda: 'Exemplo: orçamento em 2 a 3 dias úteis, sinal de 30% a 50%.', tipo: 'texto', opcoes: [], obrigatoria: false },
       { id: 'fol-diferenciais', pergunta: 'Quais são os seus diferenciais', ajuda: 'Um por linha.', tipo: 'longo', opcoes: [], obrigatoria: true },
@@ -175,7 +184,7 @@ const EXEMPLOS = {
   'cop-numeros': '+7 anos no mercado\n+1.000 clientes atendidos\n+100 mil reais em projetos entregues',
   'cop-referencias': 'https://www.exemplo.com.br\nhttps://www.outroexemplo.com.br',
   'fol-historia': 'Comecei em 2022 pintando a janela de um cliente. Hoje temos uma equipe de 10 pessoas e atendemos a região toda.',
-  'fol-servicos': 'Pintura interna e externa\nCarpintaria\nPisos\nLimpeza pós obra',
+  'emp-servicos': 'Pintura interna e externa\nCarpintaria\nPisos\nLimpeza pós obra',
   'fol-funciona': '1. Orçamento em 2 a 3 dias úteis\n2. Aprovado, agendamos a data e combinamos o sinal\n3. Fazemos o trabalho\n4. Entrega e pagamento do restante',
   'fol-diferenciais': 'Materiais de qualidade\nCuidado com a mobília do cliente\nReparo em até 7 dias\nAtendimento de qualidade',
   'fol-garantia': 'Garantia de 1 ano contra descascamento, desde que os cuidados sejam seguidos.',
@@ -277,7 +286,7 @@ export async function gerarPerguntas({ proposta, transcricao }) {
     avisos.push('IA desligada (sem OPENAI_API_KEY): o formulário saiu só com os blocos prontos.');
   }
 
-  const ligados = new Set(['contrato', ...(ia?.prontos || [])]);
+  const ligados = new Set(['contrato', 'empresa', ...(ia?.prontos || [])]);
   const prontos = BLOCOS_PRONTOS.map((b) => ({ ...b, ligado: ligados.has(b.id) }));
 
   const doProjeto = (ia?.blocos || []).map((b, bi) => ({
@@ -396,7 +405,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css">
 <link rel="stylesheet" href="/styles/base.css">
-<link rel="stylesheet" href="/styles/perguntas.css?v=q9">
+<link rel="stylesheet" href="/styles/perguntas.css?v=q10">
 <link rel="icon" href="/img/favicon.png">
 </head>
 <body class="perguntas">

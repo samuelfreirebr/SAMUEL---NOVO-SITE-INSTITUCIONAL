@@ -111,6 +111,13 @@ async function gravarJson(destino, dado) {
 
 const idValido = (id) => /^[a-z0-9][a-z0-9-]{1,60}$/.test(id);
 
+// O cartão da proposta mostra se o briefing já foi respondido.
+async function resumoBriefing(id) {
+  const f = await lerFormulario(id);
+  if (!f?.link) return null;
+  return { respondidoEm: f.respondidoEm || null };
+}
+
 export async function listarPropostas() {
   await preparar();
   const nomes = (await fs.readdir(PASTA_PROPOSTAS)).filter((n) => n.endsWith('.json'));
@@ -124,6 +131,7 @@ export async function listarPropostas() {
         criadaEm: p.criadaEm, atualizadaEm: p.atualizadaEm,
         publicada: p.publicada !== false,
         fase: p.fase, reuniao: p.reuniao,
+        briefing: await resumoBriefing(p.id),
       });
     } catch (e) { /* arquivo torto: ignora em vez de derrubar a lista */ }
   }

@@ -170,3 +170,53 @@ html:has(body.br) { height: auto; }
 .br-prontos .eyebrow { display: flex; align-items: center; gap: .6em; }
 .br-prontos .eyebrow::before { content: ""; width: var(--bullet); height: var(--bullet); border-radius: 50%; background: var(--brand); }
 .br-prontos__lista { display: flex; flex-wrap: wrap; gap: var(--sp-2xs); }
+
+/* ---------- abas ---------- */
+.br-abas { display: flex; gap: var(--sp-2xs); margin-bottom: var(--sp-md); border-bottom: var(--hair) solid var(--line); }
+.br-aba {
+  display: inline-flex; align-items: center; gap: var(--sp-2xs);
+  padding: var(--sp-xs) var(--sp-sm); margin-bottom: -1px;
+  font-size: var(--t-small); font-weight: var(--w-semi); color: var(--muted);
+  border-bottom: var(--hair-2) solid transparent;
+  transition: color var(--d-fast) var(--ease-out), border-color var(--d-fast) var(--ease-out);
+}
+.br-aba:hover { color: var(--ink); }
+.br-aba[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--brand); }
+.br-aba__selo {
+  padding: .1em .6em; border-radius: var(--radius-pill); background: var(--bg-2); color: var(--muted);
+  font-size: var(--t-eyebrow); font-weight: var(--w-bold); letter-spacing: .08em; text-transform: uppercase;
+}
+.br-aba__selo--ok { background: var(--brand); color: var(--brand-ink); }
+
+/* ---------- respostas ---------- */
+.br-resp-pagina { max-width: 52rem; display: grid; gap: var(--sp-md); }
+.br-resp-cab, .br-resp-bloco, .br-vazio { background: var(--bg); border: var(--hair) solid var(--line); border-radius: var(--radius-img); }
+.br-resp-cab { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-md); flex-wrap: wrap; padding: var(--sp-md); }
+.br-resp-cab .eyebrow { display: flex; align-items: center; gap: .6em; }
+.br-resp-cab .eyebrow::before, .br-vazio .eyebrow::before { content: ""; width: var(--bullet); height: var(--bullet); border-radius: 50%; background: var(--brand); }
+.br-resp-cab__n { margin-top: var(--sp-3xs); font-size: var(--t-h3); font-weight: var(--w-black); letter-spacing: var(--ls-h3); line-height: 1; }
+.br-resp-cab__n small { font-size: var(--t-small); font-weight: var(--w-book); color: var(--muted); letter-spacing: 0; }
+.br-resp-bloco { padding: 0; overflow: hidden; }
+.br-resp-bloco__t {
+  display: flex; align-items: baseline; gap: var(--sp-sm);
+  padding: var(--sp-sm) var(--sp-md); border-bottom: var(--hair-2) solid var(--ink);
+  font-size: var(--t-body); font-weight: var(--w-black); letter-spacing: -.02em;
+}
+.br-resp-bloco__t span { font-size: var(--t-eyebrow); font-weight: var(--w-bold); letter-spacing: .14em; color: var(--brand); }
+.br-r { display: grid; gap: var(--sp-3xs); padding: var(--sp-sm) var(--sp-md); border-top: var(--hair) solid var(--line); min-width: 0; }
+.br-r:first-of-type { border-top: 0; }
+.br-r b { font-size: var(--t-eyebrow); font-weight: var(--w-bold); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.br-r__txt { white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--t-body); line-height: 1.55; user-select: text; }
+.br-r__vazio { color: var(--meta); font-style: italic; font-size: var(--t-small); }
+.br-pulo {
+  justify-self: start; padding: .2em .8em; border-radius: var(--radius-pill);
+  background: var(--brand-wash); color: var(--brand);
+  font-size: var(--t-small); font-weight: var(--w-semi);
+}
+.br-arq-lista { list-style: none; display: flex; flex-wrap: wrap; gap: var(--sp-xs); }
+.br-arq-lista li { display: grid; gap: var(--sp-3xs); max-width: 9rem; font-size: var(--t-small); }
+.br-arq-lista img { width: 9rem; height: 6.5rem; object-fit: cover; border-radius: var(--radius-img); border: var(--hair) solid var(--line); }
+.br-arq-lista a { color: var(--brand); text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.br-vazio { padding: var(--sp-lg) var(--sp-md); display: grid; gap: var(--sp-xs); max-width: 36rem; }
+.br-vazio .eyebrow { display: flex; align-items: center; gap: .6em; }
+.br-vazio__t { font-size: var(--t-h3); font-weight: var(--w-black); letter-spacing: var(--ls-h3); line-height: var(--lh-h3); }

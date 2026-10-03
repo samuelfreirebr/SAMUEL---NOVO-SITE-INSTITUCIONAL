@@ -11,7 +11,8 @@ import { h } from '../propostas/ui.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 
-const id = decodeURIComponent(location.hash.slice(1));
+const [id, abaInicial] = decodeURIComponent(location.hash.slice(1)).split('/');
+let aba = abaInicial === 'respostas' ? 'respostas' : 'perguntas';
 const TIPOS = [
   ['texto', 'Resposta curta'], ['longo', 'Resposta longa'], ['escolha', 'Escolher uma'],
   ['varias', 'Escolher várias'], ['email', 'E-mail'], ['telefone', 'Telefone'],
@@ -56,6 +57,7 @@ async function carregar() {
   document.title = 'Briefing ' + (proposta?.cliente || id) + ' | Painel';
   f.titulo ||= ''; f.texto ||= '';
   salvo = JSON.stringify(f.blocos) + f.titulo + f.texto;
+  if (aba === 'respostas' && !f.respondidoEm) aba = 'perguntas';
   pintar();
 }
 
@@ -68,13 +70,31 @@ function pintar() {
   if (f.link) { $('#ver').href = '/perguntas/' + f.link; $('#ver').hidden = false; }
   $('#gerar').textContent = f.novo || !f.criadoEm ? 'Gerar com IA' : 'Gerar de novo com IA';
 
+  if (aba === 'respostas') { app.append(abas(), respostasEl()); marcar(); return; }
+
   app.append(
+    abas(),
     h('div', { class: 'br-grade' },
       h('div', { class: 'br-col' }, cabecalho(), ...f.blocos.map(blocoEl), prontosQueFaltam(), novoBloco()),
       h('aside', { class: 'br-lado' }, ladoLink(), ladoResumo(), ladoRespostas(), ladoArquivos())));
 
   for (const e of document.querySelectorAll('.br-q')) if (aberto.has(e.dataset.id)) e.open = true;
   marcar();
+}
+
+function trocarAba(nova) {
+  aba = nova;
+  history.replaceState(null, '', '#' + encodeURIComponent(id) + (nova === 'respostas' ? '/respostas' : ''));
+  pintar();
+  window.scrollTo(0, 0);
+}
+
+function abas() {
+  const n = f.respondidoEm ? 'Respondido' : 'Aguardando';
+  const aba1 = (chave, rotulo, extra) => h('button', { type: 'button', class: 'br-aba', 'aria-selected': aba === chave ? 'true' : 'false', onclick: () => trocarAba(chave) }, rotulo, extra);
+  return h('nav', { class: 'br-abas', 'aria-label': 'Seções do briefing' },
+    aba1('perguntas', 'Perguntas'),
+    aba1('respostas', 'Respostas', h('span', { class: 'br-aba__selo' + (f.respondidoEm ? ' br-aba__selo--ok' : '') }, f.link ? n : 'Sem link')));
 }
 
 function cabecalho() {
@@ -245,21 +265,12 @@ function ladoResumo() {
 const ARQ = /^(.+?) \((https?:\/\/[^)\s]+)\)$/;
 
 function ladoRespostas() {
-  if (!f.respondidoEm) {
-    return h('section', { class: 'br-card' },
-      h('p', { class: 'eyebrow' }, 'Respostas'),
-      h('p', { class: 'br-card__txt' }, f.link ? 'O cliente ainda não respondeu.' : 'Salve e mande o link.'));
-  }
-  const itens = f.blocos.flatMap((b) => (b.perguntas || []).filter((q) => f.respostas?.[q.id]).map((q) => ({ q, r: f.respostas[q.id] })));
-  return h('section', { class: 'br-card br-card--resp' },
+  return h('section', { class: 'br-card' },
     h('p', { class: 'eyebrow' }, 'Respostas'),
-    h('p', { class: 'br-nota' }, 'Recebido em ' + new Date(f.respondidoEm).toLocaleString('pt-BR')),
-    ...itens.map(({ q, r }) => h('div', { class: 'br-resp' },
-      h('b', {}, q.pergunta),
-      h('p', {}, ...String(r).split('\n').flatMap((linha, i) => {
-        const m = ARQ.exec(linha);
-        return [i ? h('br') : null, m ? h('a', { href: m[2], target: '_blank', rel: 'noopener' }, m[1]) : linha];
-      })))));
+    f.respondidoEm
+      ? [h('p', { class: 'br-card__txt' }, 'Recebido em ' + new Date(f.respondidoEm).toLocaleString('pt-BR') + '.'),
+        h('div', { class: 'br-card__acoes' }, h('button', { type: 'button', class: 'mini mini--ativo', onclick: () => trocarAba('respostas') }, 'Ver respostas'))]
+      : h('p', { class: 'br-card__txt' }, f.link ? 'O cliente ainda não respondeu.' : 'Salve e mande o link.'));
 }
 
 function ladoArquivos() {
@@ -269,6 +280,60 @@ function ladoArquivos() {
     h('p', { class: 'eyebrow' }, 'Arquivos enviados'),
     h('ul', { class: 'br-arqs' }, ...f.anexos.map((a) => h('li', {},
       h('a', { href: a.url, target: '_blank', rel: 'noopener' }, a.nome), h('small', {}, kb(a.tamanho))))));
+}
+
+/* ---------- respostas ----------
+   Tudo o que o cliente respondeu, por bloco, numa página só. Dá para
+   copiar tudo de uma vez e colar onde for escrever a copy. */
+const PULO = 'Vai enviar depois pelo WhatsApp';
+const EH_IMAGEM = /\.(jpe?g|png|webp|avif|gif|svg)(\?|$)/i;
+
+function respostaEl(r) {
+  if (r === PULO) return h('span', { class: 'br-pulo' }, 'Vai enviar pelo WhatsApp');
+  const linhas = String(r).split('\n');
+  const itens = linhas.map((l) => ARQ.exec(l)).filter(Boolean);
+  if (itens.length === linhas.length) {   // todas as linhas são arquivo
+    return h('ul', { class: 'br-arq-lista' }, ...itens.map((m) => h('li', {},
+      EH_IMAGEM.test(m[2]) ? h('a', { href: m[2], target: '_blank', rel: 'noopener' }, h('img', { src: m[2], alt: '', loading: 'lazy' })) : null,
+      h('a', { href: m[2], target: '_blank', rel: 'noopener' }, m[1]))));
+  }
+  return h('p', { class: 'br-r__txt' }, r);
+}
+
+function textoDasRespostas() {
+  return f.blocos.filter((b) => b.ligado !== false).map((b) => {
+    const qs = (b.perguntas || []).filter((q) => q.pergunta).map((q) => q.pergunta + '\n' + (String(f.respostas?.[q.id] || '').replace(/ \(https?:\/\/[^)\s]+\)/g, '') || '(sem resposta)'));
+    return qs.length ? b.titulo.toUpperCase() + '\n\n' + qs.join('\n\n') : '';
+  }).filter(Boolean).join('\n\n---\n\n');
+}
+
+function respostasEl() {
+  if (!f.respondidoEm) {
+    return h('section', { class: 'br-vazio' },
+      h('p', { class: 'eyebrow' }, 'Respostas'),
+      h('p', { class: 'br-vazio__t' }, f.link ? 'O cliente ainda não respondeu.' : 'O briefing ainda não tem link.'),
+      h('p', { class: 'br-card__txt' }, f.link ? 'Quando ele enviar, tudo aparece aqui. Mande o link se ainda não mandou.' : 'Salve o briefing na aba Perguntas para gerar o link.'),
+      f.link ? h('div', { class: 'br-card__acoes' }, h('button', { type: 'button', class: 'mini mini--ativo', onclick: async () => { try { await navigator.clipboard.writeText(location.origin + '/perguntas/' + f.link); avisar('Link copiado.'); } catch (e) { avisar('Abra a aba Perguntas e copie o link.', 'erro'); } } }, 'Copiar link do cliente')) : null);
+  }
+
+  const total = f.blocos.flatMap((b) => (b.ligado !== false ? b.perguntas || [] : [])).filter((q) => q.pergunta);
+  const respondidas = total.filter((q) => f.respostas?.[q.id] && f.respostas[q.id] !== PULO).length;
+  const pulos = total.filter((q) => f.respostas?.[q.id] === PULO).length;
+
+  return h('div', { class: 'br-resp-pagina' },
+    h('header', { class: 'br-resp-cab' },
+      h('div', {},
+        h('p', { class: 'eyebrow' }, 'Respondido em ' + new Date(f.respondidoEm).toLocaleString('pt-BR')),
+        h('p', { class: 'br-resp-cab__n' }, respondidas, h('small', {}, ' de ' + total.length + ' respondidas' + (pulos ? ' · ' + pulos + ' para enviar pelo WhatsApp' : '')))),
+      h('button', { type: 'button', class: 'mini mini--ativo', onclick: async () => { try { await navigator.clipboard.writeText(textoDasRespostas()); avisar('Respostas copiadas.'); } catch (e) { avisar('Não consegui copiar.', 'erro'); } } }, 'Copiar tudo')),
+    ...f.blocos.filter((b) => b.ligado !== false && (b.perguntas || []).some((q) => q.pergunta)).map((b, bi) => h('section', { class: 'br-resp-bloco' },
+      h('p', { class: 'br-resp-bloco__t' }, h('span', {}, String(bi + 1).padStart(2, '0')), b.titulo),
+      ...(b.perguntas || []).filter((q) => q.pergunta).map((q) => {
+        const r = f.respostas?.[q.id];
+        return h('div', { class: 'br-r' },
+          h('b', {}, q.pergunta),
+          r ? respostaEl(r) : h('p', { class: 'br-r__vazio' }, 'Sem resposta'));
+      }))));
 }
 
 /* ---------- salvar e gerar ---------- */
