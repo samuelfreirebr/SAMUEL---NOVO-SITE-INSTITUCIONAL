@@ -89,6 +89,10 @@ export const BLOCOS_PRONTOS = [
   },
 ];
 
+/* Texto de abertura: o mesmo em todo briefing, na voz do Samuel.
+   Editável na tela de cada briefing; este é só o ponto de partida. */
+export const TEXTO_ABERTURA = 'Este formulário leva de 10 a 15 minutos. É importante responder com atenção pois determinará nossa qualidade final do resultado! Assim que finalizar me confirma no Whatsapp que iniciamos a produção!';
+
 const pronto = (id) => BLOCOS_PRONTOS.find((b) => b.id === id);
 
 /* Esses quatro preenchem o CONTRATANTE do contrato. */
@@ -170,14 +174,6 @@ function resumo(p) {
 const idDe = (t, i) => (String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
   .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'p') + '-' + i;
 
-/* Quantos minutos o formulário leva. Meia pergunta por minuto,
-   arredondado para cinco, só para o cliente saber no que entra. */
-export function minutosDe(blocos) {
-  const total = (blocos || []).filter((b) => b.ligado !== false)
-    .reduce((n, b) => n + (b.perguntas || []).length, 0);
-  return Math.max(5, Math.round(total * 0.5 / 5) * 5);
-}
-
 export async function gerarPerguntas({ proposta, transcricao }) {
   const p = proposta || {};
   const avisos = [];
@@ -215,11 +211,10 @@ export async function gerarPerguntas({ proposta, transcricao }) {
   if (!doProjeto.length && temChaveIa() && ia) avisos.push('A IA não achou o que perguntar sobre o projeto. Só os blocos prontos foram montados.');
 
   const blocos = [...prontos, ...doProjeto];
-  const minutos = minutosDe(blocos);
 
   return {
     titulo: `Briefing${p.cliente ? ' | ' + p.cliente : ''}`,
-    texto: `Este formulário leva de ${minutos} a ${minutos + 5} minutos, uma pergunta por vez. Se não souber responder alguma, escreva "Não sei" que a gente resolve junto depois. Assim que chegar, eu começo e mando o contrato para assinatura.`,
+    texto: TEXTO_ABERTURA,
     blocos,
     avisos,
     ia: usado,
@@ -231,7 +226,7 @@ export function formularioVazio(p = {}) {
   const blocos = BLOCOS_PRONTOS.map((b) => ({ ...b }));
   return {
     titulo: `Briefing${p.cliente ? ' | ' + p.cliente : ''}`,
-    texto: `Este formulário leva poucos minutos, uma pergunta por vez. Se não souber responder alguma, escreva "Não sei" que a gente resolve junto depois.`,
+    texto: TEXTO_ABERTURA,
     blocos,
     avisos: [],
   };
