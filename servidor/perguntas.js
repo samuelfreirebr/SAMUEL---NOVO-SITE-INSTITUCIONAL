@@ -103,7 +103,7 @@ export const BLOCOS_PRONTOS = [
       { id: 'hosp-dominio', pergunta: 'Qual é o endereço do site (o domínio)', ajuda: 'Exemplo: suaempresa.com.br. Se ainda não tiver, escreva Não tenho.', tipo: 'texto', opcoes: [], obrigatoria: true },
       { id: 'hosp-registrado', pergunta: 'O domínio já está registrado', ajuda: '', tipo: 'escolha', opcoes: ['Sim, já é meu', 'Não, preciso registrar', 'Não sei'], obrigatoria: true },
       { id: 'hosp-onde', pergunta: 'Onde o domínio foi registrado', ajuda: 'Registro.br, GoDaddy, Hostinger, Locaweb. Se não souber, escreva Não sei.', tipo: 'texto', opcoes: [], obrigatoria: false },
-      { id: 'hosp-acesso', pergunta: 'Quem tem o acesso a esse painel hoje', ajuda: 'Nome e e-mail de quem consegue entrar. Não mande senha por aqui: eu peço na hora de publicar.', tipo: 'texto', opcoes: [], obrigatoria: false },
+      { id: 'hosp-acesso', pergunta: 'Vamos precisar do acesso do seu provedor, à sua conta atual de hospedagem.', ajuda: 'Caso não saiba onde está ou contratou alguém para fazer, entre em contato com a pessoa e solicite.', tipo: 'texto', opcoes: [], obrigatoria: true },
       { id: 'hosp-atual', pergunta: 'Já existe hospedagem contratada', ajuda: '', tipo: 'escolha', opcoes: ['Sim', 'Não', 'Não sei'], obrigatoria: false },
       { id: 'hosp-email', pergunta: 'Usa e-mail profissional no domínio', ajuda: 'Exemplo: contato@suaempresa.com.br. É para eu não derrubar o e-mail ao publicar.', tipo: 'escolha', opcoes: ['Sim', 'Não', 'Não sei'], obrigatoria: false },
     ],
