@@ -52,7 +52,7 @@ function montar() {
   const nomeDe = (t) => t.campo.querySelector('[name]')?.name;
   const pular = criar('button', 'pg-pular', 'Pular: enviar depois pelo WhatsApp');
   pular.hidden = true;
-  form.append(pular);
+  form.insertBefore(pular, barra);   // antes da barra fixa, que fica sempre no fim da tela
 
   /* ---------- revisão, montada no fim ---------- */
   const revisao = criar('section', 'pg-revisao');

@@ -338,3 +338,16 @@ body.quiz .pg-campo.ativa .pg-exemplo__txt { font-size: var(--t-body); }
   transition: color var(--d-fast) var(--ease-out), text-decoration-color var(--d-fast) var(--ease-out);
 }
 .pg-pular:hover { color: var(--brand); text-decoration-color: var(--brand); }
+
+
+/* ---------- barra sempre visível ----------
+   Pergunta com muitas opções passa da tela, e Continuar não pode ficar
+   escondido lá embaixo. A barra gruda no fim da janela; o respiro de
+   baixo respeita a área segura do celular. */
+body.quiz .pg-barra, body.quiz #acoes-fim {
+  position: sticky; bottom: 0; z-index: 2;
+  margin-top: var(--sp-lg);
+  padding: var(--sp-sm) 0 max(var(--sp-sm), env(safe-area-inset-bottom));
+  background: var(--bg);
+  border-top: var(--hair) solid var(--line);
+}
