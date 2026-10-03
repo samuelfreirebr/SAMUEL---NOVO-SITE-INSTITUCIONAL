@@ -57,7 +57,7 @@ async function carregar() {
   document.title = 'Briefing ' + (proposta?.cliente || id) + ' | Painel';
   f.titulo ||= ''; f.texto ||= '';
   salvo = JSON.stringify(f.blocos) + f.titulo + f.texto;
-  if (aba === 'respostas' && !f.respondidoEm) aba = 'perguntas';
+  if (aba === 'respostas' && !(f.envios || []).length) aba = 'perguntas';
   pintar();
 }
 
@@ -90,11 +90,12 @@ function trocarAba(nova) {
 }
 
 function abas() {
-  const n = f.respondidoEm ? 'Respondido' : 'Aguardando';
+  const concl = (f.envios || []).filter((e) => e.concluidoEm).length;
+  const n = concl ? (concl > 1 ? 'Respondido ×' + concl : 'Respondido') : (f.envios || []).length ? 'Parcial' : 'Aguardando';
   const aba1 = (chave, rotulo, extra) => h('button', { type: 'button', class: 'br-aba', 'aria-selected': aba === chave ? 'true' : 'false', onclick: () => trocarAba(chave) }, rotulo, extra);
   return h('nav', { class: 'br-abas', 'aria-label': 'Seções do briefing' },
     aba1('perguntas', 'Perguntas'),
-    aba1('respostas', 'Respostas', h('span', { class: 'br-aba__selo' + (f.respondidoEm ? ' br-aba__selo--ok' : '') }, f.link ? n : 'Sem link')));
+    aba1('respostas', 'Respostas', h('span', { class: 'br-aba__selo' + (concl ? ' br-aba__selo--ok' : '') }, f.link ? n : 'Sem link')));
 }
 
 function cabecalho() {
@@ -265,12 +266,15 @@ function ladoResumo() {
 const ARQ = /^(.+?) \((https?:\/\/[^)\s]+)\)$/;
 
 function ladoRespostas() {
+  const envios = f.envios || [];
+  const concl = envios.filter((e) => e.concluidoEm).length;
+  const parciais = envios.length - concl;
   return h('section', { class: 'br-card' },
     h('p', { class: 'eyebrow' }, 'Respostas'),
-    f.respondidoEm
-      ? [h('p', { class: 'br-card__txt' }, 'Recebido em ' + new Date(f.respondidoEm).toLocaleString('pt-BR') + '.'),
+    envios.length
+      ? [h('p', { class: 'br-card__txt' }, concl + (concl === 1 ? ' resposta concluída' : ' respostas concluídas') + (parciais ? ' e ' + parciais + (parciais === 1 ? ' parcial.' : ' parciais.') : '.')),
         h('div', { class: 'br-card__acoes' }, h('button', { type: 'button', class: 'mini mini--ativo', onclick: () => trocarAba('respostas') }, 'Ver respostas'))]
-      : h('p', { class: 'br-card__txt' }, f.link ? 'O cliente ainda não respondeu.' : 'Salve e mande o link.'));
+      : h('p', { class: 'br-card__txt' }, f.link ? 'Ninguém respondeu ainda.' : 'Salve e mande o link.'));
 }
 
 function ladoArquivos() {
@@ -300,36 +304,74 @@ function respostaEl(r) {
   return h('p', { class: 'br-r__txt' }, r);
 }
 
-function textoDasRespostas() {
+// O mesmo link recebe várias respostas: cada pessoa que abre é um envio.
+const QUINZE_MIN = 15 * 60 * 1000;
+let envioSel = null;
+
+const enviosDoForm = () => [...(f.envios || [])].sort((x, y) => String(y.concluidoEm || y.atualizadoEm).localeCompare(String(x.concluidoEm || x.atualizadoEm)));
+const quando = (iso) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+function estadoDe(e) {
+  if (e.concluidoEm) return ['Concluído', 'ok'];
+  // Sem novidade há 15 minutos: a pessoa largou no meio.
+  return Date.now() - new Date(e.atualizadoEm).getTime() > QUINZE_MIN ? ['Incompleto', 'parou'] : ['Respondendo agora', 'agora'];
+}
+
+function textoDasRespostas(e) {
   return f.blocos.filter((b) => b.ligado !== false).map((b) => {
-    const qs = (b.perguntas || []).filter((q) => q.pergunta).map((q) => q.pergunta + '\n' + (String(f.respostas?.[q.id] || '').replace(/ \(https?:\/\/[^)\s]+\)/g, '') || '(sem resposta)'));
+    const qs = (b.perguntas || []).filter((q) => q.pergunta).map((q) => q.pergunta + '\n' + (String(e.respostas?.[q.id] || '').replace(/ \(https?:\/\/[^)\s]+\)/g, '') || '(sem resposta)'));
     return qs.length ? b.titulo.toUpperCase() + '\n\n' + qs.join('\n\n') : '';
   }).filter(Boolean).join('\n\n---\n\n');
 }
 
+async function apagarEnvio(e) {
+  if (!confirm('Apagar esta resposta? Não dá para desfazer.')) return;
+  try {
+    await api('/api/formularios/' + encodeURIComponent(id) + '/envios/' + encodeURIComponent(e.id), { method: 'DELETE' });
+    f = { ...(await api('/api/formularios/' + encodeURIComponent(id))) };
+    envioSel = null;
+    if (!(f.envios || []).length) aba = 'perguntas';
+    pintar();
+    avisar('Resposta apagada.');
+  } catch (x) { avisar(x.message, 'erro'); }
+}
+
 function respostasEl() {
-  if (!f.respondidoEm) {
+  const envios = enviosDoForm();
+  if (!envios.length) {
     return h('section', { class: 'br-vazio' },
       h('p', { class: 'eyebrow' }, 'Respostas'),
-      h('p', { class: 'br-vazio__t' }, f.link ? 'O cliente ainda não respondeu.' : 'O briefing ainda não tem link.'),
-      h('p', { class: 'br-card__txt' }, f.link ? 'Quando ele enviar, tudo aparece aqui. Mande o link se ainda não mandou.' : 'Salve o briefing na aba Perguntas para gerar o link.'),
-      f.link ? h('div', { class: 'br-card__acoes' }, h('button', { type: 'button', class: 'mini mini--ativo', onclick: async () => { try { await navigator.clipboard.writeText(location.origin + '/perguntas/' + f.link); avisar('Link copiado.'); } catch (e) { avisar('Abra a aba Perguntas e copie o link.', 'erro'); } } }, 'Copiar link do cliente')) : null);
+      h('p', { class: 'br-vazio__t' }, f.link ? 'Ninguém respondeu ainda.' : 'O briefing ainda não tem link.'),
+      h('p', { class: 'br-card__txt' }, f.link ? 'Quando alguém abrir o link, as respostas aparecem aqui, inclusive as de quem parar no meio.' : 'Salve o briefing na aba Perguntas para gerar o link.'),
+      f.link ? h('div', { class: 'br-card__acoes' }, h('button', { type: 'button', class: 'mini mini--ativo', onclick: async () => { try { await navigator.clipboard.writeText(location.origin + '/perguntas/' + f.link); avisar('Link copiado.'); } catch (x) { avisar('Abra a aba Perguntas e copie o link.', 'erro'); } } }, 'Copiar link do cliente')) : null);
   }
 
+  // Abre no último concluído; se ninguém concluiu, no mais recente.
+  const e = envios.find((x) => x.id === envioSel) || envios.find((x) => x.concluidoEm) || envios[0];
+  envioSel = e.id;
+  const [rotulo, tom] = estadoDe(e);
+
   const total = f.blocos.flatMap((b) => (b.ligado !== false ? b.perguntas || [] : [])).filter((q) => q.pergunta);
-  const respondidas = total.filter((q) => f.respostas?.[q.id] && f.respostas[q.id] !== PULO).length;
-  const pulos = total.filter((q) => f.respostas?.[q.id] === PULO).length;
+  const respondidas = total.filter((q) => e.respostas?.[q.id] && e.respostas[q.id] !== PULO).length;
+  const pulos = total.filter((q) => e.respostas?.[q.id] === PULO).length;
 
   return h('div', { class: 'br-resp-pagina' },
+    envios.length > 1 || tom !== 'ok'
+      ? h('div', { class: 'br-envios', role: 'tablist', 'aria-label': 'Respostas recebidas' },
+        ...envios.map((x, i) => { const [r, t] = estadoDe(x); return h('button', { type: 'button', class: 'br-envio', 'aria-pressed': x.id === e.id ? 'true' : 'false', onclick: () => { envioSel = x.id; pintar(); } },
+          h('b', {}, x.respostas?.razaoSocial || 'Sem nome'), h('small', {}, quando(x.concluidoEm || x.atualizadoEm)), h('span', { class: 'br-envio__st br-envio__st--' + t }, r)); }))
+      : null,
     h('header', { class: 'br-resp-cab' },
       h('div', {},
-        h('p', { class: 'eyebrow' }, 'Respondido em ' + new Date(f.respondidoEm).toLocaleString('pt-BR')),
-        h('p', { class: 'br-resp-cab__n' }, respondidas, h('small', {}, ' de ' + total.length + ' respondidas' + (pulos ? ' · ' + pulos + ' para enviar pelo WhatsApp' : '')))),
-      h('button', { type: 'button', class: 'mini mini--ativo', onclick: async () => { try { await navigator.clipboard.writeText(textoDasRespostas()); avisar('Respostas copiadas.'); } catch (e) { avisar('Não consegui copiar.', 'erro'); } } }, 'Copiar tudo')),
+        h('p', { class: 'eyebrow' }, (e.concluidoEm ? 'Enviado em ' + new Date(e.concluidoEm).toLocaleString('pt-BR') : 'Última resposta em ' + new Date(e.atualizadoEm).toLocaleString('pt-BR'))),
+        h('p', { class: 'br-resp-cab__n' }, respondidas, h('small', {}, ' de ' + total.length + ' respondidas' + (pulos ? ' · ' + pulos + ' para enviar pelo WhatsApp' : '') + (e.concluidoEm ? '' : ' · ' + rotulo.toLowerCase())))),
+      h('div', { class: 'br-card__acoes' },
+        h('button', { type: 'button', class: 'mini mini--ativo', onclick: async () => { try { await navigator.clipboard.writeText(textoDasRespostas(e)); avisar('Respostas copiadas.'); } catch (x) { avisar('Não consegui copiar.', 'erro'); } } }, 'Copiar tudo'),
+        h('button', { type: 'button', class: 'mini mini--perigo', onclick: () => apagarEnvio(e) }, 'Apagar'))),
     ...f.blocos.filter((b) => b.ligado !== false && (b.perguntas || []).some((q) => q.pergunta)).map((b, bi) => h('section', { class: 'br-resp-bloco' },
       h('p', { class: 'br-resp-bloco__t' }, h('span', {}, String(bi + 1).padStart(2, '0')), b.titulo),
       ...(b.perguntas || []).filter((q) => q.pergunta).map((q) => {
-        const r = f.respostas?.[q.id];
+        const r = e.respostas?.[q.id];
         return h('div', { class: 'br-r' },
           h('b', {}, q.pergunta),
           r ? respostaEl(r) : h('p', { class: 'br-r__vazio' }, 'Sem resposta'));

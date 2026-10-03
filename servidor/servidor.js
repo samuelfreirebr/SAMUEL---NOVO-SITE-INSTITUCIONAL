@@ -335,7 +335,7 @@ async function api(req, res, url) {
   }
   /* --- formulário de perguntas: um por proposta --- */
   if (rota.startsWith('formularios/')) {
-    const [id, acao] = rota.slice('formularios/'.length).split('/');
+    const [id, acao, envioId] = rota.slice('formularios/'.length).split('/');
     const proposta = await dados.lerProposta(id);
     if (!proposta) return json(res, { erro: 'Proposta não encontrada.' }, 404);
     if (acao === 'gerar' && req.method === 'POST') {
@@ -345,6 +345,10 @@ async function api(req, res, url) {
         transcricao: reuniao?.texto || '',
       });
       return json(res, await dados.gravarFormulario(id, { titulo: g.titulo, texto: g.texto, blocos: g.blocos, avisos: g.avisos, ia: g.ia, comReuniao: Boolean(reuniao) }));
+    }
+    if (acao === 'envios' && req.method === 'DELETE' && envioId) {
+      const f = await dados.apagarEnvio(id, envioId);
+      return f ? json(res, { ok: true }) : json(res, { erro: 'Formulário não encontrado.' }, 404);
     }
     if (acao) return json(res, { erro: 'Rota não existe.' }, 404);
     if (req.method === 'GET') {
@@ -652,7 +656,6 @@ const servidor = http.createServer(async (req, res) => {
       /* Arquivos do cliente: logo, manual da marca, fotos. Sobem um
          a um enquanto ele responde, e voltam pelo mesmo link. */
       if (sub === 'arquivos' && req.method === 'POST') {
-        if (f.respondidoEm) return json(res, { erro: 'Este briefing já foi enviado.' }, 409);
         let corpo;
         try { corpo = await lerCorpo(req, dados.LIMITE_ANEXO + 65536); }
         catch (e) { return json(res, { erro: 'Arquivo acima do limite de 20 MB.' }, 413); }
@@ -697,11 +700,12 @@ const servidor = http.createServer(async (req, res) => {
         for (const [k, v] of Object.entries(d.respostas)) {
           if (validas.has(k)) limpas[k] = String(v ?? '').slice(0, 4000);
         }
-        await dados.responderFormulario(link, limpas);
+        try { await dados.salvarEnvio(link, { envio: d.envio, respostas: limpas, concluir: d.concluir === true }); }
+        catch (e) { return json(res, { erro: e.message }, 400); }
         return json(res, { ok: true });
       }
 
-      const html = renderizarPerguntas(comExemplos(f), { respondido: Boolean(f.respondidoEm) });
+      const html = renderizarPerguntas(comExemplos(f));
       res.writeHead(200, {
         'content-type': 'text/html; charset=utf-8',
         'content-length': Buffer.byteLength(html),

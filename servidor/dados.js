@@ -115,7 +115,8 @@ const idValido = (id) => /^[a-z0-9][a-z0-9-]{1,60}$/.test(id);
 async function resumoBriefing(id) {
   const f = await lerFormulario(id);
   if (!f?.link) return null;
-  return { respondidoEm: f.respondidoEm || null };
+  const envios = f.envios || [];
+  return { respondidoEm: f.respondidoEm || null, total: envios.filter((e) => e.concluidoEm).length, parciais: envios.filter((e) => !e.concluidoEm).length };
 }
 
 export async function listarPropostas() {
@@ -167,13 +168,34 @@ export async function apagarProposta(id) {
    endereço responde, e um endereço adivinhável deixaria qualquer um
    mandar resposta no lugar do cliente. */
 
+/* Cada pessoa que abre o link gera um envio, com id próprio. O mesmo
+   link recebe quantas respostas vierem (o cliente, um teste, um sócio).
+   Formulário antigo guardava uma resposta só: vira o primeiro envio. */
+function comEnvios(f) {
+  if (f && !Array.isArray(f.envios)) {
+    f.envios = f.respondidoEm
+      ? [{ id: 'primeiro', iniciadoEm: f.respondidoEm, atualizadoEm: f.respondidoEm, concluidoEm: f.respondidoEm, respostas: f.respostas || {} }]
+      : [];
+  }
+  return f;
+}
+
+// O contrato e o selo da lista leem o último envio concluído.
+function sincronizarUltimo(f) {
+  const ult = f.envios.filter((e) => e.concluidoEm).sort((a, b) => b.concluidoEm.localeCompare(a.concluidoEm))[0];
+  if (ult) { f.respostas = ult.respostas; f.respondidoEm = ult.concluidoEm; }
+  else { delete f.respostas; delete f.respondidoEm; }
+}
+
 export async function lerFormulario(id) {
   if (!idValido(id)) return null;
-  try { return JSON.parse(await fs.readFile(path.join(PASTA_FORMULARIOS, id + '.json'), 'utf8')); }
+  try { return comEnvios(JSON.parse(await fs.readFile(path.join(PASTA_FORMULARIOS, id + '.json'), 'utf8'))); }
   catch (e) { return null; }
 }
 
-export async function gravarFormulario(id, dado) {
+export function gravarFormulario(id, dado) { return naFila(() => gravarFormularioAgora(id, dado)); }
+
+async function gravarFormularioAgora(id, dado) {
   await preparar();
   if (!idValido(id)) throw new Error('Proposta inválida.');
   const antigo = await lerFormulario(id);
@@ -197,20 +219,55 @@ export async function formularioPeloLink(link) {
   for (const n of nomes) {
     try {
       const f = JSON.parse(await fs.readFile(path.join(PASTA_FORMULARIOS, n), 'utf8'));
-      if (f?.link === link) return f;
+      if (f?.link === link) return comEnvios(f);
     } catch (e) { /* arquivo torto: ignora */ }
   }
   return null;
 }
 
-export async function responderFormulario(link, respostas) {
-  const f = await formularioPeloLink(link);
-  if (!f) return null;
-  f.respostas = respostas;
-  f.respondidoEm = new Date().toISOString();
-  f.atualizadoEm = f.respondidoEm;
-  await gravarJson(path.join(PASTA_FORMULARIOS, f.proposta + '.json'), f);
-  return f;
+/* Gravações do mesmo arquivo uma atrás da outra: dois clientes
+   respondendo juntos não podem pisar um no outro (ler, mexer, gravar). */
+let fila = Promise.resolve();
+const naFila = (fn) => { const r = fila.then(fn, fn); fila = r.catch(() => {}); return r; };
+
+const idEnvioValido = (id) => /^[a-z0-9]{8,40}$/.test(String(id || ''));
+const MAX_ENVIOS = 300;
+
+// `concluir` falso grava o andamento; verdadeiro fecha o envio.
+export function salvarEnvio(link, { envio, respostas, concluir }) {
+  return naFila(async () => {
+    const f = await formularioPeloLink(link);
+    if (!f) return null;
+    if (!idEnvioValido(envio)) throw new Error('Envio inválido.');
+    const agora = new Date().toISOString();
+    let e = f.envios.find((x) => x.id === envio);
+    if (!e) {
+      if (f.envios.length >= MAX_ENVIOS) throw new Error('Limite de respostas deste link atingido.');
+      e = { id: envio, iniciadoEm: agora, concluidoEm: null, respostas: {} };
+      f.envios.push(e);
+    }
+    // Andamento que chega depois de concluído (aba fechando) não reabre o envio.
+    if (e.concluidoEm && !concluir) return f;
+    e.respostas = respostas;
+    e.atualizadoEm = agora;
+    if (concluir) e.concluidoEm = e.concluidoEm || agora;
+    sincronizarUltimo(f);
+    f.atualizadoEm = agora;
+    await gravarJson(path.join(PASTA_FORMULARIOS, f.proposta + '.json'), f);
+    return f;
+  });
+}
+
+export function apagarEnvio(id, envio) {
+  return naFila(async () => {
+    const f = await lerFormulario(id);
+    if (!f) return null;
+    f.envios = f.envios.filter((e) => e.id !== envio);
+    sincronizarUltimo(f);
+    f.atualizadoEm = new Date().toISOString();
+    await gravarJson(path.join(PASTA_FORMULARIOS, id + '.json'), f);
+    return f;
+  });
 }
 
 /* ---------- arquivos que o cliente sobe no briefing ----------

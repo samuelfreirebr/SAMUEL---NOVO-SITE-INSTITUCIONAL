@@ -206,7 +206,7 @@ function mostrarLista() {
           h('button', { type: 'button', class: 'ed-doc', onclick: () => abrirContrato(p), title: 'Gera o contrato desta proposta e deixa pronto para assinar' }, ico('doc'), 'Contrato'),
           h('button', { type: 'button', class: 'ed-doc', onclick: () => abrirPerguntas(p), title: p.briefing?.respondidoEm ? 'O cliente respondeu: abre as respostas' : 'Monta o briefing e dá o link para o cliente responder' },
             ico('lista'), 'Perguntas',
-            p.briefing ? h('span', { class: 'ed-selo' + (p.briefing.respondidoEm ? ' ed-selo--ok' : '') }, p.briefing.respondidoEm ? 'Respondido' : 'Aguardando') : null)),
+            p.briefing ? h('span', { class: 'ed-selo' + (p.briefing.respondidoEm ? ' ed-selo--ok' : '') }, p.briefing.respondidoEm ? (p.briefing.total > 1 ? 'Respondido ×' + p.briefing.total : 'Respondido') : p.briefing.parciais ? 'Parcial' : 'Aguardando') : null)),
         h('span', { class: 'ed-sep', 'aria-hidden': 'true' }),
         h('div', { class: 'ed-grupo' },
           h('a', { class: 'ed-acao', href: '/propostas/' + p.id, target: '_blank', rel: 'noopener', title: 'Abre a página da proposta' }, ico('olho'), 'Ver'),
@@ -831,7 +831,7 @@ function ligarIa() {
 /* ---------- perguntas ----------
    O briefing tem tela própria: /admin/perguntas/#<id da proposta>. */
 // Respondido abre direto nas respostas; o resto, na edição das perguntas.
-const abrirPerguntas = (p) => { location.href = '/admin/perguntas/#' + encodeURIComponent(p.id) + (p.briefing?.respondidoEm ? '/respostas' : ''); };
+const abrirPerguntas = (p) => { location.href = '/admin/perguntas/#' + encodeURIComponent(p.id) + (p.briefing?.total || p.briefing?.parciais ? '/respostas' : ''); };
 
 /* ---------- contrato ----------
    Uma janela só, em dois modos: o contrato de uma proposta e o

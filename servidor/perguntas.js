@@ -448,7 +448,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 
 <footer class="pg-rodape"><p class="small">Samuel Freire Web Designer</p></footer>
 
-<script type="module" src="/js/briefing.js?v=q9"></script>
+<script type="module" src="/js/briefing.js?v=q11"></script>
 </body>
 </html>`;
 }

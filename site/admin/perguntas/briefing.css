@@ -220,3 +220,20 @@ html:has(body.br) { height: auto; }
 .br-vazio { padding: var(--sp-lg) var(--sp-md); display: grid; gap: var(--sp-xs); max-width: 36rem; }
 .br-vazio .eyebrow { display: flex; align-items: center; gap: .6em; }
 .br-vazio__t { font-size: var(--t-h3); font-weight: var(--w-black); letter-spacing: var(--ls-h3); line-height: var(--lh-h3); }
+
+/* ---------- vários envios no mesmo link ---------- */
+.br-envios { display: flex; flex-wrap: wrap; gap: var(--sp-2xs); }
+.br-envio {
+  display: grid; gap: 2px; text-align: left;
+  padding: var(--sp-2xs) var(--sp-sm);
+  background: var(--bg); border: var(--hair) solid var(--line-2); border-radius: var(--radius-img);
+  transition: border-color var(--d-fast) var(--ease-out), background var(--d-fast) var(--ease-out);
+}
+.br-envio:hover { border-color: var(--ink); }
+.br-envio[aria-pressed="true"] { border-color: var(--brand); background: var(--brand-wash); }
+.br-envio b { font-size: var(--t-small); font-weight: var(--w-bold); max-width: 14ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.br-envio small { font-size: var(--t-eyebrow); color: var(--muted); }
+.br-envio__st { font-size: var(--t-eyebrow); font-weight: var(--w-semi); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.br-envio__st--ok { color: var(--brand); }
+.br-envio__st--agora { color: var(--ink); }
+.br-envio__st--parou { color: var(--meta); }

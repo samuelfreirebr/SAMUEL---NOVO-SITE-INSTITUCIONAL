@@ -159,8 +159,33 @@ function montar() {
      zero. Fica só neste navegador, nada vai para o servidor antes
      de enviar. */
   const chave = 'briefing:' + location.pathname;
+  const chaveEnvio = 'briefing-envio:' + location.pathname;
+
+  /* Cada pessoa que abre o link tem um envio, com id sorteado aqui e
+     guardado no navegador. Ele continua o mesmo ao recarregar e muda
+     depois de enviado, então o mesmo link serve para várias respostas. */
+  const novoEnvio = () => [...crypto.getRandomValues(new Uint8Array(12))].map((b) => 'abcdefghijkmnpqrstuvwxyz23456789'[b % 32]).join('');
+  let envio;
+  try { envio = localStorage.getItem(chaveEnvio); } catch (e) { /* sem armazenamento */ }
+  if (!envio) { envio = novoEnvio(); try { localStorage.setItem(chaveEnvio, envio); } catch (e) { /* segue com o id da página */ } }
+
+  // O andamento vai para o servidor: se a pessoa parar no meio, o Samuel
+  // vê até onde ela chegou. Espera um instante para não mandar a cada tecla.
+  let espera;
+  function enviarAndamento(agora = false) {
+    clearTimeout(espera);
+    const mandar = () => {
+      const v = valores();
+      if (!Object.values(v).some((x) => String(x).trim())) return;
+      fetch(location.pathname, { method: 'POST', headers: { 'content-type': 'application/json' }, keepalive: true, body: JSON.stringify({ envio, respostas: v }) }).catch(() => {});
+    };
+    if (agora) mandar(); else espera = setTimeout(mandar, 1500);
+  }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') enviarAndamento(true); });
+
   function guardar() {
     try { localStorage.setItem(chave, JSON.stringify(valores())); } catch (e) { /* sem espaço: segue sem rascunho */ }
+    enviarAndamento();
   }
   function valores() {
     const d = {};
@@ -285,11 +310,12 @@ function montar() {
       const r = await fetch(location.pathname, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ respostas: valores() }),
+        body: JSON.stringify({ envio, respostas: valores(), concluir: true }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.erro || 'Não consegui enviar. Tente de novo em instantes.');
-      try { localStorage.removeItem(chave); } catch (x) { /* nada a limpar */ }
+      clearTimeout(espera);
+      try { localStorage.removeItem(chave); localStorage.removeItem(chaveEnvio); } catch (x) { /* nada a limpar */ }
       form.hidden = true;
       capa.hidden = true;
       regua.hidden = true; rotulo.hidden = true;
