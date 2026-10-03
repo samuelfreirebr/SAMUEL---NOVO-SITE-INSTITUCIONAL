@@ -35,7 +35,14 @@ ou IA) lê isto antes de começar.
    - nada passa da borda direita;
    - título nunca quebra palavra no meio;
    - no computador, cada seção cabe na tela sempre que der.
-4. A página funciona sem JavaScript: sem o `main.js`, tudo nasce visível.
+4. Toda página que o Samuel manda por link (site, proposta, briefing, fatura)
+   leva o preview do WhatsApp: título, descrição e imagem 1200x630. As páginas
+   do servidor usam `metaCompartilhar()` de `servidor/compartilhar.js`; as
+   estáticas levam as tags og: no `<head>`. As imagens ficam em
+   `site/img/og-*.png` e saem de `material/og/gerar.sh`. Mudou uma imagem? Suba
+   `IMAGEM_V` em `compartilhar.js` (e o `?v=` nas páginas estáticas): o WhatsApp
+   guarda o preview em cache e só busca de novo quando o endereço muda.
+5. A página funciona sem JavaScript: sem o `main.js`, tudo nasce visível.
    Movimento respeita `prefers-reduced-motion`.
 
 ## 3. Propostas

@@ -11,6 +11,8 @@
    A mesma função serve a página pública e a prévia do painel.
    ============================================================ */
 
+import { metaCompartilhar } from './compartilhar.js';
+
 const V = 'f1';   // versão do fatura.css, para o cache
 
 // Escapa também as aspas: os valores entram em atributos.
@@ -127,6 +129,13 @@ export function renderizarFatura(f, { previa = false, imprimir = false } = {}) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(tituloAba)}</title>
 <meta name="robots" content="noindex, nofollow">
+${metaCompartilhar({
+  titulo: `${tituloAba} | Samuel Freire`,
+  descricao: t.lang === 'en' ? 'Invoice from Samuel Freire Web Designer.' : 'Fatura de Samuel Freire Web Designer.',
+  imagem: 'fatura',
+  caminho: f.id ? `/faturas/${f.id}` : '/',
+  alt: 'Fatura de Samuel Freire',
+})}
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css">
 <link rel="stylesheet" href="/styles/base.css">

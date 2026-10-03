@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Imagem de compartilhamento</title>
+<!--
+  Fonte das imagens que aparecem no preview do WhatsApp (site/img/og-*.png).
+  Abra com ?v=site, ?v=proposta, ?v=briefing ou ?v=fatura. Para regerar,
+  rode material/og/gerar.sh. Tamanho fixo 1200x630, que é o que o WhatsApp,
+  o Instagram e o LinkedIn esperam.
+-->
+<style>
+@font-face { font-family: "Manrope"; src: url("../../site/fonts/manrope-latin.woff2") format("woff2"); font-weight: 200 800; }
+:root { --brand: #FF4F18; --ink: #141517; --muted: #5B6470; --line: #E1E5EA; --bg: #FFFFFF; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 1200px; height: 630px; overflow: hidden; background: var(--bg); color: var(--ink); font-family: "Manrope", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+.cena { position: relative; width: 1200px; height: 630px; padding: 64px 80px 56px; display: flex; flex-direction: column; }
+.topo { display: flex; align-items: center; justify-content: space-between; }
+.marca { font-size: 34px; letter-spacing: -.04em; }
+.marca b { font-weight: 800; }
+.marca i { font-weight: 400; font-style: italic; color: var(--brand); margin-left: .28em; }
+.tag { display: flex; align-items: center; gap: 14px; font-size: 20px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+.tag::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--brand); }
+.meio { flex: 1; display: flex; align-items: center; }
+h1 { font-size: 104px; font-weight: 800; letter-spacing: -.05em; line-height: .96; max-width: 860px; }
+h1 em { font-style: normal; color: var(--brand); }
+.pe { display: flex; align-items: center; justify-content: space-between; padding-top: 26px; border-top: 2px solid var(--ink); font-size: 24px; font-weight: 600; letter-spacing: -.01em; }
+.pe span:last-child { color: var(--muted); font-weight: 500; }
+.foto { position: absolute; right: 80px; top: 150px; width: 300px; height: 300px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 6px var(--brand); display: none; }
+.com-foto h1 { max-width: 700px; font-size: 92px; }
+.com-foto .foto { display: block; }
+</style>
+</head>
+<body>
+<div class="cena" id="cena">
+  <div class="topo"><p class="marca"><b>Samuel</b><i>Freire</i></p><p class="tag" id="tag"></p></div>
+  <div class="meio"><h1 id="titulo"></h1></div>
+  <div class="pe"><span id="pe"></span><span>links.samuelfreire.com.br</span></div>
+  <img class="foto" src="../../site/img/samuel-retrato.jpg" alt="">
+</div>
+<script>
+const variantes = {
+  site:      { tag: 'Web Designer', titulo: 'Landing pages para <em>lançamentos</em>', pe: 'De 7D, com foco em escala e previsibilidade', foto: true },
+  global:    { tag: 'Digital Design & Brand', titulo: 'Digital Design &amp; <em>Brand</em> Experience', pe: 'Estratégia, Brand, Systems e Marketing', foto: true },
+  proposta:  { tag: 'Proposta comercial', titulo: 'Sua proposta de <em>projeto</em>', pe: 'Escopo, processo e investimento' },
+  briefing:  { tag: 'Briefing do projeto', titulo: 'Vamos <em>começar</em> o seu projeto', pe: 'Uma pergunta por vez' },
+  fatura:    { tag: 'Fatura', titulo: 'Sua <em>fatura</em>', pe: 'Samuel Freire Web Designer' },
+};
+const v = variantes[new URLSearchParams(location.search).get('v')] || variantes.site;
+document.getElementById('tag').textContent = v.tag;
+document.getElementById('titulo').innerHTML = v.titulo;
+document.getElementById('pe').textContent = v.pe;
+if (v.foto) document.getElementById('cena').classList.add('com-foto');
+</script>
+</body>
+</html>

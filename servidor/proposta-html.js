@@ -10,6 +10,7 @@
    ============================================================ */
 
 import { escapar } from './listas.js';
+import { metaCompartilhar } from './compartilhar.js';
 
 const V = 'p10';   // versão do proposta.css, para o cache
 
@@ -579,6 +580,13 @@ export function renderizarProposta(p, { previa = false } = {}) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Proposta · ${cliente} | Samuel Freire</title>
 <meta name="robots" content="noindex, nofollow">
+${metaCompartilhar({
+  titulo: p.cliente ? `Proposta para ${p.cliente} | Samuel Freire` : 'Proposta | Samuel Freire',
+  descricao: p.titulo ? `${String(p.titulo).trim().replace(/[.]$/, '')}. Escopo, processo e investimento do seu projeto.` : 'Escopo, processo e investimento do seu projeto.',
+  imagem: 'proposta',
+  caminho: p.id ? `/propostas/${p.id}` : '/',
+  alt: 'Proposta comercial de Samuel Freire',
+})}
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css">
 <link rel="stylesheet" href="/styles/base.css">

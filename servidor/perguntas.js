@@ -21,6 +21,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { pedirJsonIa, temChaveIa, semTravessao } from './proposta-ia.js';
+import { metaCompartilhar } from './compartilhar.js';
 
 const limpo = (t) => semTravessao(t).trim();
 
@@ -479,6 +480,13 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(f.titulo || 'Informações para começar')}</title>
 <meta name="robots" content="noindex, nofollow">
+${metaCompartilhar({
+  titulo: f.titulo || 'Briefing do projeto',   // já vem como "Briefing | Cliente"
+  descricao: 'Responda uma pergunta por vez, no seu ritmo. Leva de 10 a 15 minutos e o que você já respondeu fica salvo.',
+  imagem: 'briefing',
+  caminho: f.link ? `/perguntas/${f.link}` : '/',
+  alt: 'Briefing do projeto, Samuel Freire',
+})}
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css">
 <link rel="stylesheet" href="/styles/base.css">
