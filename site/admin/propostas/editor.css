@@ -279,53 +279,193 @@ body.ed { height: 100%; overflow: hidden; }
 }
 
 
-/* ---------- Preencher com IA ---------- */
-.ia { width: min(94vw, 760px); }
-.ia__dica { font-size: var(--t-small); color: var(--muted); line-height: 1.5; margin-bottom: var(--sp-md); }
-.ia__dica b { color: var(--ink); }
-.ia__campo { display: block; margin-bottom: var(--sp-md); }
-.ia__campo > span { display: block; font-size: var(--t-small); font-weight: var(--w-semi); margin-bottom: var(--sp-2xs); }
-.ia__campo textarea { width: 100%; min-height: 9em; resize: vertical; font-family: inherit; font-size: var(--t-body); padding: .7em .85em; border: var(--hair) solid var(--line-2); border-radius: var(--radius-img); background: var(--bg); color: var(--ink); }
-.ia .solta { margin-bottom: var(--sp-sm); }
-.ia__lista { list-style: none; display: grid; gap: 4px; margin-bottom: var(--sp-md); }
-.ia__lista li { display: flex; align-items: center; gap: var(--sp-sm); font-size: var(--t-small); padding: .45em .7em; background: var(--bg-2); border-radius: var(--radius-img); }
-.ia__lista li span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ia__lista li small { color: var(--muted); }
-.ia__lista li.lido { background: var(--bg); box-shadow: inset 0 0 0 var(--hair) var(--line); }
-.ia__aviso { font-size: var(--t-small); padding: var(--sp-sm) var(--sp-md); border-radius: var(--radius-img); margin-bottom: var(--sp-md); background: var(--bg-2); color: var(--ink); }
-.ia__aviso[data-tipo="erro"] { background: var(--brand); color: #fff; }
-.ia__aviso[data-tipo="ok"] { background: var(--ink); color: #fff; }
-.ia__acoes { display: flex; align-items: center; gap: var(--sp-md); flex-wrap: wrap; }
-.ia__meta { font-size: var(--t-eyebrow); color: var(--muted); }
-.mini--ia { background: var(--brand); color: #fff; box-shadow: none; }
-.mini--ia:hover { background: var(--ink); }
-.mini--ia[disabled] { opacity: .5; pointer-events: none; }
-.girando { display: inline-block; width: .9em; height: .9em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: ia-gira .8s linear infinite; vertical-align: -.15em; margin-right: .3em; }
-@keyframes ia-gira { to { transform: rotate(360deg); } }
-
 /* ---------- posição da seção na página ---------- */
 .ed-ordem { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .ed-ordem__rot { font-size: var(--t-eyebrow); color: var(--muted); margin-right: 4px; }
 
-/* ---------- janela das perguntas ---------- */
-.ia__link {
-  display: flex; align-items: center; gap: var(--sp-2xs); flex-wrap: wrap;
-  padding: var(--sp-sm) var(--sp-md); margin-bottom: var(--sp-md);
+
+/* ============================================================
+   Janelas (.jan): contrato, perguntas, preencher com IA.
+
+   Topo com eyebrow e nome, corpo que rola, pé fixo com as ações.
+   Aviso é régua laranja com texto escuro, não bloco laranja
+   inteiro: o laranja do sistema é detalhe, não fundo.
+   ============================================================ */
+
+/* Sem display aqui: quem mostra e esconde o dialog é painel.css
+   (dialog / dialog[open]). Uma classe venceria aquela regra e a
+   janela nasceria aberta. */
+.jan { width: min(94vw, 720px); }
+.jan--larga { width: min(96vw, 940px); }
+
+.jan__topo {
+  flex: none;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-md);
+  padding: var(--sp-md) var(--sp-md) var(--sp-sm);
+  border-bottom: var(--hair) solid var(--line);
+}
+.jan__titulo {
+  margin-top: var(--sp-3xs);
+  font-size: 1.125rem; font-weight: var(--w-black); letter-spacing: -.025em; line-height: 1.2;
+}
+.jan__fechar {
+  flex: none; width: 2rem; height: 2rem;
+  display: grid; place-items: center;
+  border-radius: 50%; font-size: 1.25rem; line-height: 1;
+  color: var(--muted); background: var(--bg-2); cursor: pointer;
+  transition: background var(--d-fast) var(--ease-out), color var(--d-fast) var(--ease-out);
+}
+.jan__fechar:hover { background: var(--ink); color: #fff; }
+
+.jan__corpo { flex: 1; min-height: 0; overflow: auto; padding: var(--sp-md); }
+.jan__dica { font-size: var(--t-small); line-height: 1.55; color: var(--muted); }
+.jan__dica b { color: var(--ink); font-weight: var(--w-semi); }
+
+/* Aviso: régua laranja e texto legível. Erro escurece a régua. */
+.jan__aviso {
+  margin-top: var(--sp-md);
+  padding: var(--sp-sm) var(--sp-md);
+  border-left: var(--hair-2) solid var(--brand);
+  background: var(--bg-2);
+  font-size: var(--t-small); line-height: 1.5; color: var(--ink);
+}
+.jan__aviso[data-tipo="erro"] { background: var(--brand-wash); }
+.jan__aviso[data-tipo="ok"] { border-left-color: var(--ink); }
+
+.jan__secao { display: block; margin-top: var(--sp-xl); }
+.jan__secao > .eyebrow, .jan__secao > span.eyebrow { margin-bottom: var(--sp-sm); }
+
+.jan__campo, .jan__doc {
+  width: 100%;
+  padding: .7em .85em;
+  background: var(--bg); color: var(--ink);
+  border: var(--hair) solid var(--line-2); border-radius: var(--radius-img);
+  font-family: inherit; font-size: var(--t-body); line-height: 1.5;
+}
+.jan__campo:focus-visible, .jan__doc:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+textarea.jan__campo { min-height: 9em; resize: vertical; }
+/* O contrato é documento: entrelinha de leitura e medida confortável. */
+.jan__doc {
+  min-height: 24em; resize: vertical;
+  font-size: .8125rem; line-height: 1.7; letter-spacing: -.004em;
+  background: var(--bg-2);
+}
+
+.jan__link { display: flex; align-items: center; gap: var(--sp-2xs); flex-wrap: wrap; }
+.jan__link input {
+  flex: 1; min-width: 14rem; padding: .6em .8em;
+  font-size: var(--t-small); color: var(--ink); background: var(--bg);
+  border: var(--hair) solid var(--line-2); border-radius: var(--radius-img);
+}
+
+.jan__pe {
+  flex: none;
+  display: flex; align-items: center; gap: var(--sp-sm); flex-wrap: wrap;
+  padding: var(--sp-sm) var(--sp-md);
+  border-top: var(--hair) solid var(--line);
+  background: var(--bg);
+}
+.jan__meta { font-size: var(--t-eyebrow); color: var(--muted); margin-left: auto; text-align: right; }
+
+/* anexos da janela da IA */
+.jan__anexos { list-style: none; display: grid; gap: 4px; margin-top: var(--sp-md); }
+.jan__anexos li {
+  display: flex; align-items: center; gap: var(--sp-sm);
+  font-size: var(--t-small); padding: .45em .7em;
   background: var(--bg-2); border-radius: var(--radius-img);
 }
-.ia__link > span { font-size: var(--t-eyebrow); font-weight: var(--w-semi); letter-spacing: var(--ls-eyebrow); text-transform: uppercase; color: var(--muted); width: 100%; }
-.ia__link input { flex: 1; min-width: 12rem; padding: .5em .7em; font-size: var(--t-small); border: var(--hair) solid var(--line-2); border-radius: var(--radius-img); background: var(--bg); color: var(--ink); }
+.jan__anexos li span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jan__anexos li small { color: var(--muted); }
+.jan .solta { margin-top: var(--sp-md); }
 
-.pg-bloco-adm { margin-bottom: var(--sp-lg); padding-top: var(--sp-sm); border-top: var(--hair) solid var(--line); }
+@media (max-width: 640px) {
+  .jan__pe { position: sticky; bottom: 0; }
+  .jan__pe .btn { width: 100%; justify-content: center; }
+  .jan__meta { margin-left: 0; text-align: left; width: 100%; }
+}
+
+.girando {
+  display: inline-block; width: .9em; height: .9em;
+  border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%;
+  animation: ia-gira .8s linear infinite; vertical-align: -.15em; margin-right: .3em;
+}
+@keyframes ia-gira { to { transform: rotate(360deg); } }
+
+/* ---------- o que a janela das perguntas lista ---------- */
+.pg-bloco-adm { margin-top: var(--sp-xl); padding-top: var(--sp-sm); border-top: var(--hair) solid var(--line); }
 .pg-bloco-adm__txt { font-size: var(--t-small); color: var(--muted); margin-top: var(--sp-3xs); }
-.pg-qs { margin: var(--sp-sm) 0 0 1.2em; display: grid; gap: var(--sp-xs); }
-.pg-qs li { font-size: var(--t-small); }
+.pg-qs { list-style: none; margin-top: var(--sp-md); display: grid; gap: var(--sp-sm); counter-reset: q; }
+.pg-qs li { position: relative; padding-left: var(--sp-xl); font-size: var(--t-small); counter-increment: q; }
+.pg-qs li::before {
+  content: counter(q, decimal-leading-zero);
+  position: absolute; left: 0; top: .1em;
+  font-size: var(--t-eyebrow); font-weight: var(--w-bold);
+  letter-spacing: .08em; color: var(--brand); font-variant-numeric: tabular-nums;
+}
 .pg-qs b { font-weight: var(--w-semi); }
-.pg-qs small { display: block; color: var(--muted); font-size: var(--t-eyebrow); }
+.pg-qs small { display: block; color: var(--muted); font-size: var(--t-eyebrow); margin-top: 2px; }
 .pg-op { font-style: italic; }
-.pg-obr { font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--brand); margin-left: .5em; }
-
-.pg-respostas { margin-bottom: var(--sp-lg); padding: var(--sp-md); background: var(--bg-2); border-radius: var(--radius-img); }
+.pg-obr {
+  display: inline-block; margin-left: .5em; padding: .1em .5em;
+  font-size: 9px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--brand); background: var(--brand-wash); border-radius: var(--radius-pill);
+}
+.pg-respostas { margin-top: var(--sp-lg); padding: var(--sp-md); background: var(--bg-2); border-radius: var(--radius-img); }
 .pg-resp { margin-top: var(--sp-sm); font-size: var(--t-small); }
 .pg-resp b { display: block; font-weight: var(--w-semi); }
 .pg-resp p { color: var(--muted); white-space: pre-wrap; }
+
+/* ---------- ações do cartão de proposta ---------- */
+.ed-prop__topo {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-sm);
+  padding: var(--sp-md) var(--sp-md) 0;
+}
+.ed-prop__topo .ed-prop__estado { margin-bottom: 0; }
+.ed-prop__abrir { padding-top: var(--sp-2xs); }
+.ed-prop__acoes { display: flex; align-items: center; gap: var(--sp-2xs); flex-wrap: wrap; padding: var(--sp-sm) var(--sp-md); border-top: var(--hair) solid var(--line); }
+.ed-grupo { display: flex; align-items: center; gap: 2px; }
+.ed-sep { width: var(--hair); align-self: stretch; background: var(--line); margin-inline: var(--sp-2xs); }
+
+/* Gera documento: ícone laranja, borda discreta. */
+.ed-doc {
+  display: inline-flex; align-items: center; gap: .45em;
+  padding: .5em .85em; border-radius: var(--radius-pill);
+  font-size: var(--t-eyebrow); font-weight: var(--w-semi); color: var(--ink);
+  background: var(--bg); box-shadow: inset 0 0 0 var(--hair) var(--line-2);
+  white-space: nowrap; cursor: pointer;
+  transition: background var(--d-fast) var(--ease-out), color var(--d-fast) var(--ease-out), box-shadow var(--d-fast);
+}
+.ed-doc svg { color: var(--brand); transition: color var(--d-fast); }
+.ed-doc:hover { background: var(--ink); color: #fff; box-shadow: none; }
+.ed-doc:hover svg { color: #fff; }
+
+/* Leva o link: texto, sem borda. É apoio, não ação principal. */
+.ed-acao {
+  display: inline-flex; align-items: center; gap: .4em;
+  padding: .5em .7em; border-radius: var(--radius-pill);
+  font-size: var(--t-eyebrow); font-weight: var(--w-semi); color: var(--muted);
+  background: transparent; white-space: nowrap; cursor: pointer;
+  transition: background var(--d-fast) var(--ease-out), color var(--d-fast) var(--ease-out);
+}
+.ed-acao:hover { background: var(--bg-2); color: var(--ink); }
+.ed-acao--ico { padding: .5em; }
+
+/* Menu do que se usa pouco. */
+.ed-mais { position: relative; margin-left: auto; }
+.ed-mais > summary { list-style: none; }
+.ed-mais > summary::-webkit-details-marker { display: none; }
+.ed-mais[open] > summary { background: var(--bg-2); color: var(--ink); }
+.ed-mais__lista {
+  position: absolute; right: 0; bottom: calc(100% + 4px); z-index: 5;
+  min-width: 10rem; padding: 4px;
+  background: var(--bg); border: var(--hair) solid var(--line-2);
+  border-radius: var(--radius-img);
+}
+.ed-mais__item {
+  display: block; width: 100%; text-align: left;
+  padding: .55em .8em; border-radius: var(--radius-img);
+  font-size: var(--t-small); font-weight: var(--w-semi); color: var(--ink);
+  cursor: pointer;
+}
+.ed-mais__item:hover { background: var(--ink); color: #fff; }
+.ed-mais__item--perigo:hover { background: var(--brand); }

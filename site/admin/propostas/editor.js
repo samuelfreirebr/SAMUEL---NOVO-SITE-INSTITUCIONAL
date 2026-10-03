@@ -139,6 +139,45 @@ async function carregar() {
   } catch (e) { if (!/sessão/.test(e.message)) avisar('Não carreguei: ' + e.message, 'erro'); }
 }
 
+/* Ícones do painel: mesmo traço da seta do site (1.6, ponta redonda). */
+const DESENHOS = {
+  doc: '<path d="M13 2H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V5zM13 2v3h3M7 11h6M7 14h6"/>',
+  lista: '<path d="M8 5h9M8 10h9M8 15h9"/><circle cx="4" cy="5" r="1" fill="currentColor" stroke="none"/><circle cx="4" cy="10" r="1" fill="currentColor" stroke="none"/><circle cx="4" cy="15" r="1" fill="currentColor" stroke="none"/>',
+  olho: '<path d="M1.5 10S4.5 4.5 10 4.5 18.5 10 18.5 10 15.5 15.5 10 15.5 1.5 10 1.5 10z"/><circle cx="10" cy="10" r="2.5"/>',
+  elo: '<path d="M8.5 11.5a3.5 3.5 0 0 0 5 0l2.5-2.5a3.54 3.54 0 0 0-5-5l-1 1M11.5 8.5a3.5 3.5 0 0 0-5 0L4 11a3.54 3.54 0 0 0 5 5l1-1"/>',
+  balao: '<path d="M17.5 9.5a6.5 6.5 0 0 1-9.4 5.8L3.5 17l1.6-4.3A6.5 6.5 0 1 1 17.5 9.5z"/>',
+  mais: '<circle cx="4.5" cy="10" r="1.3" fill="currentColor" stroke="none"/><circle cx="10" cy="10" r="1.3" fill="currentColor" stroke="none"/><circle cx="15.5" cy="10" r="1.3" fill="currentColor" stroke="none"/>',
+};
+function ico(nome) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  el.setAttribute('viewBox', '0 0 20 20');
+  el.setAttribute('width', '15'); el.setAttribute('height', '15');
+  el.setAttribute('fill', 'none'); el.setAttribute('stroke', 'currentColor');
+  el.setAttribute('stroke-width', '1.6'); el.setAttribute('stroke-linecap', 'round');
+  el.setAttribute('stroke-linejoin', 'round'); el.setAttribute('aria-hidden', 'true');
+  el.innerHTML = DESENHOS[nome] || '';
+  return el;
+}
+
+/* Menu do que se usa pouco. <details> nativo: abre no clique e no
+   teclado sem script, e fecha ao escolher. */
+function menuMais(itens) {
+  const lista = h('div', { class: 'ed-mais__lista' },
+    ...itens.map(([rotulo, acao, perigo]) => h('button', {
+      type: 'button', class: 'ed-mais__item' + (perigo ? ' ed-mais__item--perigo' : ''),
+      onclick: (e) => { e.target.closest('details').open = false; acao(); },
+    }, rotulo)));
+  return h('details', { class: 'ed-mais' },
+    h('summary', { class: 'ed-acao ed-acao--ico', title: 'Mais opções', 'aria-label': 'Mais opções' }, ico('mais')),
+    lista);
+}
+// Um menu aberto fecha quando se clica em qualquer outro lugar.
+document.addEventListener('click', (e) => {
+  for (const d of document.querySelectorAll('details.ed-mais[open]')) {
+    if (!d.contains(e.target)) d.open = false;
+  }
+});
+
 function mostrarLista() {
   est.modo = 'lista'; est.proposta = null;
   history.replaceState(null, '', location.pathname);
@@ -150,21 +189,31 @@ function mostrarLista() {
   const cards = est.propostas.map((p) => {
     const link = location.origin + '/propostas/' + p.id;
     return h('article', { class: 'ed-prop' },
-      h('button', { type: 'button', class: 'ed-prop__abrir', onclick: () => abrir(p.id) },
+      h('div', { class: 'ed-prop__topo' },
         h('span', { class: 'ed-prop__estado', 'data-ar': p.publicada ? '1' : '0' }, p.publicada ? 'No ar' : 'Rascunho'),
+        seletorFase(p.fase, (f) => mudarFase(p.id, f))),
+      h('button', { type: 'button', class: 'ed-prop__abrir', onclick: () => abrir(p.id) },
         h('b', { class: 'ed-prop__nome' }, p.cliente || p.id),
         h('span', { class: 'ed-prop__titulo' }, p.titulo || ''),
         h('span', { class: 'ed-prop__meta' }, '/propostas/' + p.id + (p.atualizadaEm ? ' · ' + new Date(p.atualizadaEm).toLocaleDateString('pt-BR') : ''))),
+      /* Três pesos, não nove botões iguais: a ação principal cheia, o
+         que gera documento com ícone, o que só leva o link em texto,
+         e o raro (duplicar, apagar) atrás do menu. A fase subiu para
+         o topo do cartão: é estado, não ação. */
       h('div', { class: 'ed-prop__acoes' },
         h('button', { type: 'button', class: 'mini mini--ativo', onclick: () => abrir(p.id) }, 'Editar'),
-        h('a', { class: 'mini', href: '/propostas/' + p.id, target: '_blank', rel: 'noopener' }, 'Ver'),
-        h('button', { type: 'button', class: 'mini', onclick: async () => { try { await navigator.clipboard.writeText(link); avisar('Link copiado.'); } catch (e) { avisar(link); } } }, 'Copiar link'),
-        h('button', { type: 'button', class: 'mini', onclick: () => copiarMensagem(p.id), title: 'Copia a mensagem pronta com o link desta proposta' }, 'Copiar mensagem'),
-        seletorFase(p.fase, (f) => mudarFase(p.id, f)),
-        h('button', { type: 'button', class: 'mini', onclick: () => abrirContrato(p), title: 'Gera o contrato desta proposta e deixa pronto para assinar' }, 'Contrato'),
-        h('button', { type: 'button', class: 'mini', onclick: () => abrirPerguntas(p), title: 'Monta o briefing e dá o link para o cliente responder' }, 'Perguntas'),
-        h('button', { type: 'button', class: 'mini', onclick: () => duplicar(p.id) }, 'Duplicar'),
-        h('button', { type: 'button', class: 'mini mini--perigo', onclick: () => apagar(p) }, 'Apagar')));
+        h('div', { class: 'ed-grupo' },
+          h('button', { type: 'button', class: 'ed-doc', onclick: () => abrirContrato(p), title: 'Gera o contrato desta proposta e deixa pronto para assinar' }, ico('doc'), 'Contrato'),
+          h('button', { type: 'button', class: 'ed-doc', onclick: () => abrirPerguntas(p), title: 'Monta o briefing e dá o link para o cliente responder' }, ico('lista'), 'Perguntas')),
+        h('span', { class: 'ed-sep', 'aria-hidden': 'true' }),
+        h('div', { class: 'ed-grupo' },
+          h('a', { class: 'ed-acao', href: '/propostas/' + p.id, target: '_blank', rel: 'noopener', title: 'Abre a página da proposta' }, ico('olho'), 'Ver'),
+          h('button', { type: 'button', class: 'ed-acao', title: 'Copia o endereço da proposta', onclick: async () => { try { await navigator.clipboard.writeText(link); avisar('Link copiado.'); } catch (e) { avisar(link); } } }, ico('elo'), 'Link'),
+          h('button', { type: 'button', class: 'ed-acao', onclick: () => copiarMensagem(p.id), title: 'Copia a mensagem pronta com o link desta proposta' }, ico('balao'), 'Mensagem')),
+        menuMais([
+          ['Duplicar', () => duplicar(p.id)],
+          ['Apagar', () => apagar(p), true],
+        ])));
   });
 
   // Transcrições que ainda não viraram proposta.
@@ -790,7 +839,7 @@ function pgAviso(txt, tipo = '') {
 
 async function abrirPerguntas(p) {
   pg = { id: p.id };
-  $('#pg-titulo').textContent = 'Perguntas · ' + (p.cliente || p.id);
+  $('#pg-titulo').textContent = p.cliente || p.id;
   $('#pg-link-caixa').hidden = true;
   $('#pg-lista').innerHTML = '';
   $('#pg-meta').textContent = '';
@@ -882,7 +931,8 @@ function ctAviso(txt, tipo = '') {
 
 async function abrirContrato(p) {
   ct = { modo: 'proposta', id: p.id, padrao: '' };
-  $('#ct-titulo').textContent = 'Contrato · ' + (p.cliente || p.id);
+  $('#ct-olho').textContent = 'Contrato';
+  $('#ct-titulo').textContent = p.cliente || p.id;
   $('#ct-rotulo').textContent = 'Texto do contrato';
   $('#ct-dica').innerHTML = 'Gerado da proposta e, quando houver, da transcrição da reunião. As cláusulas vêm do modelo; a IA só identifica o cliente e lista os serviços. O que ninguém informou fica marcado com <b>[PREENCHER]</b>.';
   $('#ct-conta-campo').hidden = true;
@@ -924,7 +974,8 @@ async function gerarContrato() {
 
 async function abrirModeloContrato() {
   ct = { modo: 'modelo', id: '', padrao: '' };
-  $('#ct-titulo').textContent = 'Modelo do contrato';
+  $('#ct-olho').textContent = 'Modelo';
+  $('#ct-titulo').textContent = 'Cláusulas de todo contrato';
   $('#ct-rotulo').textContent = 'Cláusulas fixas';
   $('#ct-dica').innerHTML = 'Vale para todo contrato novo. As marcas entre chaves, como <b>{{CONTRATANTE}}</b> e <b>{{SERVICOS}}</b>, são preenchidas na hora de gerar. Linha com marca sem valor some sozinha.';
   $('#ct-conta-campo').hidden = false;

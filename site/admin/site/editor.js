@@ -2,7 +2,7 @@
    Editor visual.
 
    Roda no painel, não no site. O script é injetado dentro do
-   quadro (iframe) a partir daqui — o site publicado não carrega
+   quadro (iframe) a partir daqui: o site publicado não carrega
    nada disto, e quem visita nunca recebe uma linha de editor.
 
    Só é possível porque o painel e o site estão no mesmo domínio.
@@ -79,7 +79,7 @@ export function ligarEditor(quadro, aoMudar, aoPedirImagem, opcoes = {}) {
   doc.head.appendChild(css);
 
   // Tamanhos já salvos (ou editados e ainda não salvos) valem aqui
-  // dentro também — regenerado a cada mudança.
+  // dentro também, regenerado a cada mudança.
   const estiloVivo = doc.createElement('style');
   estiloVivo.id = 'estilos-editor';
   doc.head.appendChild(estiloVivo);
@@ -95,7 +95,7 @@ export function ligarEditor(quadro, aoMudar, aoPedirImagem, opcoes = {}) {
   }
   pintarEstilos();
 
-  // Editando, nada pode estar invisível esperando entrar em cena — nem a
+  // Editando, nada pode estar invisível esperando entrar em cena, nem a
   // rolagem pode ter inércia, que rouba o clique e a seleção de texto.
   for (const el of doc.querySelectorAll('.reveal')) el.classList.add('vis');
 
@@ -153,7 +153,7 @@ export function ligarEditor(quadro, aoMudar, aoPedirImagem, opcoes = {}) {
   win.addEventListener('painel:dispositivo', () => { rotulo(); mostrarPx(); posicionar(); });
 
   // mousedown com preventDefault: o clique na barra não tira o foco
-  // do texto nem desfaz a seleção — é o que permite inserir no cursor.
+  // do texto nem desfaz a seleção: é o que permite inserir no cursor.
   barra.addEventListener('mousedown', (e) => e.preventDefault());
   barra.addEventListener('click', (e) => {
     const b = e.target.closest('button');

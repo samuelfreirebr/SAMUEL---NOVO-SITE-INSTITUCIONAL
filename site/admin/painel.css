@@ -3,6 +3,10 @@
    Entra depois de tokens.css e base.css; usa só as variáveis.
    ============================================================ */
 
+/* Esconder é esconder: sem isto, qualquer regra com display (uma
+   classe, por exemplo) vence o atributo hidden e o bloco reaparece. */
+[hidden] { display: none !important; }
+
 html, body { height: 100%; }
 body { background: var(--bg-2); display: flex; flex-direction: column; }
 

@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="/styles/tokens.css?v=20260909h">
 <link rel="stylesheet" href="/styles/base.css?v=20260911a">
 
-<link rel="stylesheet" href="/admin/painel.css?v=4">
+<link rel="stylesheet" href="/admin/painel.css?v=5">
 </head>
 
 <body>
@@ -121,7 +121,7 @@ async function api(url, opcoes) {
 let conteudo = {};
 let salvo = '{}';
 let versao = 'br';
-let dispositivo = 'pc';   // 'pc' | 'celular' — para quem valem quebra e tamanho
+let dispositivo = 'pc';   // 'pc' | 'celular': para quem valem quebra e tamanho
 
 /* Tamanho de texto por dispositivo. Vai em conteudo.estilos e o
    servidor transforma num <style> ao servir a página. */
@@ -190,7 +190,7 @@ function carregarQuadro() {
 
 /* O painel começa vazio, mas o site já tem clientes e projetos escritos no
    HTML. Sem isto, a aba Clientes mostrava "nenhum cliente" enquanto o
-   carrossel rodava com treze — e a única saída era recadastrar tudo.
+   carrossel rodava com treze, e a única saída era recadastrar tudo.
    Aqui a lista atual é lida do próprio quadro e vira ponto de partida.
    Os clones da esteira têm aria-hidden: ficam de fora. */
 function importarDoQuadro(doc) {

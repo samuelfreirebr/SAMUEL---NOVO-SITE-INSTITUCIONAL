@@ -9,7 +9,7 @@
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css?v=20260909h">
 <link rel="stylesheet" href="/styles/base.css?v=20260911a">
-<link rel="stylesheet" href="/admin/painel.css?v=4">
+<link rel="stylesheet" href="/admin/painel.css?v=5">
 <link rel="stylesheet" href="./editor.css">
 </head>
 <body class="ed">
@@ -41,81 +41,96 @@
   </div>
 </dialog>
 
-<dialog id="perguntas" class="ia">
-  <div class="modal__topo">
-    <b id="pg-titulo">Perguntas</b>
-    <button class="mini" type="button" id="pg-fechar">Fechar</button>
-  </div>
-  <div class="modal__corpo">
-    <p class="ia__dica">Monta o briefing a partir da proposta e da transcrição da reunião. O primeiro bloco é fixo: são os dados que o contrato precisa. Mande o link para o cliente responder; as respostas voltam para cá e preenchem o contrato.</p>
-    <p class="ia__aviso" id="pg-aviso" hidden></p>
-    <div class="ia__link" id="pg-link-caixa" hidden>
-      <span>Link para o cliente</span>
-      <input type="text" id="pg-link" readonly>
-      <button class="mini" type="button" id="pg-copiar">Copiar</button>
-      <a class="mini" id="pg-abrir" target="_blank" rel="noopener">Abrir</a>
+<dialog id="perguntas" class="jan">
+  <header class="jan__topo">
+    <div>
+      <p class="eyebrow">Briefing</p>
+      <p class="jan__titulo" id="pg-titulo">Perguntas</p>
     </div>
+    <button class="jan__fechar" type="button" id="pg-fechar" aria-label="Fechar">&times;</button>
+  </header>
+  <div class="jan__corpo">
+    <p class="jan__dica">Monta o briefing a partir da proposta e da transcrição da reunião, sem precisar colar nada. O primeiro bloco é fixo: são os dados que o contrato precisa. Mande o link; as respostas voltam para cá e preenchem o contrato.</p>
+    <p class="jan__aviso" id="pg-aviso" hidden></p>
+
+    <section class="jan__secao" id="pg-link-caixa" hidden>
+      <p class="eyebrow">Link para o cliente</p>
+      <div class="jan__link">
+        <input type="text" id="pg-link" readonly>
+        <button class="mini" type="button" id="pg-copiar">Copiar</button>
+        <a class="mini" id="pg-abrir" target="_blank" rel="noopener">Abrir</a>
+      </div>
+    </section>
+
     <div id="pg-lista"></div>
-    <div class="ia__acoes">
-      <button class="btn btn--brand" type="button" id="pg-gerar">Gerar perguntas</button>
-      <span class="ia__meta" id="pg-meta"></span>
-    </div>
   </div>
+  <footer class="jan__pe">
+    <button class="btn btn--brand" type="button" id="pg-gerar">Gerar perguntas</button>
+    <span class="jan__meta" id="pg-meta"></span>
+  </footer>
 </dialog>
 
-<dialog id="contrato" class="ia">
-  <div class="modal__topo">
-    <b id="ct-titulo">Contrato</b>
-    <button class="mini" type="button" id="ct-fechar">Fechar</button>
-  </div>
-  <div class="modal__corpo">
-    <p class="ia__dica" id="ct-dica"></p>
-    <p class="ia__aviso" id="ct-aviso" hidden></p>
-    <label class="ia__campo" id="ct-conta-campo" hidden>
-      <span>Sua conta para receber em reais</span>
-      <input type="text" id="ct-conta" placeholder="Banco, agência, conta e chave PIX">
-    </label>
-    <label class="ia__campo">
-      <span id="ct-rotulo">Texto do contrato</span>
-      <textarea id="ct-texto" rows="18" spellcheck="false"></textarea>
-    </label>
-    <div class="ia__acoes">
-      <button class="btn btn--brand" type="button" id="ct-salvar">Salvar</button>
-      <button class="mini" type="button" id="ct-gerar">Gerar de novo</button>
-      <a class="mini" id="ct-pdf" target="_blank" rel="noopener">Abrir para PDF</a>
-      <button class="mini" type="button" id="ct-padrao">Voltar ao padrão</button>
-      <span class="ia__meta" id="ct-meta"></span>
+<dialog id="contrato" class="jan jan--larga">
+  <header class="jan__topo">
+    <div>
+      <p class="eyebrow" id="ct-olho">Contrato</p>
+      <p class="jan__titulo" id="ct-titulo">Contrato</p>
     </div>
+    <button class="jan__fechar" type="button" id="ct-fechar" aria-label="Fechar">&times;</button>
+  </header>
+  <div class="jan__corpo">
+    <p class="jan__dica" id="ct-dica"></p>
+    <p class="jan__aviso" id="ct-aviso" hidden></p>
+
+    <section class="jan__secao" id="ct-conta-campo" hidden>
+      <p class="eyebrow">Sua conta para receber em reais</p>
+      <input class="jan__campo" type="text" id="ct-conta" placeholder="Banco, agência, conta e chave PIX">
+    </section>
+
+    <section class="jan__secao">
+      <p class="eyebrow" id="ct-rotulo">Texto do contrato</p>
+      <textarea class="jan__doc" id="ct-texto" rows="20" spellcheck="false"></textarea>
+    </section>
   </div>
+  <footer class="jan__pe">
+    <button class="btn btn--brand" type="button" id="ct-salvar">Salvar</button>
+    <button class="mini" type="button" id="ct-gerar">Gerar de novo</button>
+    <a class="mini" id="ct-pdf" target="_blank" rel="noopener">Abrir para PDF</a>
+    <button class="mini" type="button" id="ct-padrao">Voltar ao padrão</button>
+    <span class="jan__meta" id="ct-meta"></span>
+  </footer>
 </dialog>
 
-<dialog id="ia" class="ia">
-  <div class="modal__topo">
-    <b>Preencher com IA</b>
-    <button class="mini" type="button" id="ia-fechar">Fechar</button>
-  </div>
-  <div class="modal__corpo">
-    <p class="ia__dica">
+<dialog id="ia" class="jan">
+  <header class="jan__topo">
+    <div>
+      <p class="eyebrow">Inteligência artificial</p>
+      <p class="jan__titulo">Preencher com IA</p>
+    </div>
+    <button class="jan__fechar" type="button" id="ia-fechar" aria-label="Fechar">&times;</button>
+  </header>
+  <div class="jan__corpo">
+    <p class="jan__dica">
       Cole a conversa com o cliente, a transcrição da reunião ou o que combinaram, e anexe prints, PDF, Word ou um ZIP com tudo.
       A IA preenche <b>só</b>: nome do cliente, frase de impacto, data, valor e parcelas, entregáveis, o que cada entregável inclui, prazo, a condição de hospedagem (se o material falar disso) e as perguntas do fim.
       Processo, Sobre mim, Ecossistema e as outras condições não mudam.
     </p>
-    <label class="ia__campo">
-      <span>Texto</span>
-      <textarea id="ia-texto" rows="8" placeholder="Cole aqui a conversa, a transcrição ou o resumo do que foi combinado."></textarea>
+    <label class="jan__secao">
+      <span class="eyebrow">Texto</span>
+      <textarea class="jan__campo" id="ia-texto" rows="8" placeholder="Cole aqui a conversa, a transcrição ou o resumo do que foi combinado."></textarea>
     </label>
     <div class="solta" id="ia-solta">
       <b>Arraste os arquivos aqui</b>
       <span>ou clique para escolher. Prints (PNG, JPG), PDF, Word, texto ou ZIP. Até 30 MB no total.</span>
     </div>
     <input type="file" id="ia-arquivos" multiple accept="image/*,.pdf,.docx,.txt,.md,.csv,.json,.html,.htm,.zip,.srt,.vtt" hidden>
-    <ul class="ia__lista" id="ia-lista"></ul>
-    <p class="ia__aviso" id="ia-aviso" hidden></p>
-    <div class="ia__acoes">
-      <button class="btn btn--brand" type="button" id="ia-enviar">Preencher a proposta</button>
-      <span class="ia__meta" id="ia-meta"></span>
-    </div>
+    <ul class="jan__anexos" id="ia-lista"></ul>
+    <p class="jan__aviso" id="ia-aviso" hidden></p>
   </div>
+  <footer class="jan__pe">
+    <button class="btn btn--brand" type="button" id="ia-enviar">Preencher a proposta</button>
+    <span class="jan__meta" id="ia-meta"></span>
+  </footer>
 </dialog>
 
 <script type="module" src="./editor.js"></script>
