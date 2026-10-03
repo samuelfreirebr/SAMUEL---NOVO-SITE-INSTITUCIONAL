@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Briefing | Painel Samuel Freire</title>
+<link rel="icon" href="/img/favicon.png" type="image/png">
+<link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/styles/tokens.css?v=20260909h">
+<link rel="stylesheet" href="/styles/base.css?v=20260911a">
+<link rel="stylesheet" href="/admin/painel.css?v=5">
+<link rel="stylesheet" href="./briefing.css?v=1">
+</head>
+<body class="br">
+
+<header class="topo">
+  <h1><a href="/admin/">Painel</a> <i>Samuel Freire</i><a class="sec" href="/admin/propostas/">Propostas</a><span class="sec" id="topo-cliente">Briefing</span></h1>
+  <div class="br-topo__acoes">
+    <a class="mini" id="ver" target="_blank" rel="noopener" hidden>Ver como o cliente vê</a>
+    <button class="mini" type="button" id="gerar">Gerar com IA</button>
+    <button class="btn btn--brand btn--peq" type="button" id="salvar">Salvar</button>
+  </div>
+</header>
+
+<p class="aviso" id="aviso" role="status"></p>
+
+<main class="br-raiz" id="app">
+  <p class="vazio" style="padding:var(--sp-xl)">Carregando…</p>
+</main>
+
+<script type="module" src="./briefing.js?v=1"></script>
+</body>
+</html>

@@ -1,50 +1,130 @@
 /* ============================================================
    Briefing: a página que o cliente abre pelo link e responde.
-   Mesma identidade do site: Manrope, laranja de detalhe, hairline
-   em vez de sombra, um raio só. Nada de caixa colorida.
+
+   Dois estados no mesmo HTML:
+   - sem JavaScript, é um formulário inteiro, de cima a baixo;
+   - com JavaScript (body.quiz), vira uma pergunta por tela, com a
+     etapa no topo e a régua de progresso andando.
+
+   Mesma identidade do site: Manrope, laranja só no detalhe,
+   hairline no lugar de caixa, um raio só, sem sombra.
    ============================================================ */
 
-body.perguntas { background: var(--bg-2); }
+/* Esconder é esconder: classe com display não pode vencer [hidden]. */
+.perguntas [hidden] { display: none !important; }
+
+body.perguntas {
+  background: var(--bg);
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
 
 /* ---------- topo ---------- */
-.pg-topo { background: var(--bg); border-bottom: var(--hair) solid var(--line); }
+.pg-topo { position: sticky; top: 0; z-index: 3; background: var(--bg); }
 .pg-topo__in {
   display: flex; align-items: center; justify-content: space-between;
-  gap: var(--sp-md); min-height: var(--nav-h);
+  gap: var(--sp-md); min-height: var(--nav-h, 4.5rem);
+  padding-inline: var(--gutter);
 }
 .pg-marca { font-size: var(--t-small); font-weight: var(--w-black); letter-spacing: -.03em; color: var(--ink); }
 .pg-marca em { font-style: normal; color: var(--brand); margin-left: .28em; }
-@media (max-width: 560px) { .pg-topo__tag { display: none; } }
 
-/* ---------- a folha ---------- */
-.pg-folha {
-  max-width: 44rem;
-  padding-block: clamp(var(--sp-xl), 7vw, var(--sp-3xl)) var(--sp-3xl);
+/* Etapa e nome do bloco, alinhados à direita. */
+.pg-passo { display: flex; align-items: baseline; gap: .6em; font-size: var(--t-eyebrow); color: var(--muted); }
+.pg-passo b {
+  font-weight: var(--w-bold); letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase; color: var(--ink);
 }
-.pg-titulo { max-width: 18ch; }
-.pg-sub { margin-top: var(--sp-md); max-width: 54ch; color: var(--muted); }
+.pg-passo span { max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 560px) { .pg-passo span { display: none; } }
 
-/* ---------- blocos ---------- */
-.pg-bloco {
-  margin-top: var(--sp-2xl);
-  padding-top: var(--sp-lg);
-  border-top: var(--hair-2) solid var(--ink);
+/* Régua de progresso: hairline que enche de laranja. */
+.pg-regua { height: var(--hair-2); background: var(--line); }
+.pg-regua i {
+  display: block; height: 100%; background: var(--brand);
+  transform-origin: left center; transform: scaleX(0);
+  transition: transform var(--d-base) var(--ease-out);
 }
-.pg-bloco__texto { margin-top: var(--sp-sm); color: var(--muted); font-size: var(--t-body); }
-.pg-bloco .eyebrow { letter-spacing: var(--ls-eyebrow); }
 
-/* ---------- campos ---------- */
+/* ---------- palco ---------- */
+.pg-palco {
+  flex: 1;
+  width: 100%; max-width: 46rem;
+  margin-inline: auto;
+  padding: clamp(var(--sp-xl), 7vw, var(--sp-2xl)) var(--gutter) var(--sp-2xl);
+}
+body.quiz .pg-palco { display: flex; flex-direction: column; justify-content: center; }
+
+.pg-eyebrow { display: flex; align-items: center; gap: .6em; color: var(--muted); }
+.pg-eyebrow::before {
+  content: ""; width: var(--bullet); height: var(--bullet);
+  border-radius: 50%; background: var(--brand); flex: none;
+}
+
+.pg-titulo {
+  margin-top: var(--sp-sm);
+  font-size: var(--t-h2); font-weight: var(--w-black);
+  letter-spacing: var(--ls-h2); line-height: var(--lh-h);
+  max-width: 16ch;
+}
+.pg-sub { margin-top: var(--sp-md); max-width: 54ch; color: var(--muted); line-height: var(--lh-body); }
+.pg-conta {
+  margin-top: var(--sp-md);
+  font-size: var(--t-eyebrow); font-weight: var(--w-semi);
+  letter-spacing: var(--ls-eyebrow); text-transform: uppercase; color: var(--ink);
+}
+
+/* ---------- blocos (modo sem JavaScript) ---------- */
+.pg-bloco { margin-top: var(--sp-2xl); padding-top: var(--sp-lg); border-top: var(--hair-2) solid var(--ink); }
+.pg-bloco__texto { margin-top: var(--sp-sm); color: var(--muted); }
+.pg-bloco__n { letter-spacing: var(--ls-eyebrow); }
+
+/* No quiz o bloco some como caixa: quem organiza é o topo. */
+body.quiz .pg-bloco { margin: 0; padding: 0; border: 0; }
+body.quiz .pg-bloco__n, body.quiz .pg-bloco__texto { display: none; }
+body.quiz .pg-bloco.ativo .pg-bloco__texto {
+  display: block; margin: 0 0 var(--sp-md); color: var(--muted); font-size: var(--t-small);
+}
+
+/* ---------- a pergunta ---------- */
 .pg-campo { margin-top: var(--sp-lg); }
 .pg-campo label {
   display: block;
-  font-size: var(--t-body);
-  font-weight: var(--w-semi);
-  line-height: 1.4;
-  color: var(--ink);
+  font-size: var(--t-body); font-weight: var(--w-semi);
+  line-height: 1.4; color: var(--ink);
 }
 .pg-campo label small { font-weight: var(--w-book); color: var(--muted); }
 .pg-ajuda { margin-top: var(--sp-3xs); font-size: var(--t-small); color: var(--muted); }
 
+/* Uma por tela: a pergunta ganha corpo de título. */
+body.quiz .pg-campo { display: none; margin: 0; }
+body.quiz .pg-campo.ativa { display: block; }
+body.quiz .pg-campo.ativa label {
+  font-size: var(--t-h3); font-weight: var(--w-black);
+  letter-spacing: var(--ls-h3); line-height: var(--lh-h3);
+  max-width: 24ch;
+}
+body.quiz .pg-campo.ativa label small {
+  display: block; margin-top: var(--sp-2xs);
+  font-size: var(--t-eyebrow); font-weight: var(--w-semi);
+  letter-spacing: var(--ls-eyebrow); text-transform: uppercase; color: var(--meta);
+}
+body.quiz .pg-campo.ativa .pg-ajuda { margin-top: var(--sp-sm); max-width: 52ch; font-size: var(--t-body); }
+
+/* Entrada da tela: sobe e aparece. Quem pediu menos movimento não vê. */
+body.quiz .pg-campo.ativa, body.quiz .pg-revisao:not([hidden]), .pg-tela--capa {
+  animation: pg-entra var(--d-base) var(--ease-out) both;
+}
+@keyframes pg-entra { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.tremer { animation: pg-treme .4s var(--ease-in-out); }
+@keyframes pg-treme { 25% { transform: translateX(-6px); } 50% { transform: translateX(6px); } 75% { transform: translateX(-3px); } }
+@media (prefers-reduced-motion: reduce) {
+  body.quiz .pg-campo.ativa, body.quiz .pg-revisao, .pg-tela--capa, .tremer { animation: none; }
+  .pg-regua i { transition: none; }
+}
+
+/* ---------- campos ---------- */
 .pg-campo input[type=text], .pg-campo input[type=email],
 .pg-campo input[type=url], .pg-campo input[type=tel], .pg-campo textarea {
   width: 100%;
@@ -54,22 +134,33 @@ body.perguntas { background: var(--bg-2); }
   color: var(--ink);
   border: var(--hair) solid var(--line-2);
   border-radius: var(--radius-img);
-  font-family: inherit;
-  font-size: var(--t-body);
-  line-height: 1.5;
+  font-family: inherit; font-size: var(--t-body); line-height: 1.5;
+  transition: border-color var(--d-fast) var(--ease-out);
 }
+.pg-campo input:hover, .pg-campo textarea:hover { border-color: var(--muted); }
 .pg-campo textarea { resize: vertical; min-height: 6em; }
 .pg-campo input:focus-visible, .pg-campo textarea:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
 
+/* No quiz o campo é grande: é a única coisa na tela. */
+body.quiz .pg-campo.ativa input[type=text], body.quiz .pg-campo.ativa input[type=email],
+body.quiz .pg-campo.ativa input[type=url], body.quiz .pg-campo.ativa input[type=tel],
+body.quiz .pg-campo.ativa textarea {
+  margin-top: var(--sp-lg);
+  padding: 1em 1.1em;
+  font-size: var(--t-lead);
+  letter-spacing: var(--ls-body);
+}
+body.quiz .pg-campo.ativa textarea { font-size: var(--t-body); min-height: 8em; }
+
 /* Escolhas: a linha inteira é o alvo, para funcionar bem no celular. */
 .pg-opcoes { display: grid; gap: var(--sp-2xs); margin-top: var(--sp-sm); }
+body.quiz .pg-campo.ativa .pg-opcoes { margin-top: var(--sp-lg); }
 .pg-opcao {
   display: flex; align-items: center; gap: var(--sp-sm);
-  padding: .75em 1em;
+  padding: .9em 1.1em;
   background: var(--bg);
   border: var(--hair) solid var(--line-2);
   border-radius: var(--radius-img);
-  font-weight: var(--w-book);
   cursor: pointer;
   transition: border-color var(--d-fast) var(--ease-out), background var(--d-fast) var(--ease-out);
 }
@@ -77,43 +168,109 @@ body.perguntas { background: var(--bg-2); }
 .pg-opcao input { accent-color: var(--brand); width: 1.1em; height: 1.1em; flex: none; }
 .pg-opcao:has(input:checked) { border-color: var(--brand); background: var(--brand-wash); }
 
-/* ---------- enviar ---------- */
-.pg-acoes {
-  display: flex; align-items: center; gap: var(--sp-md); flex-wrap: wrap;
-  margin-top: var(--sp-2xl);
-  padding-top: var(--sp-lg);
-  border-top: var(--hair) solid var(--line);
+/* ---------- arquivos ---------- */
+.pg-upload { margin-top: var(--sp-sm); }
+body.quiz .pg-campo.ativa .pg-upload { margin-top: var(--sp-lg); }
+.pg-upload__alvo {
+  display: flex; flex-direction: column; gap: var(--sp-3xs);
+  width: 100%; padding: var(--sp-lg) var(--sp-md);
+  background: var(--bg-2);
+  border: var(--hair-2) dashed var(--line-2);
+  border-radius: var(--radius-img);
+  color: var(--muted); text-align: center; cursor: pointer;
+  transition: border-color var(--d-fast) var(--ease-out), color var(--d-fast) var(--ease-out);
 }
-.pg-acoes .btn { min-height: 3.25rem; padding-inline: 1.5em; }
-.pg-nota { font-size: var(--t-small); color: var(--muted); }
-.pg-erro {
-  margin-top: var(--sp-lg);
-  padding: var(--sp-sm) var(--sp-md);
-  background: var(--brand); color: #FFFFFF;
+.pg-upload__alvo b { color: var(--ink); font-weight: var(--w-bold); }
+.pg-upload__alvo span { font-size: var(--t-small); }
+.pg-upload__alvo:hover, .pg-upload.solta .pg-upload__alvo { border-color: var(--brand); color: var(--ink); }
+
+.pg-upload__lista { list-style: none; display: grid; gap: var(--sp-3xs); margin-top: var(--sp-sm); }
+.pg-arq {
+  display: flex; align-items: center; gap: var(--sp-sm);
+  padding: .6em .9em;
+  border: var(--hair) solid var(--line);
   border-radius: var(--radius-img);
   font-size: var(--t-small);
 }
-@media (max-width: 560px) { .pg-acoes .btn { width: 100%; justify-content: center; } }
-
-/* ---------- recebido ---------- */
-.pg-feito {
-  margin-top: var(--sp-2xl);
-  padding: var(--sp-xl);
-  background: var(--bg);
-  border: var(--hair) solid var(--line);
-  border-radius: var(--radius-img);
+.pg-arq b { font-weight: var(--w-semi); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pg-arq--subindo { color: var(--muted); border-style: dashed; }
+.pg-arq--erro { color: var(--brand); border-color: var(--brand); }
+.pg-arq__tirar {
+  flex: none; width: 1.75rem; height: 1.75rem; border-radius: 50%;
+  background: var(--bg-2); color: var(--muted); font-size: 1rem; line-height: 1;
+  transition: background var(--d-fast), color var(--d-fast);
 }
-.pg-feito__t {
+.pg-arq__tirar:hover { background: var(--brand); color: var(--brand-ink); }
+
+/* ---------- revisão ---------- */
+.pg-revisao__t {
+  margin-top: var(--sp-sm); margin-bottom: var(--sp-lg);
   font-size: var(--t-h3); font-weight: var(--w-black);
   letter-spacing: var(--ls-h3); line-height: var(--lh-h3);
-  margin-bottom: var(--sp-sm);
 }
-.pg-feito p { color: var(--muted); }
-.pg-feito .pg-feito__t { color: var(--ink); }
+.pg-revisao__item {
+  display: grid; grid-template-columns: 1fr auto; gap: var(--sp-2xs) var(--sp-md);
+  padding: var(--sp-sm) 0;
+  border-top: var(--hair) solid var(--line);
+}
+.pg-revisao__item b { grid-area: 1 / 1; font-size: var(--t-small); font-weight: var(--w-bold); }
+.pg-revisao__item p { grid-area: 2 / 1; color: var(--muted); font-size: var(--t-small); white-space: pre-line; overflow-wrap: anywhere; }
+.pg-revisao__item .mini { grid-area: 1 / 2 / span 2; align-self: center; }
+.pg-revisao__vazio { color: var(--meta); font-style: italic; }
+
+/* ---------- ações ---------- */
+.pg-acoes {
+  display: flex; align-items: center; gap: var(--sp-md); flex-wrap: wrap;
+  margin-top: var(--sp-xl);
+}
+.pg-acoes .btn { min-height: 3.25rem; padding-inline: 1.6em; }
+.pg-nota { font-size: var(--t-small); color: var(--muted); }
+
+/* Barra do quiz: as duas ações, sempre no mesmo lugar. */
+.pg-barra {
+  display: flex; align-items: center; gap: var(--sp-sm);
+  margin-top: var(--sp-xl);
+  padding-top: var(--sp-md);
+  border-top: var(--hair) solid var(--line);
+}
+.pg-barra .btn { min-height: 3.25rem; padding-inline: 1.6em; order: 2; }
+.pg-barra .pg-voltar { order: 1; }
+.pg-barra .pg-tecla { order: 3; margin-left: auto; }
+@media (max-width: 560px) {
+  .pg-barra .pg-tecla { display: none; }
+  .pg-barra .btn { flex: 1; justify-content: center; }
+  .pg-acoes .btn { width: 100%; justify-content: center; }
+}
+
+.pg-erro {
+  margin-top: var(--sp-md);
+  padding: var(--sp-sm) var(--sp-md);
+  border-left: var(--hair-2) solid var(--brand);
+  background: var(--brand-wash);
+  color: var(--ink);
+  font-size: var(--t-small);
+}
+
+/* ---------- recebido ---------- */
+.pg-feito { padding: var(--sp-xl) 0; }
+.pg-feito__t {
+  margin-top: var(--sp-sm);
+  font-size: var(--t-h2); font-weight: var(--w-black);
+  letter-spacing: var(--ls-h2); line-height: var(--lh-h);
+  max-width: 16ch;
+}
 
 .pg-rodape {
-  padding-block: var(--sp-xl);
+  padding: var(--sp-lg) var(--gutter);
   border-top: var(--hair) solid var(--line);
-  background: var(--bg);
 }
 .pg-rodape .small { color: var(--muted); }
+
+/* Botões pequenos da página (Voltar, Editar): o painel.css não carrega aqui. */
+.pg-form .mini {
+  padding: .55em 1.1em; border-radius: var(--radius-pill);
+  border: var(--hair) solid var(--line-2);
+  font-size: var(--t-small); font-weight: var(--w-semi); color: var(--ink);
+  transition: background var(--d-fast) var(--ease-out), color var(--d-fast) var(--ease-out), border-color var(--d-fast) var(--ease-out);
+}
+.pg-form .mini:hover { background: var(--ink); border-color: var(--ink); color: #FFFFFF; }

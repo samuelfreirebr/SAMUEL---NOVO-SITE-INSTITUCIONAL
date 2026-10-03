@@ -40,7 +40,7 @@ import { lerCorpo, lerMultipart } from './multipart.js';
 import { renderizarProposta, catalogoIcones } from './proposta-html.js';
 import { renderizarFatura } from './fatura-html.js';
 import { gerarContrato, renderizarContrato, MODELO_PADRAO } from './contrato.js';
-import { gerarPerguntas, renderizarPerguntas } from './perguntas.js';
+import { gerarPerguntas, renderizarPerguntas, formularioVazio } from './perguntas.js';
 import { preencherComIa, temChaveIa, escolherModelo } from './proposta-ia.js';
 import { apiProspeccao, configuracao as configProspeccao } from './prospeccao.js';
 import * as dados from './dados.js';
@@ -347,11 +347,19 @@ async function api(req, res, url) {
       return json(res, await dados.gravarFormulario(id, { titulo: g.titulo, texto: g.texto, blocos: g.blocos, avisos: g.avisos, ia: g.ia, comReuniao: Boolean(reuniao) }));
     }
     if (acao) return json(res, { erro: 'Rota não existe.' }, 404);
-    if (req.method === 'GET') return json(res, (await dados.lerFormulario(id)) || { proposta: id, blocos: [] });
+    if (req.method === 'GET') {
+      // Formulário que ainda não existe já chega com os blocos prontos:
+      // dá para ligar o que o projeto pede e salvar sem passar pela IA.
+      const f = await dados.lerFormulario(id);
+      if (!f) return json(res, { proposta: id, novo: true, ...formularioVazio(proposta) });
+      return json(res, { ...f, anexos: await dados.listarAnexos(f.link) });
+    }
     if (req.method === 'PUT') {
       const dado = await lerJson(req, res);
       if (!dado) return;
-      return json(res, await dados.gravarFormulario(id, { titulo: dado.titulo, texto: dado.texto, blocos: dado.blocos }));
+      if (!Array.isArray(dado.blocos)) return json(res, { erro: 'Blocos inválidos.' }, 400);
+      const salvo = await dados.gravarFormulario(id, { titulo: dado.titulo, texto: dado.texto, blocos: dado.blocos });
+      return json(res, { ...salvo, anexos: await dados.listarAnexos(salvo.link) });
     }
     return json(res, { erro: 'Método não aceito.' }, 405);
   }
@@ -637,9 +645,44 @@ const servidor = http.createServer(async (req, res) => {
     /* Perguntas: página aberta, pelo link sorteado. O cliente não tem
        login; o endereço é a credencial, como na fatura. */
     if (caminho.startsWith('/perguntas/')) {
-      const link = caminho.slice('/perguntas/'.length).replace(/\/$/, '');
+      const [link, sub, anexo] = caminho.slice('/perguntas/'.length).replace(/\/$/, '').split('/');
       const f = await dados.formularioPeloLink(link);
       if (!f) return texto(res, 'Formulário não encontrado.', 404);
+
+      /* Arquivos do cliente: logo, manual da marca, fotos. Sobem um
+         a um enquanto ele responde, e voltam pelo mesmo link. */
+      if (sub === 'arquivos' && req.method === 'POST') {
+        if (f.respondidoEm) return json(res, { erro: 'Este briefing já foi enviado.' }, 409);
+        let corpo;
+        try { corpo = await lerCorpo(req, dados.LIMITE_ANEXO + 65536); }
+        catch (e) { return json(res, { erro: 'Arquivo acima do limite de 20 MB.' }, 413); }
+        const form = lerMultipart(corpo, req.headers['content-type']);
+        const arq = form?.arquivos?.arquivo;
+        if (!arq) return json(res, { erro: 'Nenhum arquivo recebido.' }, 400);
+        try { return json(res, { ok: true, ...(await dados.gravarAnexo(link, arq.nome, arq.bytes)) }); }
+        catch (e) { return json(res, { erro: e.message }, 400); }
+      }
+
+      /* Devolve o arquivo. Imagem abre na tela; o resto baixa, para
+         nenhum arquivo de fora virar página servida no domínio. */
+      if (sub === 'arquivo' && req.method === 'GET') {
+        const alvo = dados.caminhoAnexo(link, anexo);
+        const st = alvo && await fs.stat(alvo).catch(() => null);
+        if (!st?.isFile()) return texto(res, 'Arquivo não encontrado.', 404);
+        const ext = path.extname(alvo).toLowerCase();
+        const imagem = ['.jpg', '.jpeg', '.png', '.webp', '.avif', '.gif'].includes(ext);
+        res.writeHead(200, {
+          'content-type': imagem ? MIME[ext] : 'application/octet-stream',
+          'content-length': st.size,
+          'content-disposition': (imagem ? 'inline' : 'attachment') + '; filename="' + anexo.replace(/"/g, '') + '"',
+          'cache-control': 'private, max-age=600',
+          'x-content-type-options': 'nosniff',
+          'x-robots-tag': 'noindex, nofollow',
+        });
+        return createReadStream(alvo).pipe(res);
+      }
+
+      if (sub) return texto(res, 'Página não encontrada.', 404);
 
       if (req.method === 'POST') {
         const d = await lerJson(req, res, 512 * 1024);

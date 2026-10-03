@@ -37,6 +37,7 @@ export const PASTA_FATURAS = path.join(RAIZ_DADOS, 'faturas');
 export const PASTA_REUNIOES = path.join(RAIZ_DADOS, 'reunioes');
 export const PASTA_CONTRATOS = path.join(RAIZ_DADOS, 'contratos');
 export const PASTA_FORMULARIOS = path.join(RAIZ_DADOS, 'formularios');
+export const PASTA_ANEXOS = path.join(RAIZ_DADOS, 'briefings');
 
 export async function preparar() {
   await fs.mkdir(PASTA_PROPOSTAS, { recursive: true });
@@ -44,6 +45,7 @@ export async function preparar() {
   await fs.mkdir(PASTA_REUNIOES, { recursive: true });
   await fs.mkdir(PASTA_CONTRATOS, { recursive: true });
   await fs.mkdir(PASTA_FORMULARIOS, { recursive: true });
+  await fs.mkdir(PASTA_ANEXOS, { recursive: true });
   await fs.mkdir(PASTA_IMAGENS, { recursive: true });
 }
 
@@ -201,6 +203,58 @@ export async function responderFormulario(link, respostas) {
   f.atualizadoEm = f.respondidoEm;
   await gravarJson(path.join(PASTA_FORMULARIOS, f.proposta + '.json'), f);
   return f;
+}
+
+/* ---------- arquivos que o cliente sobe no briefing ----------
+   Ficam numa pasta por formulário, com o nome do link sorteado:
+   quem tem o endereço do briefing tem os arquivos dele, e só.    */
+
+const ANEXOS_OK = /\.(jpe?g|png|webp|avif|gif|svg|pdf|ai|eps|psd|indd|zip|rar|docx?|xlsx?|pptx?|txt|md|csv|mp4|mov|otf|ttf)$/i;
+export const LIMITE_ANEXO = 20 * 1024 * 1024;    // 20 MB por arquivo
+const MAX_ANEXOS = 40;                           // por briefing
+
+const nomeLimpo = (nome) => String(nome || 'arquivo')
+  .split(/[\\/]/).pop()
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase()
+  .replace(/[^a-z0-9.]+/g, '-')
+  .replace(/^[-.]+|-+$/g, '')
+  .slice(0, 80) || 'arquivo';
+
+export async function gravarAnexo(link, nomeOriginal, bytes) {
+  if (!idSorteadoValido(link)) throw new Error('Briefing inválido.');
+  const nome = nomeLimpo(nomeOriginal);
+  if (!ANEXOS_OK.test(nome)) throw new Error('Este tipo de arquivo não é aceito aqui. Mande imagem, PDF, documento ou um ZIP.');
+  if (bytes.length > LIMITE_ANEXO) throw new Error('Arquivo de ' + (bytes.length / 1048576).toFixed(1) + ' MB. O limite é 20 MB.');
+
+  const dir = path.join(PASTA_ANEXOS, link);
+  await fs.mkdir(dir, { recursive: true });
+  const jaTem = (await fs.readdir(dir).catch(() => [])).length;
+  if (jaTem >= MAX_ANEXOS) throw new Error('Limite de ' + MAX_ANEXOS + ' arquivos neste briefing. Mande o resto como link de pasta.');
+
+  const guardado = Date.now().toString(36) + '-' + nome;
+  await fs.writeFile(path.join(dir, guardado), bytes);
+  return { nome, guardado, url: '/perguntas/' + link + '/arquivo/' + guardado };
+}
+
+// Caminho de um anexo para servir. Null quando o nome é torto.
+export function caminhoAnexo(link, guardado) {
+  if (!idSorteadoValido(link)) return null;
+  const nome = String(guardado || '');
+  if (!nome || nome.includes('/') || nome.includes('\\') || nome.includes('..')) return null;
+  return path.join(PASTA_ANEXOS, link, nome);
+}
+
+export async function listarAnexos(link) {
+  if (!idSorteadoValido(link)) return [];
+  const dir = path.join(PASTA_ANEXOS, link);
+  const nomes = await fs.readdir(dir).catch(() => []);
+  const itens = [];
+  for (const n of nomes) {
+    const st = await fs.stat(path.join(dir, n)).catch(() => null);
+    if (st?.isFile()) itens.push({ nome: n.replace(/^[a-z0-9]+-/, ''), guardado: n, tamanho: st.size, url: '/perguntas/' + link + '/arquivo/' + n });
+  }
+  return itens;
 }
 
 /* ---------- faturas ----------

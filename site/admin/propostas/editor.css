@@ -391,30 +391,6 @@ textarea.jan__campo { min-height: 9em; resize: vertical; }
 }
 @keyframes ia-gira { to { transform: rotate(360deg); } }
 
-/* ---------- o que a janela das perguntas lista ---------- */
-.pg-bloco-adm { margin-top: var(--sp-xl); padding-top: var(--sp-sm); border-top: var(--hair) solid var(--line); }
-.pg-bloco-adm__txt { font-size: var(--t-small); color: var(--muted); margin-top: var(--sp-3xs); }
-.pg-qs { list-style: none; margin-top: var(--sp-md); display: grid; gap: var(--sp-sm); counter-reset: q; }
-.pg-qs li { position: relative; padding-left: var(--sp-xl); font-size: var(--t-small); counter-increment: q; }
-.pg-qs li::before {
-  content: counter(q, decimal-leading-zero);
-  position: absolute; left: 0; top: .1em;
-  font-size: var(--t-eyebrow); font-weight: var(--w-bold);
-  letter-spacing: .08em; color: var(--brand); font-variant-numeric: tabular-nums;
-}
-.pg-qs b { font-weight: var(--w-semi); }
-.pg-qs small { display: block; color: var(--muted); font-size: var(--t-eyebrow); margin-top: 2px; }
-.pg-op { font-style: italic; }
-.pg-obr {
-  display: inline-block; margin-left: .5em; padding: .1em .5em;
-  font-size: 9px; letter-spacing: .1em; text-transform: uppercase;
-  color: var(--brand); background: var(--brand-wash); border-radius: var(--radius-pill);
-}
-.pg-respostas { margin-top: var(--sp-lg); padding: var(--sp-md); background: var(--bg-2); border-radius: var(--radius-img); }
-.pg-resp { margin-top: var(--sp-sm); font-size: var(--t-small); }
-.pg-resp b { display: block; font-weight: var(--w-semi); }
-.pg-resp p { color: var(--muted); white-space: pre-wrap; }
-
 /* ---------- ações do cartão de proposta ---------- */
 .ed-prop__topo {
   display: flex; align-items: center; justify-content: space-between; gap: var(--sp-sm);
