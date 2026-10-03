@@ -159,10 +159,11 @@ export const BLOCOS_PRONTOS = [
     titulo: 'Domínio e hospedagem',
     texto: 'Para o site entrar no ar no endereço certo, sem surpresa na hora de publicar.',
     perguntas: [
-      { id: 'hosp-dominio', pergunta: 'Qual é o endereço do site (o domínio)', ajuda: 'Exemplo: suaempresa.com.br. Se ainda não tiver, escreva Não tenho.', tipo: 'texto', opcoes: [], obrigatoria: true },
-      { id: 'hosp-registrado', pergunta: 'O domínio já está registrado', ajuda: '', tipo: 'escolha', opcoes: ['Sim, já é meu', 'Não, preciso registrar', 'Não sei'], obrigatoria: true },
-      { id: 'hosp-onde', pergunta: 'Onde o domínio foi registrado', ajuda: 'Registro.br, GoDaddy, Hostinger, Locaweb. Se não souber, escreva Não sei.', tipo: 'texto', opcoes: [], obrigatoria: false },
-      { id: 'hosp-acesso', pergunta: 'Vamos precisar do acesso do seu provedor, à sua conta atual de hospedagem.', ajuda: 'Caso não saiba onde está ou contratou alguém para fazer, entre em contato com a pessoa e solicite.', tipo: 'texto', opcoes: [], obrigatoria: true },
+      { id: 'hosp-tem', pergunta: 'Você tem um site atualmente', ajuda: '', tipo: 'escolha', opcoes: ['Sim', 'Não'], obrigatoria: true },
+      { id: 'hosp-link', pergunta: 'Envie o link do seu site atual', ajuda: 'O endereço completo, começando com https://', tipo: 'link', opcoes: [], obrigatoria: true, se: { id: 'hosp-tem', valor: 'Sim' } },
+      { id: 'hosp-dominio-novo', pergunta: 'Qual endereço você gostaria para o seu site', ajuda: 'Exemplo: suaempresa.com.br. Se ainda não pensou, escreva Não sei.', tipo: 'texto', opcoes: [], obrigatoria: true, se: { id: 'hosp-tem', valor: 'Não' } },
+      { id: 'hosp-onde', pergunta: 'Onde o domínio foi registrado', ajuda: 'Registro.br, GoDaddy, Hostinger, Locaweb. Se não souber, escreva Não sei.', tipo: 'texto', opcoes: [], obrigatoria: false, se: { id: 'hosp-tem', valor: 'Sim' } },
+      { id: 'hosp-acesso', pergunta: 'Vamos precisar do acesso do seu provedor, à sua conta atual de hospedagem.', ajuda: 'Caso não saiba onde está ou contratou alguém para fazer, entre em contato com a pessoa e solicite.', tipo: 'texto', opcoes: [], obrigatoria: true, se: { id: 'hosp-tem', valor: 'Sim' } },
       { id: 'hosp-atual', pergunta: 'Já existe hospedagem contratada', ajuda: '', tipo: 'escolha', opcoes: ['Sim', 'Não', 'Não sei'], obrigatoria: false },
       { id: 'hosp-email', pergunta: 'Usa e-mail profissional no domínio', ajuda: 'Exemplo: contato@suaempresa.com.br. É para eu não derrubar o e-mail ao publicar.', tipo: 'escolha', opcoes: ['Sim', 'Não', 'Não sei'], obrigatoria: false },
     ],
@@ -417,7 +418,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css">
 <link rel="stylesheet" href="/styles/base.css">
-<link rel="stylesheet" href="/styles/perguntas.css?v=q17">
+<link rel="stylesheet" href="/styles/perguntas.css?v=q18">
 <link rel="icon" href="/img/favicon.png">
 </head>
 <body class="perguntas">
@@ -459,7 +460,7 @@ export function renderizarPerguntas(f, { respondido = false } = {}) {
 
 <footer class="pg-rodape"><p class="small">Samuel Freire Web Designer</p></footer>
 
-<script type="module" src="/js/briefing.js?v=q17"></script>
+<script type="module" src="/js/briefing.js?v=q18"></script>
 </body>
 </html>`;
 }
