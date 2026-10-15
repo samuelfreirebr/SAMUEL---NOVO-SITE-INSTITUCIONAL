@@ -222,11 +222,15 @@ function cartao(i) {
     // teclado copia pelo botão Copiar.
     i.conteudo ? h('p', { class: 'cf-conteudo', title: 'Clique para copiar', onclick: copiar }, i.conteudo) : null,
     i.tags.length ? h('div', { class: 'cf-tags' }, i.tags.map((t) => h('button', { type: 'button', class: 'cf-tag', onclick: () => { tag = t; filtrar(); scrollTo({ top: 0 }); } }, '#' + t))) : null,
+    // Uma ação com nome (a que se veio fazer: abrir o link ou copiar o
+    // texto) e as outras só em ícone, para caber numa linha no celular.
     h('div', { class: 'fm-card__acoes' },
-      i.url ? h('a', { class: 'mini mini--ativo', href: i.url, target: '_blank', rel: 'noopener noreferrer' }, ico('abrir'), 'Abrir') : null,
-      h('button', { type: 'button', class: 'mini' + (i.url ? '' : ' mini--ativo'), onclick: copiar }, ico('copiar'), 'Copiar'),
-      h('button', { type: 'button', class: 'mini', onclick: () => fixar(i) }, ico('fixar'), i.fixado ? 'Desafixar' : 'Fixar'),
-      h('button', { type: 'button', class: 'mini cf-card__editar', onclick: () => abrir(i) }, ico('editar'), 'Editar')));
+      i.url
+        ? h('a', { class: 'mini mini--ativo', href: i.url, target: '_blank', rel: 'noopener noreferrer' }, ico('abrir'), 'Abrir')
+        : h('button', { type: 'button', class: 'mini mini--ativo', onclick: copiar }, ico('copiar'), 'Copiar'),
+      i.url ? h('button', { type: 'button', class: 'mini cf-ico', onclick: copiar, 'aria-label': 'Copiar link', title: 'Copiar link' }, ico('copiar')) : null,
+      h('button', { type: 'button', class: 'mini cf-ico' + (i.fixado ? ' cf-ico--ligado' : ''), onclick: () => fixar(i), 'aria-label': i.fixado ? 'Desafixar' : 'Fixar no topo', title: i.fixado ? 'Desafixar' : 'Fixar no topo' }, ico('fixar')),
+      h('button', { type: 'button', class: 'mini cf-ico cf-card__editar', onclick: () => abrir(i), 'aria-label': 'Editar', title: 'Editar' }, ico('editar'))));
 }
 
 async function fixar(i) {
@@ -331,7 +335,7 @@ $('#busca').addEventListener('input', () => {
   const v = $('#busca').value.trim();
   $('#guardar-barra').hidden = !v;
   $('#dica').dataset.tom = v ? 'acao' : '';
-  $('#dica').firstChild.textContent = v ? 'Buscando. Enter guarda isto no cofre. ' : dicaPadrao;
+  $('#dica').textContent = v ? 'Buscando. Enter guarda isto no cofre.' : dicaPadrao;
   filtrar();
 });
 $('#busca').addEventListener('keydown', (e) => { if (e.key === 'Enter') guardarRapido($('#busca').value); });
@@ -374,9 +378,9 @@ document.addEventListener('keydown', (e) => {
   $('#busca').focus();
 });
 
-let dicaPadrao = $('#dica').firstChild.textContent;
+let dicaPadrao = $('#dica').textContent;
 await carregar();
-if (!iaLigada) $('#dica').firstChild.textContent = dicaPadrao = 'Colou, está guardado: link, prompt, comando ou trecho. Sem a IA ligada, o nome vem do título da página ou da primeira linha. ';
+if (!iaLigada) $('#dica').textContent = dicaPadrao = 'Cole qualquer coisa para guardar. Sem a IA, o nome vem da página ou da primeira linha.';
 let pedido = new URLSearchParams(location.search).get('link');
 try { pedido = pedido || sessionStorage.getItem('cofre-colar'); sessionStorage.removeItem('cofre-colar'); } catch (e) { /* sem sessionStorage: segue só com o ?link= */ }
 if (location.search) history.replaceState(null, '', location.pathname);

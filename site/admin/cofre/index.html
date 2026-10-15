@@ -11,23 +11,21 @@
 <link rel="stylesheet" href="/styles/base.css?v=20260911a">
 <link rel="stylesheet" href="/admin/painel.css?v=9">
 <link rel="stylesheet" href="/admin/formularios/formularios.css?v=2">
-<link rel="stylesheet" href="./cofre.css?v=7">
+<link rel="stylesheet" href="./cofre.css?v=8">
 </head>
 <body class="fm">
 
 <header class="topo">
   <h1><a href="/admin/">Painel</a> <i>Samuel Freire</i><span class="sec">Cofre</span></h1>
-  <div class="fm-topo__acoes">
-    <button class="btn btn--brand btn--peq" type="button" id="novo"></button>
-  </div>
 </header>
 
 <p class="aviso" id="aviso" role="status"></p>
 
 <main class="fm-raiz">
-  <section class="fm-intro">
+  <div class="cf-cabeca">
     <h2 class="fm-titulo">Cofre</h2>
-  </section>
+    <button class="mini" type="button" id="novo"></button>
+  </div>
 
   <label class="cf-busca">
     <span class="cf-busca__ico" id="busca-ico"></span>
@@ -35,11 +33,13 @@
     <kbd>/</kbd>
     <button class="mini mini--ativo" type="button" id="guardar-barra" hidden></button>
   </label>
-  <p class="cf-dica-barra" id="dica">Colou, está guardado: link, prompt, comando ou trecho de texto. A IA dá o nome, explica para que serve e põe no lugar certo. <span class="cf-favorito" id="favorito-caixa" hidden>Para guardar de qualquer site, arraste para a barra de favoritos: <a class="mini" id="favorito">Guardar no Cofre</a></span></p>
+  <p class="cf-dica-barra" id="dica">Cole qualquer coisa para guardar. A IA dá o nome e põe no lugar certo.</p>
 
   <div class="cf-filtros" id="filtros" role="group" aria-label="Filtrar por categoria"></div>
 
   <div class="cf-lista" id="lista"><p class="vazio">Carregando…</p></div>
+
+  <p class="cf-favorito" id="favorito-caixa" hidden>Para guardar de qualquer site, arraste para a barra de favoritos: <a class="mini" id="favorito">Guardar no Cofre</a></p>
 </main>
 
 <dialog id="jan" class="fm-jan cf-jan" aria-labelledby="jan-titulo">
@@ -86,6 +86,6 @@
   </footer>
 </dialog>
 
-<script type="module" src="./cofre.js?v=5"></script>
+<script type="module" src="./cofre.js?v=6"></script>
 </body>
 </html>

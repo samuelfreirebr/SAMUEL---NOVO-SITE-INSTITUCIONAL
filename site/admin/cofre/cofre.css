@@ -3,9 +3,17 @@
    campos) e só acrescenta busca, etiquetas e o miolo do cartão.
    ============================================================ */
 
+/* ---------- cabeça e ritmo da página ----------
+   O caminho é: barra (colar ou buscar) > filtros > lista. Título e
+   "Nova anotação" dividem uma linha; a barra encosta na dica (que é
+   dela) e se afasta dos filtros, que se afastam da lista. */
+.fm .fm-raiz { padding-top: var(--sp-md); }
+.cf-cabeca { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-sm); margin-bottom: var(--sp-sm); }
+.cf-cabeca .fm-titulo { margin: 0; }
+
 /* ---------- busca ---------- */
 .cf-busca {
-  display: flex; align-items: center; gap: var(--sp-xs); margin: 0 0 var(--sp-sm);
+  display: flex; align-items: center; gap: var(--sp-xs); margin: 0 0 var(--sp-2xs);
   padding: 0 var(--sp-sm); background: var(--bg);
   border: var(--hair) solid var(--line-2); border-radius: var(--radius-img);
   transition: border-color var(--d-fast) var(--ease-out);
@@ -28,9 +36,19 @@
 
 /* ---------- etiquetas de filtro ---------- */
 .cf-filtros { display: flex; flex-wrap: wrap; gap: var(--sp-3xs); margin-bottom: var(--sp-md); }
-.cf-dica-barra { margin: calc(-1 * var(--sp-2xs)) 0 var(--sp-md); font-size: var(--t-eyebrow); color: var(--muted); line-height: 1.6; }
+/* No estreito, uma linha só que rola de lado, de borda a borda, em vez
+   de três linhas de etiquetas empurrando a lista para baixo. */
+@media (max-width: 760px) {
+  .cf-filtros {
+    flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+    margin-inline: calc(-1 * var(--sp-md)); padding-inline: var(--sp-md);
+  }
+  .cf-filtros::-webkit-scrollbar { display: none; }
+  .cf-filtro { flex: none; }
+}
+.cf-dica-barra { margin: 0 0 var(--sp-md); font-size: var(--t-eyebrow); color: var(--muted); line-height: 1.6; }
 .cf-dica-barra[data-tom="acao"] { color: var(--ink); font-weight: var(--w-semi); }
-.cf-favorito { display: inline-flex; align-items: center; gap: var(--sp-2xs); flex-wrap: wrap; }
+.cf-favorito { display: flex; align-items: center; gap: var(--sp-2xs); flex-wrap: wrap; margin-top: var(--sp-xl); padding-top: var(--sp-sm); border-top: var(--hair) solid var(--line); font-size: var(--t-eyebrow); color: var(--muted); }
 @media (hover: none) { .cf-favorito { display: none !important; } }
 .cf-favorito .mini { cursor: grab; }
 .cf-filtro {
@@ -86,6 +104,11 @@
 }
 .cf-tag:hover { background: var(--brand-wash); color: var(--ink); }
 .cf-card__editar { margin-left: auto; }
+/* Nome e domínio são uma coisa só: colados, e o resto do cartão respira. */
+.cf-card .fm-card__meta { margin-top: calc(var(--sp-3xs) - var(--sp-xs)); }
+.cf-card .fm-card__acoes { flex-wrap: nowrap; }
+.cf-ico { justify-content: center; padding-inline: .7em; }
+.cf-ico--ligado { color: var(--brand); }
 
 /* ---------- janela ---------- */
 .cf-jan { width: min(94vw, 40rem); }
@@ -99,7 +122,8 @@
 /* No dedo, alvo de pelo menos 44px nos botões e filtros; as tags, que
    são muitas e ficam juntas, vão a 32px (acima dos 24px mínimos). */
 @media (pointer: coarse) {
-  .cf-filtro, .cf-card .mini, .cf-busca .mini { min-height: 2.75rem; }
+  .cf-filtro, .cf-card .mini, .cf-busca .mini, #novo { min-height: 2.75rem; }
+  .cf-ico { min-width: 2.75rem; }
   .cf-tag { min-height: 2rem; padding-inline: .8em; }
 }
 .fm textarea {
