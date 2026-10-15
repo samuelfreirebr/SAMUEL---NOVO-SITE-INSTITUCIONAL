@@ -1,0 +1,87 @@
+/* ============================================================
+   Cofre. Usa a base do painel de formulários (cartão, janela,
+   campos) e só acrescenta busca, etiquetas e o miolo do cartão.
+   ============================================================ */
+
+/* ---------- busca ---------- */
+.cf-busca {
+  display: flex; align-items: center; gap: var(--sp-xs); margin: 0 0 var(--sp-sm);
+  padding: 0 var(--sp-sm); background: var(--bg);
+  border: var(--hair) solid var(--line-2); border-radius: var(--radius-img);
+  transition: border-color var(--d-fast) var(--ease-out);
+}
+.cf-busca:focus-within { border-color: var(--ink); }
+.cf-busca__ico { display: flex; color: var(--muted); font-size: var(--t-lead); }
+.fm .cf-busca input {
+  flex: 1; min-width: 0; padding: .85em 0; border: 0; background: none;
+  font-size: var(--t-lead); font-weight: var(--w-semi); letter-spacing: -.02em;
+}
+.fm .cf-busca input:focus-visible { outline: none; }
+@media (max-width: 560px) { .fm .cf-busca input { font-size: var(--t-body); } }
+.cf-busca input::-webkit-search-cancel-button { cursor: pointer; }
+.cf-busca kbd {
+  flex: none; padding: .1em .55em; border: var(--hair) solid var(--line-2); border-radius: var(--radius-img);
+  font: inherit; font-size: var(--t-eyebrow); color: var(--muted);
+}
+@media (hover: none) { .cf-busca kbd { display: none; } }
+
+/* ---------- etiquetas de filtro ---------- */
+.cf-filtros { display: flex; flex-wrap: wrap; gap: var(--sp-3xs); margin-bottom: var(--sp-md); }
+.cf-dica-barra { margin: calc(-1 * var(--sp-2xs)) 0 var(--sp-md); font-size: var(--t-eyebrow); color: var(--muted); line-height: 1.6; }
+.cf-dica-barra[data-tom="acao"] { color: var(--brand); font-weight: var(--w-semi); }
+.cf-favorito { display: inline-flex; align-items: center; gap: var(--sp-2xs); flex-wrap: wrap; }
+@media (hover: none) { .cf-favorito { display: none !important; } }
+.cf-favorito .mini { cursor: grab; }
+.cf-filtro {
+  display: inline-flex; align-items: center; gap: .5em;
+  padding: .5em .95em; border-radius: var(--radius-pill);
+  font-size: var(--t-eyebrow); font-weight: var(--w-semi); color: var(--ink);
+  background: var(--bg); box-shadow: inset 0 0 0 var(--hair) var(--line-2);
+  transition: background var(--d-fast), color var(--d-fast);
+}
+.cf-filtro:hover { box-shadow: inset 0 0 0 var(--hair) var(--ink); }
+.cf-filtro[aria-pressed="true"] { background: var(--ink); color: var(--bg); box-shadow: none; }
+.cf-filtro__n { color: var(--muted); font-weight: var(--w-book); }
+.cf-filtro[aria-pressed="true"] .cf-filtro__n { color: var(--muted-invert); }
+.cf-filtro--tag { background: var(--brand); color: var(--brand-ink); box-shadow: none; }
+
+/* ---------- cartões ---------- */
+.cf-lista { display: grid; gap: var(--sp-sm); grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr)); align-items: start; }
+.cf-card--fixado { border-color: var(--brand); }
+.cf-card--destaque { border-color: var(--brand); background: var(--brand-wash); }
+.cf-organizando { color: var(--brand); font-size: var(--t-small); }
+.cf-card__topo { display: flex; align-items: center; gap: var(--sp-2xs); }
+.cf-card__ico { flex: none; width: 1.25rem; height: 1.25rem; border-radius: var(--radius-img); }
+.cf-card__ico--nota { display: grid; place-items: center; background: var(--bg-2); color: var(--muted); font-size: .75rem; }
+.cf-card__cat { font-size: var(--t-eyebrow); font-weight: var(--w-bold); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.cf-card__pino { margin-left: auto; display: flex; color: var(--brand); }
+a.fm-card__nome { text-decoration: none; }
+.cf-card__desc {
+  font-size: var(--t-small); line-height: 1.55; color: var(--ink-2); white-space: pre-line; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 6; line-clamp: 6; overflow: hidden;
+}
+.cf-tags { display: flex; flex-wrap: wrap; gap: var(--sp-3xs); }
+.cf-tag {
+  padding: .15em .6em; border-radius: var(--radius-pill); background: var(--bg-2);
+  font-size: var(--t-eyebrow); color: var(--muted);
+  transition: background var(--d-fast), color var(--d-fast);
+}
+.cf-tag:hover { background: var(--brand-wash); color: var(--brand); }
+.cf-card__editar { margin-left: auto; }
+
+/* ---------- janela ---------- */
+.cf-jan { width: min(94vw, 40rem); }
+.cf-linha { display: flex; gap: var(--sp-2xs); flex-wrap: wrap; }
+.cf-linha input { flex: 1 1 14rem; min-width: 0; }
+.cf-dica { font-size: var(--t-eyebrow); color: var(--muted); }
+.fm textarea {
+  width: 100%; min-height: 7em; padding: .7em .9em; background: var(--bg); color: var(--ink);
+  border: var(--hair) solid var(--line-2); border-radius: var(--radius-img); font: inherit; font-size: var(--t-small); line-height: 1.5;
+}
+.cf-dupla { display: grid; gap: var(--sp-sm); }
+@media (min-width: 560px) { .cf-dupla { grid-template-columns: 1fr 1fr; } }
+.cf-check { margin: 0; display: flex; align-items: center; gap: var(--sp-2xs); font-size: var(--t-small); font-weight: var(--w-semi); cursor: pointer; }
+.cf-check input { accent-color: var(--brand); width: 1.1em; height: 1.1em; }
+.cf-pe { display: flex; align-items: center; justify-content: flex-end; gap: var(--sp-sm); }
+.cf-pe #f-apagar { margin-right: auto; }
+

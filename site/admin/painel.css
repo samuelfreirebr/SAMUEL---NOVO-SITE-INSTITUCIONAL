@@ -42,6 +42,10 @@ body { background: var(--bg-2); display: flex; flex-direction: column; }
 .mini[disabled] { opacity: .4; pointer-events: none; }
 .mini--ativo { background: var(--ink); color: #fff; box-shadow: none; }
 
+/* Atalho do topo: abre o Cofre já no formulário de link novo. */
+.atalho-cofre { padding-inline: .7em; }
+.atalho-cofre svg { width: 1.05em; height: 1.05em; }
+
 #salvar[data-sujo="1"]::after {
   content: ""; width: 6px; height: 6px; border-radius: 50%;
   background: #fff; margin-left: .5em; display: inline-block;
@@ -179,6 +183,16 @@ dialog::backdrop { background: rgba(20,21,23,.55); }
 .hub__nome { font-size: var(--t-lead); font-weight: var(--w-black); letter-spacing: -.035em; line-height: 1; }
 .hub__nome em { font-style: italic; font-weight: var(--w-book); }
 .hub__meta { color: var(--muted); font-size: var(--t-small); margin-top: 4px; }
+/* Cofre direto da tela inicial: colou, Guardar, e o link já entra organizado. */
+.hub__cofre {
+  display: flex; align-items: center; gap: var(--sp-2xs); flex-wrap: wrap;
+  margin: calc(-1 * var(--sp-lg)) 0 var(--sp-lg); padding: var(--sp-2xs) var(--sp-2xs) var(--sp-2xs) var(--sp-sm);
+  background: var(--bg); border: var(--hair) solid var(--line); border-radius: var(--radius-img);
+}
+.hub__cofre:focus-within { border-color: var(--ink); }
+.hub__cofre label { margin: 0; font-size: var(--t-eyebrow); font-weight: var(--w-bold); letter-spacing: .12em; text-transform: uppercase; color: var(--brand); }
+.hub__cofre input[type=text] { flex: 1 1 12rem; min-width: 0; border: 0; padding: .6em .4em; }
+.hub__cofre input[type=text]:focus-visible { outline: none; }
 /* Quatro blocos: lado a lado no computador, dois por linha no
    tablet, um por linha no celular. Contagem fixa em vez de auto-fit,
    que quebrava em três em cima e um sozinho embaixo. */

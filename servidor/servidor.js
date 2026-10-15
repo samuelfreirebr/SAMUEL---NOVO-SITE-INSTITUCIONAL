@@ -16,6 +16,7 @@
      /admin/site/         editor do site    · exige sessão
      /admin/propostas/    propostas         · exige sessão
      /admin/faturas/      faturas           · exige sessão
+     /admin/cofre/        banco de links    · exige sessão (/cofre leva para lá)
      /contratos/<id>      contrato da proposta, para imprimir · exige sessão
      /google-prospection/ prospecção        · exige sessão
      /api/...             API do painel     · exige sessão (entrar/sair abertas)
@@ -44,6 +45,7 @@ import { gerarPerguntas, renderizarPerguntas, formularioVazio, BLOCOS_PRONTOS, c
 import { preencherComIa, temChaveIa, escolherModelo } from './proposta-ia.js';
 import { apiProspeccao, configuracao as configProspeccao } from './prospeccao.js';
 import * as dados from './dados.js';
+import * as cofre from './cofre.js';
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 // A pasta site/ ao lado desta. No container, copiada para /app/site.
@@ -206,6 +208,27 @@ async function api(req, res, url) {
   /* --- prospecção: vive em módulo próprio --- */
   if (rota === 'prospeccao' || rota.startsWith('prospeccao/')) {
     return apiProspeccao(req, res, url, rota.slice('prospeccao/'.length));
+  }
+
+  /* --- cofre: links úteis, só do painel --- */
+  if (rota === 'cofre') {
+    if (req.method === 'GET') return json(res, { itens: await cofre.listar(), ia: cofre.temChaveCofre() });
+    if (req.method === 'POST') {
+      const dado = await lerJson(req, res, 65536);
+      if (dado === undefined) return;
+      try { return json(res, await cofre.salvar(dado)); }
+      catch (e) { return json(res, { erro: e.message }, 400); }
+    }
+    return json(res, { erro: 'Método não aceito.' }, 405);
+  }
+  if (rota === 'cofre/ia' && req.method === 'POST') {
+    const dado = await lerJson(req, res, 4096);
+    if (dado === undefined) return;
+    const d = await cofre.descrever(dado.url);
+    return json(res, d, d.erro ? (d.semChave ? 503 : 502) : 200);
+  }
+  if (rota.startsWith('cofre/') && req.method === 'DELETE') {
+    return (await cofre.apagar(rota.slice('cofre/'.length))) ? json(res, { ok: true }) : json(res, { erro: 'Item não encontrado.' }, 404);
   }
 
   /* --- modelo de proposta: o que toda proposta nova já traz --- */
@@ -580,11 +603,19 @@ const servidor = http.createServer(async (req, res) => {
       return api(req, res, url);
     }
 
+    /* --- /cofre: endereço curto do Cofre. ?link= já guarda o link
+       (é o que o favorito "Guardar no Cofre" manda). O login continua
+       valendo: quem não entrou cai na tela de entrar. --- */
+    if (caminho === '/cofre' || caminho === '/cofre/') {
+      res.writeHead(302, { location: '/admin/cofre/' + url.search, 'cache-control': 'no-store' });
+      return res.end();
+    }
+
     /* --- Painel --- */
     if (caminho === '/admin' || caminho.startsWith('/admin/')) {
       /* Pastas precisam da barra final: sem ela o navegador resolve
          './editor.js' como /editor.js e a página abre morta. */
-      if (/^\/admin(\/site|\/propostas|\/faturas)?$/.test(caminho)) {
+      if (/^\/admin(\/site|\/propostas|\/faturas|\/cofre)?$/.test(caminho)) {
         res.writeHead(308, { location: caminho + '/' + url.search, 'cache-control': 'no-store' });
         return res.end();
       }

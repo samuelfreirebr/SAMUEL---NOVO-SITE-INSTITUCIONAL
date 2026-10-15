@@ -9,12 +9,13 @@
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css?v=20260909h">
 <link rel="stylesheet" href="/styles/base.css?v=20260911a">
-<link rel="stylesheet" href="/admin/painel.css?v=5">
+<link rel="stylesheet" href="/admin/painel.css?v=7">
 </head>
 <body>
 
 <header class="topo">
   <h1>Painel <i>Samuel Freire</i></h1>
+  <a class="mini atalho-cofre" href="/admin/cofre/" title="Cofre: guardar ou achar um link" aria-label="Abrir o Cofre"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3.5h11v9h-11z M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4z M4.5 12.5V14 M11.5 12.5V14"/></svg></a>
   <a class="mini" href="/" target="_blank" rel="noopener">Ver o site</a>
   <button class="mini" type="button" id="sair">Sair</button>
 </header>
@@ -29,6 +30,13 @@
         <p class="hub__meta"><span id="saudacao">Olá</span> · <span id="data"></span></p>
       </div>
     </div>
+
+    <form class="hub__cofre" action="/admin/cofre/" method="get">
+      <label for="cofre-link">Cofre</label>
+      <input type="text" id="cofre-link" name="link" inputmode="url" autocomplete="off" required placeholder="Cole um link aqui">
+      <button class="mini mini--ativo" type="submit">Guardar</button>
+      <a class="mini" href="/admin/cofre/">Abrir o Cofre</a>
+    </form>
 
     <div class="hub__blocos">
       <a class="bloco" href="/admin/propostas/">
@@ -60,6 +68,12 @@
         <span class="bloco__titulo">Formulários</span>
         <span class="bloco__desc">Briefings para o cliente responder, uma pergunta por vez. Monte em branco ou a partir de uma proposta, mande o link e leia as respostas.</span>
         <span class="bloco__pe">Formulários <svg class="arrow" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M4 12L12 4M12 4H5.5M12 4v6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </a>
+      <a class="bloco" href="/admin/cofre/">
+        <span class="bloco__num">06</span>
+        <span class="bloco__titulo">Cofre</span>
+        <span class="bloco__desc">Links úteis e anotações num lugar só: ferramentas, repositórios, vídeos e documentações, cada um com o que é e quando usar.</span>
+        <span class="bloco__pe">Cofre <svg class="arrow" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M4 12L12 4M12 4H5.5M12 4v6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       </a>
     </div>
 
