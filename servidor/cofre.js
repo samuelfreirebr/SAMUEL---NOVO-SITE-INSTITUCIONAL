@@ -18,7 +18,7 @@ import { lookup } from 'node:dns/promises';
 import net from 'node:net';
 import path from 'node:path';
 import { RAIZ_DADOS } from './dados.js';
-import { pedirJsonIa, temChaveIa } from './proposta-ia.js';
+import { pedirJsonIa, temChaveIa, prepararAnexos } from './proposta-ia.js';
 
 const ARQ = path.join(RAIZ_DADOS, 'cofre.json');
 export const CATEGORIAS = ['prompts', 'textos', 'ferramentas', 'github', 'videos', 'ia', 'docs', 'arquivos', 'outros'];
@@ -227,4 +227,76 @@ export async function descrever(urlBruta) {
   // Sem a chave, fica o que a própria página diz de si: título e descrição.
   if (!temChaveCofre()) return { nome: corte(pagina.titulo, 160), descricao: corte(pagina.descricao.split(' | ')[0], 600), semIa: true };
   return perguntarIa(`Link: ${url}\nTítulo: ${pagina.titulo}\nDescrição da página: ${pagina.descricao}\n\nComeço do conteúdo:\n${pagina.texto}`);
+}
+
+/* ---------- separar vários itens de um material grande ----------
+   Texto colado, conversa exportada (.txt ou .zip do WhatsApp), PDF,
+   DOCX ou imagem. A IA devolve a lista do que vale guardar; nada é
+   gravado aqui: o painel mostra para revisão e só salva o aprovado. */
+
+const SISTEMA_SEPARAR = `Você ajuda um designer brasileiro a montar o cofre pessoal dele. Recebe um material grande (conversa, anotações, documento, print) e separa TUDO o que vale guardar, um item por coisa útil:
+- links de ferramentas, repositórios, vídeos, documentações e arquivos;
+- prompts e instruções para IA, copiados por inteiro;
+- comandos de terminal, trechos de código e configurações, copiados por inteiro;
+- dicas, decisões e informações que ele vai querer achar depois.
+Ignore conversa sem conteúdo (cumprimentos, combinados de horário, "ok", "valeu").
+
+Para cada item:
+- url: o endereço exatamente como aparece no material; vazio se não houver. Nunca invente nem complete endereço.
+- conteudo: para prompt, comando, código ou dica, o texto exato do material (pode juntar linhas da mesma mensagem); vazio para link puro.
+- nome: curto e reconhecível, em português quando fizer sentido.
+- descricao: português do Brasil, de 1 a 3 frases simples: o que é e quando usar. Sem travessão.
+- categoria: prompts, textos, ferramentas, github, videos, ia, docs, arquivos ou outros (textos = comando, código, dica, anotação).
+- tags: de 2 a 5 palavras curtas em minúsculas.
+Junte repetições num item só. Se nada for útil, devolva a lista vazia.`;
+
+const ESQUEMA_SEPARAR = {
+  type: 'object', additionalProperties: false, required: ['itens'],
+  properties: {
+    itens: {
+      type: 'array',
+      items: {
+        type: 'object', additionalProperties: false,
+        required: ['url', 'conteudo', 'nome', 'descricao', 'categoria', 'tags'],
+        properties: {
+          url: { type: 'string' },
+          conteudo: { type: 'string' },
+          nome: { type: 'string' },
+          descricao: { type: 'string' },
+          categoria: { type: 'string', enum: CATEGORIAS },
+          tags: { type: 'array', items: { type: 'string' } },
+        },
+      },
+    },
+  },
+};
+
+export async function separar({ texto, arquivos }) {
+  if (!temChaveIa()) return { erro: 'Separar precisa da IA: falta a OPENAI_API_KEY na stack.', semChave: true };
+  const t = String(texto || '').trim();
+  if (!t && !(arquivos || []).length) return { erro: 'Cole um texto ou escolha um arquivo.' };
+
+  let anexos;
+  try { anexos = prepararAnexos(arquivos || []); }
+  catch (e) { return { erro: e.message }; }
+  const partes = [];
+  if (t) partes.push({ type: 'input_text', text: '--- Material colado ---\n' + t.slice(0, 60000) });
+  partes.push(...anexos.partes);
+  if (!partes.length) return { erro: 'Nenhum arquivo pôde ser lido. Use texto, imagem, PDF, DOCX ou ZIP.', lidos: anexos.lidos };
+
+  let ia;
+  // ponytail: uma chamada só, até ~16 mil tokens de saída (algumas dezenas
+  // de itens). Material maior que isso, mandar em partes.
+  try { ({ ia } = await pedirJsonIa(partes, { sistema: SISTEMA_SEPARAR, esquema: ESQUEMA_SEPARAR, nome: 'itens_do_cofre', tokens: 16000 })); }
+  catch (e) { return { erro: 'A IA não respondeu: ' + e.message, lidos: anexos.lidos }; }
+
+  const itens = (ia.itens || []).map((i) => ({
+    url: /^https?:\/\/\S+$/i.test(String(i.url || '').trim()) ? corte(i.url, 2000) : '',
+    conteudo: String(i.conteudo || '').slice(0, 50000).trim(),
+    nome: semTravessao(i.nome, 160),
+    descricao: semTravessao(i.descricao, 8000),
+    categoria: CATEGORIAS.includes(i.categoria) ? i.categoria : 'outros',
+    tags: (Array.isArray(i.tags) ? i.tags : []).map((x) => corte(x, 30).toLowerCase()).filter(Boolean).slice(0, 5),
+  })).filter((i) => i.nome && (i.url || i.conteudo || i.descricao));
+  return { itens, lidos: anexos.lidos };
 }

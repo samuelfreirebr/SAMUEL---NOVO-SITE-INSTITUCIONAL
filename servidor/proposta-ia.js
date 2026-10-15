@@ -108,8 +108,8 @@ const MIME_IMG = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp
 
 /* Transforma cada anexo em partes que a IA entende: texto, imagem ou
    PDF. ZIP e DOCX são abertos aqui. Devolve também o resumo do que
-   foi lido, para o painel mostrar. */
-function prepararAnexos(arquivos) {
+   foi lido, para o painel mostrar. O Cofre usa o mesmo leitor. */
+export function prepararAnexos(arquivos) {
   const partes = [];
   const lidos = [];
   let total = 0;
@@ -255,7 +255,7 @@ function resumoAtual(p) {
 - perguntas atuais: ${(p.faq?.itens || []).map((f) => f.pergunta).join(' | ') || '(nenhuma)'}`;
 }
 
-async function chamarOpenAi(partes, modeloEscolhido, { sistema = SISTEMA, esquema = ESQUEMA, nome = 'proposta_preenchida' } = {}) {
+async function chamarOpenAi(partes, modeloEscolhido, { sistema = SISTEMA, esquema = ESQUEMA, nome = 'proposta_preenchida', tokens = 4000 } = {}) {
   const r = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
@@ -266,7 +266,7 @@ async function chamarOpenAi(partes, modeloEscolhido, { sistema = SISTEMA, esquem
         { role: 'user', content: partes },
       ],
       text: { format: { type: 'json_schema', name: nome, schema: esquema, strict: true } },
-      max_output_tokens: 4000,
+      max_output_tokens: tokens,
     }),
     signal: AbortSignal.timeout(120000),
   });

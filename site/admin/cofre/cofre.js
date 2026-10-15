@@ -325,6 +325,166 @@ async function apagar() {
   } catch (e) { avisar(e.message, 'erro'); }
 }
 
+/* ---------- separar vários itens de um material grande ----------
+   Envio (texto, arquivos, imagens) > a IA devolve a lista > revisão
+   numa tela só, onde dá para tirar item ou trocar a categoria > só o
+   aprovado é gravado. Cancelar não grava nada. */
+let anexos = [];      // arquivos e imagens escolhidos, colados ou arrastados
+let propostos = [];   // itens que a IA achou, ainda não gravados
+let etapa = 'envio';
+
+const plural = (n, um, varios) => n + ' ' + (n === 1 ? um : varios);
+
+function abrirSeparar({ texto = '', arquivos = [], jaSeparar = false } = {}) {
+  anexos = [...arquivos];
+  propostos = [];
+  $('#sep-texto').value = texto;
+  $('#sep-aviso').textContent = iaLigada ? '' : 'Separar precisa da IA: falta a OPENAI_API_KEY na stack.';
+  irPara('envio');
+  $('#sep').showModal();
+  if (jaSeparar && iaLigada) separarAgora(); else $('#sep-texto').focus();
+}
+
+function irPara(qual) {
+  etapa = qual;
+  $('#sep-envio').hidden = qual !== 'envio';
+  $('#sep-revisao').hidden = qual !== 'revisao';
+  $('#sep-titulo').textContent = qual === 'envio' ? 'Separar e guardar' : 'Revise antes de guardar';
+  if (qual === 'envio') pintarAnexos(); else pintarRevisao();
+  atualizarPe();
+}
+
+function atualizarPe() {
+  const ok = $('#sep-ok');
+  const temMaterial = Boolean($('#sep-texto').value.trim() || anexos.length);
+  if (etapa === 'envio') {
+    ok.replaceChildren(ico('ia'), 'Separar com IA');
+    ok.disabled = !iaLigada || !temMaterial;
+    $('#sep-inteiro').hidden = !$('#sep-texto').value.trim();
+  } else {
+    ok.replaceChildren(ico('salvar'), 'Guardar ' + plural(propostos.length, 'item', 'itens'));
+    ok.disabled = !propostos.length;
+    $('#sep-inteiro').hidden = true;
+  }
+}
+
+function adicionarArquivos(lista) {
+  anexos.push(...[...lista].filter((f) => f.size));
+  pintarAnexos();
+  atualizarPe();
+}
+
+function pintarAnexos() {
+  $('#sep-anexos').replaceChildren(...anexos.map((f, n) => h('li', {},
+    h('span', { class: 'cf-anexos__nome' }, f.name || 'imagem colada'),
+    h('small', {}, f.type.startsWith('image/') ? 'imagem' : Math.max(1, Math.round(f.size / 1024)) + ' KB'),
+    h('button', { type: 'button', class: 'mini cf-ico', 'aria-label': 'Tirar ' + (f.name || 'imagem'), title: 'Tirar', onclick: () => { anexos.splice(n, 1); pintarAnexos(); atualizarPe(); } }, ico('apagar')))));
+}
+
+async function separarAgora() {
+  const fd = new FormData();
+  fd.append('texto', $('#sep-texto').value);
+  for (const f of anexos) fd.append('arquivos', f, f.name || 'imagem-colada.png');
+  const ok = $('#sep-ok');
+  ok.disabled = true;
+  $('#sep-aviso').textContent = 'Lendo e separando. Material grande pode levar até um minuto…';
+  try {
+    const d = await api('/api/cofre/separar', { method: 'POST', body: fd });
+    // O que já está no cofre (mesmo link ou mesmo texto) fica de fora.
+    const links = new Set(itens.map((i) => i.url).filter(Boolean));
+    const textos = new Set(itens.map((i) => (i.conteudo || '').trim()).filter(Boolean));
+    propostos = d.itens.filter((i) => !(i.url && links.has(i.url)) && !(i.conteudo && textos.has(i.conteudo.trim())));
+    const repetidos = d.itens.length - propostos.length;
+    const naoLidos = (d.lidos || []).filter((l) => /não lido|sem texto/.test(l.como)).map((l) => l.nome);
+    if (!propostos.length) {
+      $('#sep-aviso').textContent = (repetidos ? 'Tudo o que a IA achou já estava no cofre.' : 'A IA não achou nada para guardar nesse material.')
+        + (naoLidos.length ? ' Não deu para ler: ' + naoLidos.join(', ') + '.' : '');
+      atualizarPe();
+      return;
+    }
+    $('#sep-aviso').textContent = plural(propostos.length, 'item encontrado', 'itens encontrados') + '. Tire o que não quiser e guarde o resto.'
+      + (repetidos ? ' ' + plural(repetidos, 'já estava', 'já estavam') + ' no cofre e ficou de fora.' : '')
+      + (naoLidos.length ? ' Não deu para ler: ' + naoLidos.join(', ') + '.' : '');
+    irPara('revisao');
+  } catch (e) {
+    $('#sep-aviso').textContent = e.message;
+    atualizarPe();
+  }
+}
+
+function pintarRevisao() {
+  $('#sep-lista').replaceChildren(...propostos.map((p, n) => h('li', { class: 'cf-rev__item' },
+    h('div', { class: 'cf-rev__topo' },
+      h('select', { class: 'cf-rev__cat', 'aria-label': 'Categoria de ' + p.nome, onchange: (e) => { p.categoria = e.target.value; } },
+        Object.entries(CATEGORIAS).map(([chave, rotulo]) => h('option', { value: chave, selected: chave === p.categoria }, rotulo))),
+      h('button', { type: 'button', class: 'mini cf-ico', 'aria-label': 'Tirar "' + p.nome + '" da lista', title: 'Tirar da lista', onclick: () => {
+        propostos.splice(n, 1);
+        pintarRevisao();
+        atualizarPe();
+        $('#sep-aviso').textContent = propostos.length ? plural(propostos.length, 'item para guardar', 'itens para guardar') + '.' : 'Lista vazia. Cancele ou volte e mande outro material.';
+      } }, ico('apagar'))),
+    h('h3', { class: 'fm-card__nome' }, p.nome),
+    p.url ? h('p', { class: 'fm-card__meta' }, dominio(p.url) || p.url) : null,
+    p.descricao ? h('p', { class: 'cf-card__desc' }, p.descricao) : null,
+    p.conteudo ? h('p', { class: 'cf-conteudo cf-rev__conteudo' }, p.conteudo) : null,
+    p.tags.length ? h('div', { class: 'cf-tags' }, p.tags.map((t) => h('span', { class: 'cf-tag' }, '#' + t))) : null)));
+}
+
+async function guardarSeparados() {
+  const ok = $('#sep-ok');
+  ok.disabled = true;
+  let feitos = 0;
+  try {
+    while (propostos.length) {
+      itens.unshift(await enviar('/api/cofre', 'POST', propostos[0]));
+      propostos.shift();
+      feitos++;
+    }
+  } catch (e) {
+    // Os já gravados saem da lista; o resto fica para tentar de novo.
+    pintar();
+    pintarRevisao();
+    atualizarPe();
+    $('#sep-aviso').textContent = plural(feitos, 'guardado', 'guardados') + '. Parou num item: ' + e.message;
+    return;
+  }
+  $('#sep').close();
+  pintar();
+  avisar(plural(feitos, 'item guardado', 'itens guardados') + ' no cofre.');
+}
+
+function cancelarSeparar() {
+  if (etapa === 'revisao' && propostos.length && !confirm('Descartar ' + plural(propostos.length, 'item encontrado', 'itens encontrados') + '? Nada foi guardado ainda.')) return;
+  $('#sep').close();
+}
+
+$('#separar').append(ico('ia'), 'Separar de um texto');
+$('#separar').onclick = () => abrirSeparar();
+$('#sep-fechar').onclick = cancelarSeparar;
+$('#sep-cancelar').onclick = cancelarSeparar;
+$('#sep').addEventListener('cancel', (e) => { e.preventDefault(); cancelarSeparar(); });
+$('#sep-ok').onclick = () => (etapa === 'envio' ? separarAgora() : guardarSeparados());
+$('#sep-inteiro').onclick = () => { const t = $('#sep-texto').value; $('#sep').close(); guardarRapido(t); };
+$('#sep-texto').addEventListener('input', atualizarPe);
+$('#sep-arquivos').addEventListener('change', (e) => { adicionarArquivos(e.target.files); e.target.value = ''; });
+$('#sep-solta').addEventListener('dragover', (e) => { e.preventDefault(); $('#sep-solta').classList.add('ativa'); });
+$('#sep-solta').addEventListener('dragleave', () => $('#sep-solta').classList.remove('ativa'));
+$('#sep-solta').addEventListener('drop', (e) => { e.preventDefault(); $('#sep-solta').classList.remove('ativa'); adicionarArquivos(e.dataTransfer.files); });
+
+// Voltou para a janela (o atalho do Mac traz o app para a frente): cursor
+// na barra, pronto para colar ou digitar, se nada mais estava em foco.
+addEventListener('focus', () => {
+  if (!document.querySelector('dialog[open]') && document.activeElement === document.body) $('#busca').focus();
+});
+
+// Arquivo arrastado para qualquer ponto da tela vai direto para separar.
+document.addEventListener('dragover', (e) => { if (!$('#sep').open && e.dataTransfer?.types.includes('Files')) e.preventDefault(); });
+document.addEventListener('drop', (e) => {
+  if ($('#sep').open || !e.dataTransfer?.files.length) return;
+  e.preventDefault();
+  abrirSeparar({ arquivos: [...e.dataTransfer.files], jaSeparar: true });
+});
+
 /* ---------- ligações ---------- */
 for (const [chave, rotulo] of Object.entries(CATEGORIAS)) $('#f-categoria').append(h('option', { value: chave }, rotulo));
 $('#novo').append(ico('mais'), 'Nova anotação');
@@ -346,15 +506,25 @@ $('#guardar-barra').onclick = () => guardarRapido($('#busca').value);
 // link, prompt ou texto. Colar dentro de um campo preenchido é só colar.
 document.addEventListener('paste', (e) => {
   const t = e.target;
+  const imagens = [...(e.clipboardData?.files || [])].filter((f) => f.type.startsWith('image/'));
+  // Dentro da tela de separar: imagem colada vira anexo; texto cai no campo.
+  if ($('#sep').open) {
+    if (imagens.length) { e.preventDefault(); adicionarArquivos(imagens); }
+    return;
+  }
   // Só na barra vazia ou no fundo da tela: com o foco num botão, num
   // link ou num cartão, colar não deve criar item sem querer.
   const naBarraVazia = t.id === 'busca' && !t.value;
   const noFundo = !t.closest('button, a, input, textarea, select, [contenteditable], .cf-card');
   if ($('#jan').open || !(naBarraVazia || noFundo)) return;
+  // Imagem colada vai direto para a IA analisar; texto enorme (uma conversa
+  // inteira) abre a tela de separar em vez de virar um item só.
+  if (imagens.length) { e.preventDefault(); abrirSeparar({ arquivos: imagens, jaSeparar: true }); return; }
   const colado = (e.clipboardData?.getData('text') || '').trim();
   if (!colado) return;
   e.preventDefault();
-  guardarRapido(colado);
+  if (colado.length > 3000) abrirSeparar({ texto: colado });
+  else guardarRapido(colado);
 });
 
 // Favorito "Guardar no Cofre": abre /cofre?link=<página atual>.
@@ -380,8 +550,11 @@ document.addEventListener('keydown', (e) => {
 
 let dicaPadrao = $('#dica').textContent;
 await carregar();
-if (!iaLigada) $('#dica').textContent = dicaPadrao = 'Cole qualquer coisa para guardar. Sem a IA, o nome vem da página ou da primeira linha.';
-let pedido = new URLSearchParams(location.search).get('link');
+if (!iaLigada) $('#dica').textContent = dicaPadrao = 'Cole ou arraste qualquer coisa para guardar. Sem a IA, o nome vem da página ou da primeira linha.';
+const parametros = new URLSearchParams(location.search);
+// ?q= abre já buscando (atalho do Mac ou da barra de endereço do Chrome).
+if (parametros.get('q')) { $('#busca').value = parametros.get('q'); $('#busca').dispatchEvent(new Event('input')); }
+let pedido = parametros.get('link');
 try { pedido = pedido || sessionStorage.getItem('cofre-colar'); sessionStorage.removeItem('cofre-colar'); } catch (e) { /* sem sessionStorage: segue só com o ?link= */ }
 if (location.search) history.replaceState(null, '', location.pathname);
 if (pedido) guardarRapido(pedido);

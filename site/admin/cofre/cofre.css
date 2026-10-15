@@ -9,7 +9,9 @@
    dela) e se afasta dos filtros, que se afastam da lista. */
 .fm .fm-raiz { padding-top: var(--sp-md); }
 .cf-cabeca { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-sm); margin-bottom: var(--sp-sm); }
+.cf-cabeca { flex-wrap: wrap; }
 .cf-cabeca .fm-titulo { margin: 0; }
+.cf-cabeca__acoes { display: flex; flex-wrap: wrap; gap: var(--sp-3xs); }
 
 /* ---------- busca ---------- */
 .cf-busca {
@@ -118,6 +120,32 @@
 .cf-dica:empty { display: none; }
 .cf-rotulo { margin: 0; font-size: var(--t-eyebrow); font-weight: var(--w-bold); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 
+/* ---------- separar ---------- */
+.cf-sep { width: min(94vw, 46rem); }
+.cf-sep__aviso { padding: 0 var(--sp-md) var(--sp-xs); }
+.cf-solta {
+  position: relative; display: grid; gap: var(--sp-3xs); justify-items: center; margin: 0;
+  padding: var(--sp-md); text-align: center; cursor: pointer;
+  border: var(--hair) dashed var(--line-2); border-radius: var(--radius-img);
+  transition: border-color var(--d-fast), background var(--d-fast);
+}
+.cf-solta:hover, .cf-solta.ativa, .cf-solta:focus-within { border-color: var(--ink); background: var(--bg-2); }
+.cf-solta input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.cf-solta b { font-size: var(--t-small); font-weight: var(--w-semi); }
+.cf-solta small { font-size: var(--t-eyebrow); color: var(--muted); }
+.cf-anexos { display: grid; gap: var(--sp-3xs); margin: 0; padding: 0; list-style: none; }
+.cf-anexos:empty { display: none; }
+.cf-anexos li { display: flex; align-items: center; gap: var(--sp-2xs); padding: var(--sp-3xs) var(--sp-3xs) var(--sp-3xs) var(--sp-xs); background: var(--bg-2); border-radius: var(--radius-img); font-size: var(--t-small); }
+.cf-anexos__nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cf-anexos small { color: var(--muted); font-size: var(--t-eyebrow); }
+
+.cf-rev { display: grid; gap: var(--sp-sm); margin: 0; padding: 0; list-style: none; }
+.cf-rev__item { display: grid; gap: var(--sp-xs); padding: var(--sp-sm); border: var(--hair) solid var(--line); border-radius: var(--radius-img); }
+.cf-rev__topo { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-xs); }
+.fm .cf-rev__cat { width: auto; padding: .4em .7em; font-size: var(--t-eyebrow); font-weight: var(--w-bold); letter-spacing: .08em; text-transform: uppercase; }
+.cf-rev .fm-card__meta { margin-top: calc(var(--sp-3xs) - var(--sp-xs)); }
+.cf-rev__conteudo { -webkit-line-clamp: 4; line-clamp: 4; cursor: auto; }
+
 /* ---------- toque ---------- */
 /* No dedo, alvo de pelo menos 44px nos botões e filtros; as tags, que
    são muitas e ficam juntas, vão a 32px (acima dos 24px mínimos). */
@@ -134,6 +162,7 @@
 @media (min-width: 560px) { .cf-dupla { grid-template-columns: 1fr 1fr; } }
 .cf-check { margin: 0; display: flex; align-items: center; gap: var(--sp-2xs); font-size: var(--t-small); font-weight: var(--w-semi); cursor: pointer; }
 .cf-check input { accent-color: var(--brand); width: 1.1em; height: 1.1em; }
-.cf-pe { display: flex; align-items: center; justify-content: flex-end; gap: var(--sp-sm); }
+.cf-pe { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--sp-2xs) var(--sp-sm); }
+.cf-pe > * { white-space: nowrap; }
 .cf-pe #f-apagar { margin-right: auto; }
 

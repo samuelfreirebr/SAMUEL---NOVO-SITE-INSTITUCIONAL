@@ -1,0 +1,16 @@
+{
+  "id": "/admin/cofre/",
+  "name": "Cofre",
+  "short_name": "Cofre",
+  "description": "Links, prompts e textos guardados no painel do Samuel Freire.",
+  "lang": "pt-BR",
+  "start_url": "/admin/cofre/",
+  "scope": "/admin/cofre/",
+  "display": "standalone",
+  "background_color": "#F2F4F7",
+  "theme_color": "#FFFFFF",
+  "icons": [
+    { "src": "/img/cofre-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/img/cofre-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

@@ -6,12 +6,17 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Cofre | Painel Samuel Freire</title>
 <link rel="icon" href="/img/favicon.png" type="image/png">
+<!-- Instalável como app (Chrome: Instalar Cofre). O manifesto mora atrás do
+     login, então vai com o cookie. -->
+<link rel="manifest" href="/admin/cofre/manifest.json" crossorigin="use-credentials">
+<link rel="apple-touch-icon" href="/img/cofre-192.png">
+<meta name="theme-color" content="#FFFFFF">
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css?v=20260909h">
 <link rel="stylesheet" href="/styles/base.css?v=20260911a">
 <link rel="stylesheet" href="/admin/painel.css?v=9">
 <link rel="stylesheet" href="/admin/formularios/formularios.css?v=2">
-<link rel="stylesheet" href="./cofre.css?v=8">
+<link rel="stylesheet" href="./cofre.css?v=10">
 </head>
 <body class="fm">
 
@@ -24,7 +29,10 @@
 <main class="fm-raiz">
   <div class="cf-cabeca">
     <h2 class="fm-titulo">Cofre</h2>
-    <button class="mini" type="button" id="novo"></button>
+    <div class="cf-cabeca__acoes">
+      <button class="mini" type="button" id="separar"></button>
+      <button class="mini" type="button" id="novo"></button>
+    </div>
   </div>
 
   <label class="cf-busca">
@@ -33,7 +41,7 @@
     <kbd>/</kbd>
     <button class="mini mini--ativo" type="button" id="guardar-barra" hidden></button>
   </label>
-  <p class="cf-dica-barra" id="dica">Cole qualquer coisa para guardar. A IA dá o nome e põe no lugar certo.</p>
+  <p class="cf-dica-barra" id="dica">Cole ou arraste qualquer coisa para guardar. A IA dá o nome e põe no lugar certo.</p>
 
   <div class="cf-filtros" id="filtros" role="group" aria-label="Filtrar por categoria"></div>
 
@@ -86,6 +94,37 @@
   </footer>
 </dialog>
 
-<script type="module" src="./cofre.js?v=6"></script>
+<dialog id="sep" class="fm-jan cf-jan cf-sep" aria-labelledby="sep-titulo">
+  <header class="fm-jan__topo">
+    <p class="fm-jan__titulo" id="sep-titulo">Separar e guardar</p>
+    <button class="fm-jan__fechar" type="button" id="sep-fechar" aria-label="Fechar">&times;</button>
+  </header>
+  <div class="fm-jan__corpo" id="sep-envio">
+    <label class="fm-campo">
+      <span>Texto</span>
+      <textarea id="sep-texto" rows="8" placeholder="Cole uma conversa, anotações ou um documento inteiro. Dá para colar imagem aqui também."></textarea>
+    </label>
+    <div class="fm-campo">
+      <span class="cf-rotulo">Arquivos e imagens</span>
+      <label class="cf-solta" id="sep-solta">
+        <input type="file" id="sep-arquivos" multiple accept=".txt,.md,.csv,.json,.html,.pdf,.docx,.zip,image/*">
+        <b>Escolher arquivos ou arrastar para cá</b>
+        <small>Conversa do WhatsApp (.txt ou .zip), PDF, Word e imagens, até 30 MB</small>
+      </label>
+      <ul class="cf-anexos" id="sep-anexos"></ul>
+    </div>
+  </div>
+  <div class="fm-jan__corpo" id="sep-revisao" hidden>
+    <ol class="cf-rev" id="sep-lista"></ol>
+  </div>
+  <p class="cf-dica cf-sep__aviso" id="sep-aviso" role="status"></p>
+  <footer class="fm-jan__pe cf-pe">
+    <button class="mini" type="button" id="sep-inteiro" hidden>Guardar como um item só</button>
+    <button class="mini" type="button" id="sep-cancelar">Cancelar</button>
+    <button class="btn btn--brand btn--peq" type="button" id="sep-ok"></button>
+  </footer>
+</dialog>
+
+<script type="module" src="./cofre.js?v=10"></script>
 </body>
 </html>

@@ -227,6 +227,15 @@ async function api(req, res, url) {
     const d = dado.url ? await cofre.descrever(dado.url) : await cofre.descreverTexto(dado.texto);
     return json(res, d, d.erro ? (d.semChave ? 503 : 502) : 200);
   }
+  if (rota === 'cofre/separar' && req.method === 'POST') {
+    let corpo;
+    try { corpo = await lerCorpo(req, 32 * 1024 * 1024); }
+    catch (e) { return json(res, { erro: 'Os arquivos passam de 30 MB. Mande menos de uma vez.' }, 413); }
+    const form = lerMultipart(corpo, req.headers['content-type']);
+    if (!form) return json(res, { erro: 'Envio inválido.' }, 400);
+    const d = await cofre.separar({ texto: form.campos.texto || '', arquivos: form.lista || [] });
+    return json(res, d, d.erro ? (d.semChave ? 503 : 502) : 200);
+  }
   if (rota.startsWith('cofre/') && req.method === 'DELETE') {
     return (await cofre.apagar(rota.slice('cofre/'.length))) ? json(res, { ok: true }) : json(res, { erro: 'Item não encontrado.' }, 404);
   }
