@@ -5,8 +5,9 @@
    itens pequenos, e a busca e os filtros rodam no navegador.
 
    Ao guardar um link, o servidor lê a página do link (no GitHub, o
-   README pela API), manda para o Claude e devolve nome, descrição,
-   categoria e tags. Sem a ANTHROPIC_API_KEY, devolve só o título e a
+   README pela API), manda para a mesma IA das propostas (ChatGPT, pela
+   OPENAI_API_KEY) e devolve nome, descrição, categoria e tags. Sem a
+   chave, devolve só o título e a
    descrição da página. Endereço da rede interna
    (localhost, IP privado) é recusado antes de qualquer leitura.
    ============================================================ */
@@ -17,10 +18,11 @@ import { lookup } from 'node:dns/promises';
 import net from 'node:net';
 import path from 'node:path';
 import { RAIZ_DADOS } from './dados.js';
+import { pedirJsonIa, temChaveIa } from './proposta-ia.js';
 
 const ARQ = path.join(RAIZ_DADOS, 'cofre.json');
 export const CATEGORIAS = ['prompts', 'textos', 'ferramentas', 'github', 'videos', 'ia', 'docs', 'arquivos', 'outros'];
-export const temChaveCofre = () => Boolean(process.env.ANTHROPIC_API_KEY);
+export const temChaveCofre = temChaveIa;
 
 /* ---------- guardar ---------- */
 
@@ -162,10 +164,9 @@ export async function lerPagina(url) {
   };
 }
 
-/* ---------- pedir ao Claude ---------- */
+/* ---------- pedir à IA ---------- */
 
-const SISTEMA = `Você organiza o cofre pessoal de um designer brasileiro: links úteis, prompts, comandos, trechos de texto e anotações. Recebe um link (com o conteúdo lido da página) ou um texto colado, e responde SÓ com um JSON, sem nada antes ou depois:
-{"nome": "...", "descricao": "...", "categoria": "...", "tags": ["..."]}
+const SISTEMA = `Você organiza o cofre pessoal de um designer brasileiro: links úteis, prompts, comandos, trechos de texto e anotações. Recebe um link (com o conteúdo lido da página) ou um texto colado, e devolve nome, descrição, categoria e tags.
 
 - nome: curto e reconhecível. Link: o nome da ferramenta, do repositório ou do vídeo, sem slogan. Texto: um título que diga o que ele é (exemplo: "Prompt para revisar copy de landing page").
 - descricao: em português do Brasil, de 2 a 4 frases simples: o que é, o que faz e quando usar. Sem jargão, sem travessão. Nunca repita o texto colado.
@@ -177,20 +178,21 @@ Se a página veio vazia ou bloqueada, deduza pelo endereço e diga só o que dá
 
 const semTravessao = (t, max) => corte(t, max).replace(/\s*[\u2014\u2013]\s*/g, ', ');
 
-async function perguntarIa(pedido) {
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    signal: AbortSignal.timeout(60000),
-    headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: 'claude-haiku-5-5', max_tokens: 800, system: SISTEMA, messages: [{ role: 'user', content: pedido }] }),
-  }).catch((e) => ({ ok: false, json: async () => ({ error: { message: e.message } }) }));
-  const d = await r.json().catch(() => ({}));
-  if (!r.ok) return { erro: 'A IA não respondeu: ' + (d?.error?.message || r.status) };
+const ESQUEMA = {
+  type: 'object', additionalProperties: false,
+  required: ['nome', 'descricao', 'categoria', 'tags'],
+  properties: {
+    nome: { type: 'string' },
+    descricao: { type: 'string' },
+    categoria: { type: 'string', enum: CATEGORIAS },
+    tags: { type: 'array', items: { type: 'string' } },
+  },
+};
 
-  const texto = (d.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
+async function perguntarIa(pedido) {
   let ia;
-  try { ia = JSON.parse(texto.slice(texto.indexOf('{'), texto.lastIndexOf('}') + 1)); }
-  catch (e) { return { erro: 'A IA respondeu num formato inesperado. Tente de novo.' }; }
+  try { ({ ia } = await pedirJsonIa([{ type: 'input_text', text: pedido }], { sistema: SISTEMA, esquema: ESQUEMA, nome: 'item_do_cofre' })); }
+  catch (e) { return { erro: 'A IA não respondeu: ' + e.message }; }
   return {
     nome: semTravessao(ia.nome, 160),
     descricao: semTravessao(ia.descricao, 8000),
