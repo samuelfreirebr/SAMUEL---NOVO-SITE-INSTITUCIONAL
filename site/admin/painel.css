@@ -190,9 +190,10 @@ dialog::backdrop { background: rgba(20,21,23,.55); }
   background: var(--bg); border: var(--hair) solid var(--line); border-radius: var(--radius-img);
 }
 .hub__cofre:focus-within { border-color: var(--ink); }
-.hub__cofre label { margin: 0; font-size: var(--t-eyebrow); font-weight: var(--w-bold); letter-spacing: .12em; text-transform: uppercase; color: var(--brand); }
-.hub__cofre input[type=text] { flex: 1 1 12rem; min-width: 0; border: 0; padding: .6em .4em; }
-.hub__cofre input[type=text]:focus-visible { outline: none; }
+.hub__cofre label { display: flex; align-items: center; gap: .6em; margin: 0; font-size: var(--t-eyebrow); font-weight: var(--w-bold); letter-spacing: .12em; text-transform: uppercase; color: var(--ink); }
+.hub__cofre label::before { content: ""; width: var(--bullet); height: var(--bullet); border-radius: 50%; background: var(--brand); }
+.hub__cofre textarea { flex: 1 1 12rem; min-width: 0; min-height: 0; border: 0; padding: .6em .4em; resize: none; }
+.hub__cofre textarea:focus-visible { outline: none; }
 /* Quatro blocos: lado a lado no computador, dois por linha no
    tablet, um por linha no celular. Contagem fixa em vez de auto-fit,
    que quebrava em três em cima e um sozinho embaixo. */

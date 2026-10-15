@@ -9,7 +9,7 @@
 <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/styles/tokens.css?v=20260909h">
 <link rel="stylesheet" href="/styles/base.css?v=20260911a">
-<link rel="stylesheet" href="/admin/painel.css?v=7">
+<link rel="stylesheet" href="/admin/painel.css?v=9">
 </head>
 <body>
 
@@ -33,7 +33,7 @@
 
     <form class="hub__cofre" action="/admin/cofre/" method="get">
       <label for="cofre-link">Cofre</label>
-      <input type="text" id="cofre-link" name="link" inputmode="url" autocomplete="off" required placeholder="Cole um link aqui">
+      <textarea id="cofre-link" name="link" rows="1" autocomplete="off" required placeholder="Cole um link ou texto"></textarea>
       <button class="mini mini--ativo" type="submit">Guardar</button>
       <a class="mini" href="/admin/cofre/">Abrir o Cofre</a>
     </form>
@@ -87,6 +87,22 @@
 
 <script type="module">
 const $ = (s) => document.querySelector(s);
+
+/* Cofre: colar no campo já guarda. O texto vai pelo sessionStorage, não
+   pelo endereço, porque um prompt longo não cabe numa URL. Sem JS, o
+   formulário manda ?link= e o Cofre guarda do mesmo jeito. */
+function mandarProCofre(texto) {
+  if (!texto.trim()) return;
+  try { sessionStorage.setItem('cofre-colar', texto); location.href = '/admin/cofre/'; }
+  catch (e) { location.href = '/admin/cofre/?link=' + encodeURIComponent(texto); }
+}
+$('.hub__cofre').addEventListener('submit', (e) => { e.preventDefault(); mandarProCofre($('#cofre-link').value); });
+$('#cofre-link').addEventListener('paste', (e) => {
+  if ($('#cofre-link').value) return;
+  e.preventDefault();
+  mandarProCofre(e.clipboardData?.getData('text') || '');
+});
+$('#cofre-link').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); mandarProCofre($('#cofre-link').value); } });
 
 const h = new Date().getHours();
 $('#saudacao').textContent = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';

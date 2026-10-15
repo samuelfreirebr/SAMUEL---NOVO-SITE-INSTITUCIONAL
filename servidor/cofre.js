@@ -1,5 +1,5 @@
 /* ============================================================
-   Cofre: banco de links úteis do Samuel. Só o painel enxerga.
+   Cofre: links úteis, prompts e textos do Samuel. Só o painel enxerga.
 
    Tudo num arquivo só (/dados/cofre.json): são algumas centenas de
    itens pequenos, e a busca e os filtros rodam no navegador.
@@ -19,7 +19,7 @@ import path from 'node:path';
 import { RAIZ_DADOS } from './dados.js';
 
 const ARQ = path.join(RAIZ_DADOS, 'cofre.json');
-export const CATEGORIAS = ['ferramentas', 'github', 'videos', 'ia', 'docs', 'arquivos', 'outros'];
+export const CATEGORIAS = ['prompts', 'textos', 'ferramentas', 'github', 'videos', 'ia', 'docs', 'arquivos', 'outros'];
 export const temChaveCofre = () => Boolean(process.env.ANTHROPIC_API_KEY);
 
 /* ---------- guardar ---------- */
@@ -50,6 +50,7 @@ function limpar(d) {
   return {
     url, nome,
     descricao: corte(d.descricao, 8000),
+    conteudo: String(d.conteudo ?? '').slice(0, 50000).trim(),   // o texto colado, intacto
     categoria: CATEGORIAS.includes(d.categoria) ? d.categoria : 'outros',
     tags: [...new Set(tags)].slice(0, 12),
     fixado: Boolean(d.fixado),
@@ -163,15 +164,51 @@ export async function lerPagina(url) {
 
 /* ---------- pedir ao Claude ---------- */
 
-const SISTEMA = `Você organiza um banco pessoal de links úteis de um designer brasileiro. Recebe o endereço e o conteúdo lido da página e responde SÓ com um JSON, sem nada antes ou depois:
+const SISTEMA = `Você organiza o cofre pessoal de um designer brasileiro: links úteis, prompts, comandos, trechos de texto e anotações. Recebe um link (com o conteúdo lido da página) ou um texto colado, e responde SÓ com um JSON, sem nada antes ou depois:
 {"nome": "...", "descricao": "...", "categoria": "...", "tags": ["..."]}
 
-- nome: curto e reconhecível (o nome da ferramenta, do repositório ou do vídeo), sem slogan.
-- descricao: em português do Brasil, de 2 a 4 frases simples: o que é, o que faz e quando usar. Sem jargão, sem travessão.
-- categoria: uma destas chaves: ferramentas, github, videos, ia, docs, arquivos, outros.
-  (github = repositórios; videos = Instagram, YouTube, TikTok; ia = Claude, skills, IA em geral; docs = documentação; arquivos = Drive, Figma, Notion)
+- nome: curto e reconhecível. Link: o nome da ferramenta, do repositório ou do vídeo, sem slogan. Texto: um título que diga o que ele é (exemplo: "Prompt para revisar copy de landing page").
+- descricao: em português do Brasil, de 2 a 4 frases simples: o que é, o que faz e quando usar. Sem jargão, sem travessão. Nunca repita o texto colado.
+- categoria: uma destas chaves:
+  prompts = prompt ou instrução para IA; textos = trecho, citação, anotação, roteiro, comando de terminal ou qualquer texto que não seja prompt;
+  ferramentas = sites e apps; github = repositórios; videos = Instagram, YouTube, TikTok; ia = Claude, skills, produtos de IA; docs = documentação; arquivos = Drive, Figma, Notion; outros = o que não couber.
 - tags: de 2 a 5 palavras curtas em minúsculas, em português quando houver termo comum.
 Se a página veio vazia ou bloqueada, deduza pelo endereço e diga só o que dá para afirmar.`;
+
+const semTravessao = (t, max) => corte(t, max).replace(/\s*[\u2014\u2013]\s*/g, ', ');
+
+async function perguntarIa(pedido) {
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    signal: AbortSignal.timeout(60000),
+    headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({ model: 'claude-haiku-5-5', max_tokens: 800, system: SISTEMA, messages: [{ role: 'user', content: pedido }] }),
+  }).catch((e) => ({ ok: false, json: async () => ({ error: { message: e.message } }) }));
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) return { erro: 'A IA não respondeu: ' + (d?.error?.message || r.status) };
+
+  const texto = (d.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
+  let ia;
+  try { ia = JSON.parse(texto.slice(texto.indexOf('{'), texto.lastIndexOf('}') + 1)); }
+  catch (e) { return { erro: 'A IA respondeu num formato inesperado. Tente de novo.' }; }
+  return {
+    nome: semTravessao(ia.nome, 160),
+    descricao: semTravessao(ia.descricao, 8000),
+    categoria: CATEGORIAS.includes(ia.categoria) ? ia.categoria : 'outros',
+    tags: (Array.isArray(ia.tags) ? ia.tags : []).map((t) => corte(t, 30).toLowerCase()).filter(Boolean).slice(0, 5),
+  };
+}
+
+// Texto colado: a IA dá nome, explica e escolhe a categoria. Sem a
+// chave, o nome é a primeira linha e vai para Prompts ou Textos.
+export async function descreverTexto(textoBruto) {
+  const texto = String(textoBruto || '').trim();
+  if (!texto) return { erro: 'Nada para guardar.' };
+  // ponytail: sem IA, prompt é reconhecido só pelo jeito de começar; a IA cobre o resto.
+  const pareceprompt = /^\s*(voc[eê] [eé]|aja como|atue como|act as|you are|escreva|crie|gere|revise|resuma|analise|fa[cç]a|me ajude)/i.test(texto);
+  if (!temChaveCofre()) return { nome: corte(texto.split('\n')[0], 70), categoria: pareceprompt ? 'prompts' : 'textos', semIa: true };
+  return perguntarIa('Texto colado:\n"""\n' + texto.slice(0, 12000) + '\n"""');
+}
 
 export async function descrever(urlBruta) {
   let url;
@@ -187,30 +224,5 @@ export async function descrever(urlBruta) {
 
   // Sem a chave, fica o que a própria página diz de si: título e descrição.
   if (!temChaveCofre()) return { nome: corte(pagina.titulo, 160), descricao: corte(pagina.descricao.split(' | ')[0], 600), semIa: true };
-
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    signal: AbortSignal.timeout(60000),
-    headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({
-      model: 'claude-haiku-5-5',
-      max_tokens: 800,
-      system: SISTEMA,
-      messages: [{ role: 'user', content: `Endereço: ${url}\nTítulo: ${pagina.titulo}\nDescrição da página: ${pagina.descricao}\n\nComeço do conteúdo:\n${pagina.texto}` }],
-    }),
-  }).catch((e) => ({ ok: false, json: async () => ({ error: { message: e.message } }) }));
-  const d = await r.json().catch(() => ({}));
-  if (!r.ok) return { erro: 'A IA não respondeu: ' + (d?.error?.message || r.status) };
-
-  const texto = (d.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
-  let ia;
-  try { ia = JSON.parse(texto.slice(texto.indexOf('{'), texto.lastIndexOf('}') + 1)); }
-  catch (e) { return { erro: 'A IA respondeu num formato inesperado. Tente de novo.' }; }
-  const semTravessao = (t) => corte(t, 8000).replace(/\s*[\u2014\u2013]\s*/g, ', ');
-  return {
-    nome: semTravessao(ia.nome).slice(0, 160),
-    descricao: semTravessao(ia.descricao),
-    categoria: CATEGORIAS.includes(ia.categoria) ? ia.categoria : 'outros',
-    tags: (Array.isArray(ia.tags) ? ia.tags : []).map((t) => corte(t, 30).toLowerCase()).filter(Boolean).slice(0, 5),
-  };
+  return perguntarIa(`Link: ${url}\nTítulo: ${pagina.titulo}\nDescrição da página: ${pagina.descricao}\n\nComeço do conteúdo:\n${pagina.texto}`);
 }

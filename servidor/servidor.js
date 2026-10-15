@@ -214,7 +214,7 @@ async function api(req, res, url) {
   if (rota === 'cofre') {
     if (req.method === 'GET') return json(res, { itens: await cofre.listar(), ia: cofre.temChaveCofre() });
     if (req.method === 'POST') {
-      const dado = await lerJson(req, res, 65536);
+      const dado = await lerJson(req, res, 262144);
       if (dado === undefined) return;
       try { return json(res, await cofre.salvar(dado)); }
       catch (e) { return json(res, { erro: e.message }, 400); }
@@ -222,9 +222,9 @@ async function api(req, res, url) {
     return json(res, { erro: 'Método não aceito.' }, 405);
   }
   if (rota === 'cofre/ia' && req.method === 'POST') {
-    const dado = await lerJson(req, res, 4096);
+    const dado = await lerJson(req, res, 262144);
     if (dado === undefined) return;
-    const d = await cofre.descrever(dado.url);
+    const d = dado.url ? await cofre.descrever(dado.url) : await cofre.descreverTexto(dado.texto);
     return json(res, d, d.erro ? (d.semChave ? 503 : 502) : 200);
   }
   if (rota.startsWith('cofre/') && req.method === 'DELETE') {
