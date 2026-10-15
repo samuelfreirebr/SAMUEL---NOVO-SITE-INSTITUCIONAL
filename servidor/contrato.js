@@ -214,7 +214,7 @@ const ESQUEMA = {
   },
 };
 
-const SISTEMA = `Você prepara os dados variáveis de um contrato de prestação de serviços de design e webdesign de Samuel Freire. As cláusulas jurídicas já existem e NÃO são com você. Você recebe a proposta comercial aprovada e, quando houver, a transcrição da reunião com o cliente, e devolve só os campos do esquema, em português do Brasil.
+const SISTEMA = `Você prepara os dados variáveis de um contrato de prestação de serviços de design e webdesign de Samuel Freire. As cláusulas jurídicas já existem e NÃO são com você. Você recebe a proposta comercial aprovada e, quando houver, a transcrição da reunião com o cliente e as respostas que ele deu no formulário (dados da empresa, documento, endereço, o que precisa), e devolve só os campos do esquema, em português do Brasil.
 
 Campos:
 - tituloServicos: "DE DESIGN E WEBDESIGN" se o projeto inclui site, loja, landing page ou sistema; "DE DESIGN" se é só identidade visual, folder, impresso ou criativos.
@@ -254,7 +254,16 @@ export function montar(modeloTexto, campos) {
   }).filter((l) => l !== null).join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
-export async function gerarContrato({ proposta, transcricao, modelo, respostas }) {
+// "- Pergunta: resposta", só do que o cliente respondeu.
+export function textoDoBriefing(blocos, r) {
+  if (!r) return '';
+  const valor = (v) => Array.isArray(v) ? v.join(', ') : typeof v === 'object' ? JSON.stringify(v) : String(v);
+  return (blocos || []).flatMap((b) => b.perguntas || [])
+    .filter((q) => q.pergunta && r[q.id] != null && String(r[q.id]).trim())
+    .map((q) => `- ${q.pergunta}: ${valor(r[q.id])}`).join('\n');
+}
+
+export async function gerarContrato({ proposta, transcricao, modelo, respostas, perguntas }) {
   const p = proposta || {};
   const avisos = [];
   let ia = null, usado = null;
@@ -262,6 +271,8 @@ export async function gerarContrato({ proposta, transcricao, modelo, respostas }
   if (temChaveIa()) {
     const partes = [{ type: 'input_text', text: resumoDaProposta(p) }];
     if (transcricao) partes.push({ type: 'input_text', text: `--- Transcrição da reunião ---\n${String(transcricao).slice(0, 60000)}` });
+    const briefing = textoDoBriefing(perguntas, respostas);
+    if (briefing) partes.push({ type: 'input_text', text: `--- Respostas do cliente no formulário ---\n${briefing.slice(0, 30000)}` });
     try {
       const r = await pedirJsonIa(partes, { sistema: SISTEMA, esquema: ESQUEMA, nome: 'dados_do_contrato' });
       ia = r.ia; usado = r.modelo;
@@ -420,5 +431,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   assert.equal(valorPorExtenso(1500.5, 'R$').replace(/\s/g, ' '), 'R$ 1.500,50 (mil e quinhentos reais e cinquenta centavos)');
   assert.equal(montar('a\n{{X}}\nb {{Y}}', { X: '', Y: 'c' }), 'a\nb c');
   assert.equal(montar('{{Z}}', {}), '[PREENCHER: Z]');
+  assert.equal(textoDoBriefing([{ perguntas: [{ id: 'a', pergunta: 'CNPJ' }, { id: 'b', pergunta: 'Vazia' }, { id: 'c', pergunta: 'Cores' }] }], { a: '1', b: ' ', c: ['azul', 'verde'] }), '- CNPJ: 1\n- Cores: azul, verde');
+  assert.equal(textoDoBriefing([], null), '');
   console.log('contrato.js: tudo certo');
 }

@@ -436,17 +436,24 @@ async function api(req, res, url) {
     // Gera a partir da proposta salva (com o modelo, como a página
     // pública) e da transcrição da reunião, se houver. Substitui o texto.
     if (acao === 'gerar' && req.method === 'POST') {
-      const reuniao = proposta.reuniao ? await dados.lerReuniao(proposta.reuniao) : null;
+      // A tela de Contratos escolhe formulário, resposta e reunião;
+      // campo ausente vale o que a proposta aponta, e "" é nenhum.
+      const esc = await lerJson(req, res, 8192);
+      if (!esc) return;
+      const reuniao = await dados.lerReuniao(String(esc.reuniao ?? proposta.reuniao ?? ''));
       // O briefing já respondido traz CNPJ, endereço e razão social:
       // é o que sairia como [PREENCHER] no contrato.
-      const form = await dados.lerFormulario(id);
+      const form = await dados.lerFormulario(String(esc.formulario ?? id));
+      const envio = esc.envio ? form?.envios?.find((e) => e.id === esc.envio) : null;
+      const respostas = envio ? envio.respostas : (form?.respondidoEm ? form.respostas : null);
       const g = await gerarContrato({
         proposta: comModelo(proposta, await dados.lerModelo()),
         transcricao: reuniao?.texto || '',
         modelo: await dados.lerModeloContrato(),
-        respostas: form?.respondidoEm ? form.respostas : null,
+        respostas,
+        perguntas: form?.blocos,
       });
-      return json(res, await dados.gravarContrato(id, { texto: g.texto, avisos: g.avisos, ia: g.modelo, comReuniao: Boolean(reuniao) }));
+      return json(res, await dados.gravarContrato(id, { texto: g.texto, avisos: g.avisos, ia: g.modelo, comReuniao: Boolean(reuniao), comFormulario: Boolean(respostas) }));
     }
     if (acao) return json(res, { erro: 'Rota não existe.' }, 404);
     if (req.method === 'GET') return json(res, (await dados.lerContrato(id)) || { proposta: id, texto: '' });

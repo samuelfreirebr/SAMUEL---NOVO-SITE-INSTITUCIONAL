@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Contratos | Painel Samuel Freire</title>
+<link rel="icon" href="/img/favicon.png" type="image/png">
+<link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/styles/tokens.css?v=20260909h">
+<link rel="stylesheet" href="/styles/base.css?v=20260911a">
+<link rel="stylesheet" href="/admin/painel.css?v=9">
+<link rel="stylesheet" href="/admin/formularios/formularios.css?v=2">
+<style>
+  .ct-fontes { display: grid; gap: var(--sp-sm); grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); margin-bottom: var(--sp-sm); }
+  .ct-fontes select, .ct-texto { width: 100%; }
+  .ct-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2xs); margin-block: var(--sp-sm); }
+  .ct-texto { min-height: 60vh; padding: var(--sp-sm); font: inherit; font-size: var(--t-small); line-height: 1.6; border: var(--hair) solid var(--line); border-radius: var(--radius-img); background: var(--bg); }
+  .ct-meta { color: var(--muted); font-size: var(--t-eyebrow); }
+</style>
+</head>
+<body class="fm">
+
+<header class="topo">
+  <h1><a href="/admin/">Painel</a> <i>Samuel Freire</i><span class="sec">Contratos</span></h1>
+</header>
+
+<p class="aviso" id="aviso" role="status"></p>
+
+<main class="fm-raiz">
+  <section class="fm-intro">
+    <p class="eyebrow">Contratos</p>
+    <h2 class="fm-titulo">Gerar contrato</h2>
+    <p class="fm-sub">Escolha a proposta e, se quiser, o formulário, a resposta do cliente e a transcrição da reunião. Quanto mais fontes, menos pontos ficam com [PREENCHER]. As cláusulas vêm do modelo do contrato.</p>
+  </section>
+
+  <div class="ct-fontes">
+    <label class="fm-campo"><span>Proposta</span><select id="proposta"></select></label>
+    <label class="fm-campo"><span>Formulário</span><select id="formulario"></select></label>
+    <label class="fm-campo"><span>Resposta do formulário</span><select id="envio"></select></label>
+    <label class="fm-campo"><span>Transcrição da reunião</span><select id="reuniao"></select></label>
+  </div>
+
+  <div class="ct-acoes">
+    <button class="btn btn--brand btn--peq" type="button" id="gerar">Gerar contrato</button>
+    <button class="mini" type="button" id="salvar">Salvar texto</button>
+    <a class="mini" id="pdf" target="_blank" rel="noopener">Abrir PDF</a>
+    <span class="ct-meta" id="meta"></span>
+  </div>
+  <p class="fm-aviso" id="avisos" hidden></p>
+
+  <textarea class="ct-texto" id="texto" spellcheck="true" placeholder="Escolha a proposta e clique em Gerar contrato."></textarea>
+</main>
+
+<script type="module" src="./contratos.js?v=2"></script>
+</body>
+</html>
